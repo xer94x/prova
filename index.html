@@ -37,7 +37,7 @@
   .content{padding:24px}
   .category-section{margin-bottom:32px}
   .category-title{font-family:'Bebas Neue',sans-serif;font-size:13px;letter-spacing:3px;color:var(--muted);text-transform:uppercase;margin-bottom:12px;padding-bottom:8px;border-bottom:1px solid var(--border)}
-  .ch-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:8px}
+  .ch-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:10px}
   .ch-card{
     position:relative;
     aspect-ratio:1;
@@ -45,7 +45,7 @@
     flex-direction:column;
     align-items:center;
     justify-content:center;
-    padding:8px 6px 22px;
+    padding:10px 8px 30px;
     background:var(--card);
     border:1px solid var(--border);
     border-radius:12px;
@@ -59,30 +59,31 @@
   .ch-card:active{transform:translateY(0)}
   .ch-num{
     position:absolute;
-    top:6px;left:8px;
+    top:8px;left:10px;
     font-family:'Bebas Neue',sans-serif;
-    font-size:11px;
+    font-size:13px;
     color:var(--accent);
     letter-spacing:0.5px;
   }
-  .ch-logo{width:60px;height:60px;object-fit:contain;border-radius:6px}
+  .ch-logo{width:90px;height:90px;object-fit:contain;border-radius:6px}
   .ch-logo-ph{
-    width:60px;height:60px;border-radius:8px;
+    width:90px;height:90px;border-radius:10px;
     background:linear-gradient(135deg,var(--accent),var(--accent2));
     display:flex;align-items:center;justify-content:center;
-    font-family:'Bebas Neue',sans-serif;font-size:15px;color:#fff;
+    font-family:'Bebas Neue',sans-serif;font-size:20px;color:#fff;
   }
   .ch-name{
     position:absolute;
-    bottom:5px;left:0;right:0;
+    bottom:7px;left:0;right:0;
     text-align:center;
-    font-size:10px;
-    color:var(--muted);
+    font-size:12px;
+    font-weight:500;
+    color:var(--text);
     white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
-    padding:0 5px;
+    padding:0 8px;
   }
   #ch-count{font-size:13px;color:var(--muted)}
-  .skeleton{background:linear-gradient(90deg,var(--card) 25%,#1e1e2e 50%,var(--card) 75%);background-size:200% 100%;animation:shimmer 1.2s infinite;border-radius:12px;aspect-ratio:1}
+  .skeleton{background:linear-gradient(90deg,var(--card) 25%,#1e1e2e 50%,var(--card) 75%);background-size:200% 100%;animation:shimmer 1.2s infinite;border-radius:12px;aspect-ratio:1;min-height:160px}
   @keyframes shimmer{0%{background-position:200%}100%{background-position:-200%}}
 </style>
 </head>
