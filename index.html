@@ -145,214 +145,276 @@
 const M3U_URL = "https://raw.githubusercontent.com/doms9/iptv/refs/heads/default/M3U8/TV.m3u8";
 const EPG_URL = "https://raw.githubusercontent.com/doms9/iptv/refs/heads/default/M3U8/TV.xml";
 
-let channels=[], epgData={}, activeCat="Tutti", activeCh=null;
+let channels = [];
+let epgData = {};
+let activeCat = "Tutti";
+let activeCh = null;
 
-function pad(n){return String(n).padStart(2,'0');}
-function fmtTime(d){return pad(d.getHours())+':'+pad(d.getMinutes());}
-function fmtDate(d){
-  const days=['Dom','Lun','Mar','Mer','Gio','Ven','Sab'];
-  const months=['Gen','Feb','Mar','Apr','Mag','Giu','Lug','Ago','Set','Ott','Nov','Dic'];
-  return days[d.getDay()]+' '+d.getDate()+' '+months[d.getMonth()];
+/* ── UTILS ── */
+function pad(n) { return String(n).padStart(2, '0'); }
+function fmtTime(d) { return pad(d.getHours()) + ':' + pad(d.getMinutes()); }
+function fmtDate(d) {
+  const days = ['Dom','Lun','Mar','Mer','Gio','Ven','Sab'];
+  const months = ['Gen','Feb','Mar','Apr','Mag','Giu','Lug','Ago','Set','Ott','Nov','Dic'];
+  return days[d.getDay()] + ' ' + d.getDate() + ' ' + months[d.getMonth()];
 }
-function parseEpgDate(s){
-  const m=s.match(/(\d{4})(\d{2})(\d{2})(\d{2})(\d{2})(\d{2})\s*([+-]\d{4})?/);
-  if(!m) return new Date(0);
-  const base=new Date(Date.UTC(+m[1],+m[2]-1,+m[3],+m[4],+m[5],+m[6]));
-  if(m[7]){const sign=m[7][0]==='+'?-1:1;const hh=+m[7].slice(1,3),mm=+m[7].slice(3,5);base.setMinutes(base.getMinutes()+sign*(hh*60+mm));}
+function parseEpgDate(s) {
+  const m = s.match(/(\d{4})(\d{2})(\d{2})(\d{2})(\d{2})(\d{2})\s*([+-]\d{4})?/);
+  if (!m) return new Date(0);
+  const base = new Date(Date.UTC(+m[1], +m[2]-1, +m[3], +m[4], +m[5], +m[6]));
+  if (m[7]) {
+    const sign = m[7][0] === '+' ? -1 : 1;
+    const hh = +m[7].slice(1,3), mm = +m[7].slice(3,5);
+    base.setMinutes(base.getMinutes() + sign*(hh*60+mm));
+  }
   return base;
 }
-function setStatus(state,txt){document.getElementById("status").className=state;document.getElementById("status-txt").textContent=txt;}
-function showErr(msg){const b=document.getElementById("err-banner");if(msg){b.textContent="❌ "+msg;b.classList.add("show");}else b.classList.remove("show");}
+function setStatus(state, txt) {
+  document.getElementById("status").className = state;
+  document.getElementById("status-txt").textContent = txt;
+}
+function showErr(msg) {
+  const b = document.getElementById("err-banner");
+  if (msg) { b.textContent = "❌ " + msg; b.classList.add("show"); }
+  else b.classList.remove("show");
+}
+function openVLC(url) {
+  if (url) window.location.href = 'vlc://' + url;
+}
 
-function parseM3U(text){
-  const lines=text.split('\n');const chs=[];let cur=null;
-  for(const line of lines){
-    const l=line.trim();
-    if(l.startsWith('#EXTINF')){
-      cur={};
-      const nm=l.match(/,(.+)$/);if(nm) cur.name=nm[1].trim();
-      const lo=l.match(/tvg-logo="([^"]+)"/);if(lo) cur.logo=lo[1];
-      const nu=l.match(/tvg-chno="([^"]+)"/);if(nu) cur.num=parseInt(nu[1])||9999;
-      const id=l.match(/tvg-id="([^"]+)"/);if(id) cur.tvgId=id[1];
-      const gr=l.match(/group-title="([^"]+)"/);if(gr) cur.cat=gr[1];
-    } else if(l.startsWith('http')&&cur){
-      cur.url=l;if(!cur.cat) cur.cat="Vari";chs.push(cur);cur=null;
+/* ── PARSE M3U ── */
+function parseM3U(text) {
+  const lines = text.split('\n');
+  const chs = [];
+  let cur = null;
+  for (const line of lines) {
+    const l = line.trim();
+    if (l.startsWith('#EXTINF')) {
+      cur = {};
+      const nm = l.match(/,(.+)$/); if (nm) cur.name = nm[1].trim();
+      const lo = l.match(/tvg-logo="([^"]+)"/); if (lo) cur.logo = lo[1];
+      const nu = l.match(/tvg-chno="([^"]+)"/); if (nu) cur.num = parseInt(nu[1]) || 9999;
+      const id = l.match(/tvg-id="([^"]+)"/); if (id) cur.tvgId = id[1];
+      const gr = l.match(/group-title="([^"]+)"/); if (gr) cur.cat = gr[1];
+    } else if (l.startsWith('http') && cur) {
+      cur.url = l;
+      if (!cur.cat) cur.cat = "Vari";
+      chs.push(cur);
+      cur = null;
     }
   }
   return chs;
 }
 
-function parseEPG(xmlText){
-  const data={};
-  try{
-    const doc=new DOMParser().parseFromString(xmlText,'application/xml');
-    doc.querySelectorAll('programme').forEach(p=>{
-      const ch=p.getAttribute('channel');if(!ch) return;
-      if(!data[ch]) data[ch]=[];
+/* ── PARSE EPG ── */
+function parseEPG(xmlText) {
+  const data = {};
+  try {
+    const doc = new DOMParser().parseFromString(xmlText, 'application/xml');
+    doc.querySelectorAll('programme').forEach(p => {
+      const ch = p.getAttribute('channel');
+      if (!ch) return;
+      if (!data[ch]) data[ch] = [];
       data[ch].push({
-        start:parseEpgDate(p.getAttribute('start')||''),
-        stop:parseEpgDate(p.getAttribute('stop')||''),
-        title:p.querySelector('title')?.textContent||'',
-        desc:p.querySelector('desc')?.textContent||''
+        start: parseEpgDate(p.getAttribute('start') || ''),
+        stop:  parseEpgDate(p.getAttribute('stop') || ''),
+        title: p.querySelector('title')?.textContent || '',
+        desc:  p.querySelector('desc')?.textContent || ''
       });
     });
-    for(const k of Object.keys(data)) data[k].sort((a,b)=>a.start-b.start);
-  }catch(e){console.warn('EPG error',e);}
+    for (const k of Object.keys(data)) data[k].sort((a,b) => a.start - b.start);
+  } catch(e) { console.warn('EPG error', e); }
   return data;
 }
 
-async function init(){
-  document.getElementById("refresh-btn").disabled=true;
-  setStatus("loading","Carico playlist...");showErr(null);
-  try{
-    const r=await fetch(M3U_URL);
-    if(!r.ok) throw new Error("HTTP "+r.status);
-    channels=parseM3U(await r.text()).sort((a,b)=>(a.num||9999)-(b.num||9999));
-    document.getElementById("ch-count").textContent=channels.length+" canali";
-    setStatus("loading","Carico EPG...");
-    try{const re=await fetch(EPG_URL);if(re.ok) epgData=parseEPG(await re.text());}
-    catch(e){console.warn("EPG skip",e);}
-    setStatus("ok","Pronto ✓");
-    buildCatFilter();renderList();renderGrid();
-  }catch(e){
-    setStatus("err","Errore");showErr("Impossibile caricare la playlist: "+e.message);
+/* ── INIT ── */
+async function init() {
+  document.getElementById("refresh-btn").disabled = true;
+  setStatus("loading", "Carico playlist...");
+  showErr(null);
+  try {
+    const r = await fetch(M3U_URL);
+    if (!r.ok) throw new Error("HTTP " + r.status);
+    channels = parseM3U(await r.text()).sort((a,b) => (a.num||9999) - (b.num||9999));
+    document.getElementById("ch-count").textContent = channels.length + " canali";
+    setStatus("ok", "Pronto ✓");
+    buildCatFilter();
+    renderList();
+    renderGrid();
+    // EPG in background
+    fetch(EPG_URL).then(re => {
+      if (re.ok) return re.text();
+    }).then(xt => {
+      if (xt) epgData = parseEPG(xt);
+    }).catch(e => console.warn("EPG skip", e));
+  } catch(e) {
+    setStatus("err", "Errore");
+    showErr("Impossibile caricare la playlist: " + e.message);
   }
-  document.getElementById("refresh-btn").disabled=false;
+  document.getElementById("refresh-btn").disabled = false;
 }
 
-function buildCatFilter(){
-  const el=document.getElementById("cat-filter");el.innerHTML="";
-  ["Tutti",...new Set(channels.map(c=>c.cat))].forEach(cat=>{
-    const b=document.createElement("button");
-    b.className="cat-btn"+(cat===activeCat?" active":"");
-    b.textContent=cat;
-    b.onclick=()=>{activeCat=cat;buildCatFilter();renderList();renderGrid();};
+/* ── CAT FILTER ── */
+function buildCatFilter() {
+  const el = document.getElementById("cat-filter");
+  el.innerHTML = "";
+  ["Tutti", ...new Set(channels.map(c => c.cat))].forEach(cat => {
+    const b = document.createElement("button");
+    b.className = "cat-btn" + (cat === activeCat ? " active" : "");
+    b.textContent = cat;
+    b.onclick = () => { activeCat = cat; buildCatFilter(); renderList(); renderGrid(); };
     el.appendChild(b);
   });
 }
 
-function getFiltered(){
-  const q=document.getElementById("search").value.toLowerCase();
-  return channels.filter(c=>{
-    const ms=!q||(c.name||'').toLowerCase().includes(q)||String(c.num||'').includes(q);
-    return ms&&(activeCat==="Tutti"||c.cat===activeCat);
+/* ── FILTER ── */
+function getFiltered() {
+  const q = document.getElementById("search").value.toLowerCase();
+  return channels.filter(c => {
+    const ms = !q || (c.name||'').toLowerCase().includes(q) || String(c.num||'').includes(q);
+    return ms && (activeCat === "Tutti" || c.cat === activeCat);
   });
 }
-function onSearch(){renderList();renderGrid();}
+function onSearch() { renderList(); renderGrid(); }
 
-function openStream(url){
-  if(!url) return;
-  window.location.href='vlc://'+url;
+/* ── EPG HELPERS ── */
+function getNowProg(ch) {
+  const progs = epgData[ch.tvgId] || epgData[ch.name] || [];
+  const now = new Date();
+  return progs.find(p => p.start <= now && p.stop > now) || null;
+}
+function getProgs(ch) {
+  return epgData[ch.tvgId] || epgData[ch.name] || [];
 }
 
-function getNowProg(ch){
-  const progs=epgData[ch.tvgId]||epgData[ch.name]||[];
-  const now=new Date();
-  return progs.find(p=>p.start<=now&&p.stop>now)||null;
-}
-
-function renderList(){
-  const list=document.getElementById("ch-list");list.innerHTML="";
-  const chs=getFiltered();
-  document.getElementById("ch-count").textContent=chs.length+" / "+channels.length+" canali";
-  if(!chs.length){list.innerHTML='<div style="padding:20px;text-align:center;color:var(--muted);font-size:13px">Nessun canale trovato</div>';return;}
-  const groups={};
-  for(const ch of chs){if(!groups[ch.cat]) groups[ch.cat]=[];groups[ch.cat].push(ch);}
-  for(const [cat,chs2] of Object.entries(groups)){
-    const lbl=document.createElement("div");lbl.className="ch-section-title";lbl.textContent=cat;list.appendChild(lbl);
-    for(const ch of chs2){
-      const item=document.createElement("div");
-      item.className="ch-item"+(activeCh===ch?" active":"");
-      const init=(ch.name||'??').split(' ').slice(0,2).map(w=>w[0]||'').join('').toUpperCase();
-      const num=ch.num&&ch.num<9000?String(ch.num).padStart(3,'0'):'—';
-      const nowProg=getNowProg(ch);
-      item.innerHTML=`
-        ${ch.logo?`<img class="ch-logo-sm" src="${ch.logo}" alt="" onerror="this.outerHTML='<div class=ch-logo-ph-sm>${init}</div>'">`:`<div class="ch-logo-ph-sm">${init}</div>`}
+/* ── RENDER LIST ── */
+function renderList() {
+  const list = document.getElementById("ch-list");
+  list.innerHTML = "";
+  const chs = getFiltered();
+  document.getElementById("ch-count").textContent = chs.length + " / " + channels.length + " canali";
+  if (!chs.length) {
+    list.innerHTML = '<div style="padding:20px;text-align:center;color:var(--muted);font-size:13px">Nessun canale trovato</div>';
+    return;
+  }
+  const groups = {};
+  for (const ch of chs) { if (!groups[ch.cat]) groups[ch.cat] = []; groups[ch.cat].push(ch); }
+  for (const [cat, chs2] of Object.entries(groups)) {
+    const lbl = document.createElement("div");
+    lbl.className = "ch-section-title";
+    lbl.textContent = cat;
+    list.appendChild(lbl);
+    for (const ch of chs2) {
+      const item = document.createElement("div");
+      item.className = "ch-item" + (activeCh === ch ? " active" : "");
+      const init = (ch.name||'??').split(' ').slice(0,2).map(w => w[0]||'').join('').toUpperCase();
+      const num = ch.num && ch.num < 9000 ? String(ch.num).padStart(3,'0') : '—';
+      const nowProg = getNowProg(ch);
+      item.innerHTML = `
+        ${ch.logo
+          ? `<img class="ch-logo-sm" src="${ch.logo}" alt="" onerror="this.outerHTML='<div class=ch-logo-ph-sm>${init}</div>'">`
+          : `<div class="ch-logo-ph-sm">${init}</div>`}
         <div class="ch-item-info">
           <div class="ch-item-num">${num}</div>
           <div class="ch-item-name">${ch.name||''}</div>
-          ${nowProg?`<div class="ch-now"><span>${fmtTime(nowProg.start)}</span> ${nowProg.title}</div>`:''}
+          ${nowProg ? `<div class="ch-now"><span>${fmtTime(nowProg.start)}</span> ${nowProg.title}</div>` : ''}
         </div>
         <span class="play-btn">▶</span>`;
-      item.onclick=()=>selectChannel(ch);
+      item.onclick = () => selectChannel(ch);
       list.appendChild(item);
     }
   }
 }
 
-function renderGrid(){
-  const gv=document.getElementById("grid-view");gv.innerHTML="";
-  const chs=getFiltered();
-  const groups={};
-  for(const ch of chs){if(!groups[ch.cat]) groups[ch.cat]=[];groups[ch.cat].push(ch);}
-  for(const [cat,chs2] of Object.entries(groups)){
-    const sec=document.createElement("div");sec.className="grid-section";
-    const t=document.createElement("div");t.className="grid-section-title";t.textContent=cat;sec.appendChild(t);
-    const grid=document.createElement("div");grid.className="ch-grid";
-    for(const ch of chs2){
-      const a=document.createElement("div");a.className="ch-card";
-      const init=(ch.name||'??').split(' ').slice(0,2).map(w=>w[0]||'').join('').toUpperCase();
-      const num=ch.num&&ch.num<9000?String(ch.num).padStart(3,'0'):'—';
-      a.innerHTML=`
+/* ── RENDER GRID ── */
+function renderGrid() {
+  const gv = document.getElementById("grid-view");
+  gv.innerHTML = "";
+  const chs = getFiltered();
+  const groups = {};
+  for (const ch of chs) { if (!groups[ch.cat]) groups[ch.cat] = []; groups[ch.cat].push(ch); }
+  for (const [cat, chs2] of Object.entries(groups)) {
+    const sec = document.createElement("div"); sec.className = "grid-section";
+    const t = document.createElement("div"); t.className = "grid-section-title"; t.textContent = cat; sec.appendChild(t);
+    const grid = document.createElement("div"); grid.className = "ch-grid";
+    for (const ch of chs2) {
+      const a = document.createElement("div"); a.className = "ch-card";
+      const init = (ch.name||'??').split(' ').slice(0,2).map(w => w[0]||'').join('').toUpperCase();
+      const num = ch.num && ch.num < 9000 ? String(ch.num).padStart(3,'0') : '—';
+      a.innerHTML = `
         <span class="ch-card-num">${num}</span>
-        ${ch.logo?`<img class="ch-card-logo" src="${ch.logo}" alt="" onerror="this.outerHTML='<div class=ch-card-ph>${init}</div>'">`:`<div class="ch-card-ph">${init}</div>`}
+        ${ch.logo
+          ? `<img class="ch-card-logo" src="${ch.logo}" alt="" onerror="this.outerHTML='<div class=ch-card-ph>${init}</div>'">`
+          : `<div class="ch-card-ph">${init}</div>`}
         <span class="ch-card-name">${ch.name||''}</span>`;
-      a.onclick=()=>{if(ch.url) openStream(ch.url);};
+      a.onclick = () => openVLC(ch.url);
       grid.appendChild(a);
     }
-    sec.appendChild(grid);gv.appendChild(sec);
+    sec.appendChild(grid); gv.appendChild(sec);
   }
 }
 
-function selectChannel(ch){
-  activeCh=ch;
+/* ── SELECT CHANNEL ── */
+function selectChannel(ch) {
+  activeCh = ch;
   renderList();
-  // open stream in VLC
-  if(ch.url) openStream(ch.url);
-  // show EPG
-  const init=(ch.name||'??').split(' ').slice(0,2).map(w=>w[0]||'').join('').toUpperCase();
-  const nowProg=getNowProg(ch);
-  document.getElementById("epg-header").innerHTML=`
-    ${ch.logo?`<img class="epg-logo" src="${ch.logo}" alt="" onerror="this.outerHTML='<div class=epg-logo-ph>${init}</div>'">`:`<div class="epg-logo-ph">${init}</div>`}
+  openVLC(ch.url);
+  // EPG header
+  const init = (ch.name||'??').split(' ').slice(0,2).map(w => w[0]||'').join('').toUpperCase();
+  const nowProg = getNowProg(ch);
+  document.getElementById("epg-header").innerHTML = `
+    ${ch.logo
+      ? `<img class="epg-logo" src="${ch.logo}" alt="" onerror="this.outerHTML='<div class=epg-logo-ph>${init}</div>'">`
+      : `<div class="epg-logo-ph">${init}</div>`}
     <div>
       <div class="epg-ch-name">${ch.name||''}</div>
-      ${nowProg?`<div class="epg-now-title">${nowProg.title}</div><div class="epg-now-time">${fmtTime(nowProg.start)} – ${fmtTime(nowProg.stop)}</div>`:'<div class="epg-now-time" style="color:var(--muted)">Nessun dato EPG</div>'}
+      ${nowProg
+        ? `<div class="epg-now-title">${nowProg.title}</div><div class="epg-now-time">${fmtTime(nowProg.start)} – ${fmtTime(nowProg.stop)}</div>`
+        : '<div class="epg-now-time" style="color:var(--muted)">Nessun dato EPG</div>'}
     </div>
-    <button class="open-btn" onclick="openStream('${ch.url}')">▶ Apri in VLC</button>`;
-
-  const body=document.getElementById("epg-body");body.innerHTML="";
-  const progs=(epgData[ch.tvgId]||epgData[ch.name]||[]).filter(p=>p.stop>new Date(Date.now()-60000));
-  if(!progs.length){body.innerHTML='<div class="epg-empty"><span class="icon">📅</span><span>Nessun dato EPG disponibile</span></div>';return;}
-  const now=new Date();let lastDay="";
-  for(const p of progs){
-    const day=fmtDate(p.start);
-    if(day!==lastDay){const dt=document.createElement("div");dt.className="epg-day";dt.textContent=day;body.appendChild(dt);lastDay=day;}
-    const isNow=p.start<=now&&p.stop>now;
-    const dur=Math.round((p.stop-p.start)/60000);
-    const pct=isNow?Math.round((now-p.start)/(p.stop-p.start)*100):0;
-    const row=document.createElement("div");row.className="epg-row"+(isNow?" now":"");
-    row.innerHTML=`
+    <button class="open-btn" onclick="openVLC('${ch.url}')">▶ Apri in VLC</button>`;
+  // EPG body
+  const body = document.getElementById("epg-body");
+  body.innerHTML = "";
+  const progs = getProgs(ch).filter(p => p.stop > new Date(Date.now() - 60000));
+  if (!progs.length) {
+    body.innerHTML = '<div class="epg-empty"><span class="icon">📅</span><span>Nessun dato EPG disponibile</span></div>';
+    return;
+  }
+  const now = new Date();
+  let lastDay = "";
+  for (const p of progs) {
+    const day = fmtDate(p.start);
+    if (day !== lastDay) {
+      const dt = document.createElement("div"); dt.className = "epg-day"; dt.textContent = day; body.appendChild(dt); lastDay = day;
+    }
+    const isNow = p.start <= now && p.stop > now;
+    const dur = Math.round((p.stop - p.start) / 60000);
+    const pct = isNow ? Math.round((now - p.start) / (p.stop - p.start) * 100) : 0;
+    const row = document.createElement("div"); row.className = "epg-row" + (isNow ? " now" : "");
+    row.innerHTML = `
       <div class="epg-time">${fmtTime(p.start)}</div>
       <div style="flex:1;min-width:0">
-        <div class="epg-prog-title">${p.title}${isNow?'<span class="now-badge">ORA</span>':''}</div>
+        <div class="epg-prog-title">${p.title}${isNow ? '<span class="now-badge">ORA</span>' : ''}</div>
         <div class="epg-dur">${dur} min</div>
-        ${p.desc?`<div class="epg-desc">${p.desc}</div>`:''}
-        ${isNow?`<div class="progress-bar"><div class="progress-fill" style="width:${pct}%"></div></div>`:''}
+        ${p.desc ? `<div class="epg-desc">${p.desc}</div>` : ''}
+        ${isNow ? `<div class="progress-bar"><div class="progress-fill" style="width:${pct}%"></div></div>` : ''}
       </div>`;
     body.appendChild(row);
-    if(isNow) setTimeout(()=>row.scrollIntoView({behavior:'smooth',block:'center'}),100);
+    if (isNow) setTimeout(() => row.scrollIntoView({ behavior: 'smooth', block: 'center' }), 100);
   }
 }
 
-function setView(v){
-  document.getElementById("list-view").style.display=v==="list"?"flex":"none";
-  document.getElementById("grid-view").className="grid-view"+(v==="grid"?" on":"");
-  document.getElementById("vbtn-list").className="vbtn"+(v==="list"?" active":"");
-  document.getElementById("vbtn-grid").className="vbtn"+(v==="grid"?" active":"");
+/* ── VIEW TOGGLE ── */
+function setView(v) {
+  document.getElementById("list-view").style.display = v === "list" ? "flex" : "none";
+  document.getElementById("grid-view").className = "grid-view" + (v === "grid" ? " on" : "");
+  document.getElementById("vbtn-list").className = "vbtn" + (v === "list" ? " active" : "");
+  document.getElementById("vbtn-grid").className = "vbtn" + (v === "grid" ? " active" : "");
 }
 
 init();
-setInterval(()=>{if(activeCh) selectChannel(activeCh);},60000);
+setInterval(() => { if (activeCh) selectChannel(activeCh); }, 60000);
 </script>
 </body>
 </html>
