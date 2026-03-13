@@ -244,6 +244,8 @@ function openStream(url){
   if(!url) return;
   window.location.href='vlc://'+url;
 }
+
+function getNowProg(ch){
   const progs=epgData[ch.tvgId]||epgData[ch.name]||[];
   const now=new Date();
   return progs.find(p=>p.start<=now&&p.stop>now)||null;
