@@ -240,7 +240,10 @@ function getFiltered(){
 }
 function onSearch(){renderList();renderGrid();}
 
-function getNowProg(ch){
+function openStream(url){
+  if(!url) return;
+  window.location.href='vlc://'+url;
+}
   const progs=epgData[ch.tvgId]||epgData[ch.name]||[];
   const now=new Date();
   return progs.find(p=>p.start<=now&&p.stop>now)||null;
@@ -292,7 +295,7 @@ function renderGrid(){
         <span class="ch-card-num">${num}</span>
         ${ch.logo?`<img class="ch-card-logo" src="${ch.logo}" alt="" onerror="this.outerHTML='<div class=ch-card-ph>${init}</div>'">`:`<div class="ch-card-ph">${init}</div>`}
         <span class="ch-card-name">${ch.name||''}</span>`;
-      a.onclick=()=>{if(ch.url) window.open(ch.url,'_blank','noopener');};
+      a.onclick=()=>{if(ch.url) openStream(ch.url);};
       grid.appendChild(a);
     }
     sec.appendChild(grid);gv.appendChild(sec);
@@ -302,8 +305,8 @@ function renderGrid(){
 function selectChannel(ch){
   activeCh=ch;
   renderList();
-  // open stream
-  if(ch.url) window.open(ch.url,'_blank','noopener');
+  // open stream in VLC
+  if(ch.url) openStream(ch.url);
   // show EPG
   const init=(ch.name||'??').split(' ').slice(0,2).map(w=>w[0]||'').join('').toUpperCase();
   const nowProg=getNowProg(ch);
@@ -313,7 +316,7 @@ function selectChannel(ch){
       <div class="epg-ch-name">${ch.name||''}</div>
       ${nowProg?`<div class="epg-now-title">${nowProg.title}</div><div class="epg-now-time">${fmtTime(nowProg.start)} – ${fmtTime(nowProg.stop)}</div>`:'<div class="epg-now-time" style="color:var(--muted)">Nessun dato EPG</div>'}
     </div>
-    <button class="open-btn" onclick="window.open('${ch.url}','_blank','noopener')">▶ Apri stream</button>`;
+    <button class="open-btn" onclick="openStream('${ch.url}')">▶ Apri in VLC</button>`;
 
   const body=document.getElementById("epg-body");body.innerHTML="";
   const progs=(epgData[ch.tvgId]||epgData[ch.name]||[]).filter(p=>p.stop>new Date(Date.now()-60000));
