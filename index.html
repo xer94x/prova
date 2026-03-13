@@ -165,9 +165,8 @@
 
 <script src="https://cdn.jsdelivr.net/npm/hls.js@latest/dist/hls.min.js"></script>
 <script>
-const PROXY    = "https://corsproxy.io/?url=";
-const M3U_URL  = PROXY + encodeURIComponent("https://s.id/d9M3U8");
-const EPG_URL  = PROXY + encodeURIComponent("https://s.id/d9sEPG");
+const M3U_URL  = "https://api.allorigins.win/raw?url=" + encodeURIComponent("https://s.id/d9M3U8");
+const EPG_URL  = "https://api.allorigins.win/raw?url=" + encodeURIComponent("https://s.id/d9sEPG");
 
 let channels = [];
 let epgData   = {};   // { tvg-id: [ {start, stop, title, desc} ] }
