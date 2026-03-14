@@ -178,8 +178,17 @@ function showErr(msg) {
   if (msg) { b.textContent = "❌ " + msg; b.classList.add("show"); }
   else b.classList.remove("show");
 }
-function openVLC(url) {
-  if (url) window.open(url, '_blank', 'noopener');
+function openVLC(url, name) {
+  if (!url) return;
+  const m3u = '#EXTM3U\n#EXTINF:-1,' + (name||'Stream') + '\n' + url;
+  const blob = new Blob([m3u], { type: 'audio/x-mpegurl' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = (name||'stream').replace(/[^a-z0-9]/gi,'_') + '.m3u';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  setTimeout(() => URL.revokeObjectURL(a.href), 1000);
 }
 
 /* ── PARSE M3U ── */
@@ -347,7 +356,7 @@ function renderGrid() {
           ? `<img class="ch-card-logo" src="${ch.logo}" alt="" onerror="this.outerHTML='<div class=ch-card-ph>${init}</div>'">`
           : `<div class="ch-card-ph">${init}</div>`}
         <span class="ch-card-name">${ch.name||''}</span>`;
-      a.onclick = () => openVLC(ch.url);
+      a.onclick = () => openVLC(ch.url, ch.name);
       grid.appendChild(a);
     }
     sec.appendChild(grid); gv.appendChild(sec);
@@ -358,7 +367,7 @@ function renderGrid() {
 function selectChannel(ch) {
   activeCh = ch;
   renderList();
-  openVLC(ch.url);
+  openVLC(ch.url, ch.name);
   // EPG header
   const init = (ch.name||'??').split(' ').slice(0,2).map(w => w[0]||'').join('').toUpperCase();
   const nowProg = getNowProg(ch);
@@ -372,7 +381,7 @@ function selectChannel(ch) {
         ? `<div class="epg-now-title">${nowProg.title}</div><div class="epg-now-time">${fmtTime(nowProg.start)} – ${fmtTime(nowProg.stop)}</div>`
         : '<div class="epg-now-time" style="color:var(--muted)">Nessun dato EPG</div>'}
     </div>
-    <button class="open-btn" onclick="openVLC('${ch.url}')">▶ Apri stream</button>`;
+    <button class="open-btn" onclick="openVLC('${ch.url}','${(ch.name||'').replace(/'/g,"\\'")}')">▶ Apri in VLC</button>`;
   // EPG body
   const body = document.getElementById("epg-body");
   body.innerHTML = "";
