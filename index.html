@@ -901,7 +901,7 @@ function buildChannels(rawDTT, rawFree, rawRakuten, rawPluto){
     }
     const total=ch.streams.length;
     ch.streams.forEach((s,i)=>{
-      s.label=total===1?"▶ Guarda":`▶ ${i+1}`;
+      s.label=total===1?"▶ Guarda":`${i+1}`;
       s.isAlt=(s.source==="free"||s.source==="rakuten");
     });
     delete ch.seenUrls;
@@ -1038,7 +1038,7 @@ function makeCard(ch){
   }else{
     linksHtml=ch.streams.map((s,i)=>{
       const alt=(s.source==="free")?" alt":"";
-      return `<a class="lnk-btn${alt}" href="${s.url}" target="_blank" rel="noopener" onclick="event.stopPropagation()">▶ ${i+1}</a>`;
+      return `<a class="lnk-btn${alt}" href="${s.url}" target="_blank" rel="noopener" onclick="event.stopPropagation()">${i+1}</a>`;
     }).join("");
   }
 
