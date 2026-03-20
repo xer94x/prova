@@ -626,6 +626,17 @@ function buildChannels(rawDTT, rawFree, rawRakuten, rawPluto){
       sg=REGIONE_RAW[r.group||""]||(gl!=="Streaming"?null:null);
     }
 
+    // Applica alias per unire varianti nome (solo Streaming)
+    if(gl==="Streaming"){
+      const a1=resolveAlias(displayName);
+      if(a1) displayName=a1;
+      else{
+        // fallback: strip suffissi e riprova
+        const stripped=_stripSuf(_normAlias(displayName));
+        const a2=resolveAlias(stripped);
+        if(a2) displayName=a2;
+      }
+    }
     const key=normKey(displayName);
     if(!map[key]){
       const brand=isLG?"LG":isSamsung?"Samsung":isRakuten?"Rakuten":isWedo?"Wedo":null;
@@ -646,7 +657,9 @@ function buildChannels(rawDTT, rawFree, rawRakuten, rawPluto){
     if(!r.url||!r.name)continue;
     if(r.url.includes("youtube.com")||r.url.includes("twitch.tv"))continue;
     let cname=r.name.trim();
-    const rakAlias=resolveAlias(cname);if(rakAlias)cname=rakAlias;
+    const rakAlias=resolveAlias(cname);
+    if(rakAlias) cname=rakAlias;
+    else{const rs=_stripSuf(_normAlias(cname));const ra2=resolveAlias(rs);if(ra2)cname=ra2;}
     const key=normKey(cname);
     const rakSubgroup=normalizeStreamingSubcat(r.group||"Film");
 
@@ -667,7 +680,9 @@ function buildChannels(rawDTT, rawFree, rawRakuten, rawPluto){
   for(const r of (rawPluto||[])){
     if(!r.url||!r.name)continue;
     let cname=r.name.trim();
-    const pluAlias=resolveAlias(cname);if(pluAlias)cname=pluAlias;
+    const pluAlias=resolveAlias(cname);
+    if(pluAlias) cname=pluAlias;
+    else{const ps=_stripSuf(_normAlias(cname));const pa2=resolveAlias(ps);if(pa2)cname=pa2;}
     const key=normKey(cname);
     const plutoSubgroup=normalizeStreamingSubcat(r.group||"Film");
 
@@ -692,7 +707,7 @@ function buildChannels(rawDTT, rawFree, rawRakuten, rawPluto){
 
     let cname=r.name.replace(/\s*[ⓢⓣⓨⓖ⊕]/gu,"").trim();
     const gl=freetvGroupFromUrl(cname,r.url||"",r.group||"");
-    if(gl==="Streaming"){const fa=resolveAlias(cname);if(fa)cname=fa;}
+    if(gl==="Streaming"){const fa=resolveAlias(cname);if(fa)cname=fa;else{const fs=_stripSuf(_normAlias(cname));const fa2=resolveAlias(fs);if(fa2)cname=fa2;}}
     const key=normKey(cname);
 
     if(!map[key]){
