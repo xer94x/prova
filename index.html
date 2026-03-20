@@ -150,7 +150,7 @@ header{background:var(--surface);border-bottom:1px solid var(--border);padding:0
 <div id="empty">Nessun canale trovato</div>
 
 <script>
-// ── Scroll arrows ─────────────────────────────────────────────────────────────
+// -- Scroll arrows -------------------------------------------------------------
 function updateArrows(el,lBtn,rBtn){
   lBtn.classList.toggle("hidden",el.scrollLeft<=4);
   rBtn.classList.toggle("hidden",el.scrollLeft>=el.scrollWidth-el.clientWidth-4);
@@ -166,11 +166,11 @@ function initScrollArrows(){
   setTimeout(()=>{updateArrows(tabs,tl,tr);updateArrows(cats,cl,cr)},100);
 }
 
-// ── Groups that are "streaming" (no DTT number shown) ────────────────────────
+// -- Groups that are "streaming" (no DTT number shown) ------------------------
 const STREAMING_GROUPS=["Rakuten","Samsung","LG","Wedo","Pluto"];
 const STREAMING_UNIFIED="Streaming"; // gruppo unico per tutti i canali FAST
 
-// ── Group mapping (tivustream) ────────────────────────────────────────────────
+// -- Group mapping (tivustream) ------------------------------------------------
 const GMAP={
   "Canali RAI":"RAI","Canali Mediaset":"Mediaset",
   "Altri Canali Nazionali":"Nazionali","Canali per Bambini/Ragazzi":"Kids",
@@ -194,7 +194,7 @@ const ALL_REGIONI=["Abruzzo","Basilicata","Calabria","Campania","Emilia Romagna"
 // Sottogruppi Rakuten nell'ordine desiderato per il cat-strip
 const RAKUTEN_SUBCAT_ORDER=["Film","Serie","Crime","Comedy","Documentari","Sport","Kids","Musica","Lifestyle","News"];
 
-// ── LG Channels: mappa numero canale → sottogruppo ───────────────────────────
+// -- LG Channels: mappa numero canale -> sottogruppo ---------------------------
 const LG_SUBCAT_ORDER=["Cinema","Serie & Fiction","Comedy","Crime","Intrattenimento","Food & Lifestyle","Natura & Doc","Sport","Rakuten Viki","Kids & Anime","Musica","News"];
 const STREAMING_SUBCAT_ORDER=['Novità','Cinema','Serie','Sport','Kids','Musica','Natura & Doc','Food & Lifestyle','News','Comedy','Intrattenimento','Horror','Western','Romance','Rakuten Viki'];
 
@@ -215,7 +215,7 @@ function getLgSubcat(num){
   return "Cinema";
 }
 
-// ── Normalizza i sottogruppi streaming in categorie unificate ────────────────
+// -- Normalizza i sottogruppi streaming in categorie unificate ----------------
 function normalizeStreamingSubcat(sg){
   if(!sg) return "Cinema";
   const s=sg.toLowerCase().trim();
@@ -291,7 +291,7 @@ function getStreamingSubcatFromUrl(name,url,rawGroup,group){
   return "Film";
 }
 
-// ── Group order for display ───────────────────────────────────────────────────
+// -- Group order for display ---------------------------------------------------
 const GROUP_ORDER=["RAI","Mediaset","Nazionali","Sport","News","Kids","Musica","Religiosi","Cinema","Streaming","Regioni","Altro"];
 const GROUP_EMOJI={
   "RAI":"📺","Mediaset":"📡","Nazionali":"🇮🇹","Sport":"⚽","News":"📰",
@@ -300,7 +300,7 @@ const GROUP_EMOJI={
 };
 function groupLabel(g){return (GROUP_EMOJI[g]||"")+" "+g}
 
-// ── Normalize channel name for dedup key ─────────────────────────────────────
+// -- Normalize channel name for dedup key -------------------------------------
 function normKey(name){
   return name.toLowerCase()
     .replace(/\s*\(link\s*\d+\)/gi,"").replace(/\s*\(stream\s*\w*\)/gi,"")
@@ -313,7 +313,7 @@ function cleanName(name){
 }
 
 
-// ── Mappa alias: varianti di nome → nome canonico ────────────────────────────
+// -- Mappa alias: varianti di nome -> nome canonico ----------------------------
 const CHANNEL_ALIAS = {
   "3bmeteo channel": "3BMeteo",
   "3bmeteo": "3BMeteo",
@@ -408,8 +408,32 @@ const CHANNEL_ALIAS = {
   "nature time": "Nature Time",
   "nbc samsung channels": "NBC News NOW",
   "nbc news now": "NBC News NOW",
-  "now90s00s": "Now 90s00s",
-  "now 90s00s": "Now 90s00s",
+  // DeAPlaneta Kids + Bernard L'Orso -> DeAPlaneta Kids (priorit? Samsung)
+  "bernard l orso": "DeAPlaneta Kids",
+  "bernard lorso": "DeAPlaneta Kids",
+  "deaplaneta kids": "DeAPlaneta Kids",
+  // Euronews Samsung -> Euronews (priorit? LG)
+  "eurosamsung channels i": "Euronews",
+  "euronews samsung": "Euronews",
+  // Now 70/80/90/Rock -> That's (priorit? Rakuten)
+  "now 70s": "That's 70s",
+  "now 80s": "That's 80s",
+  "now90s00s": "That's 90s00s",
+  "now 90s00s": "That's 90s00s",
+  "now rock": "That's Rock",
+  "thats 70s": "That's 70s",
+  "thats 80s": "That's 80s",
+  "thats 90s00s": "That's 90s00s",
+  "thats rock": "That's Rock",
+  // Vevo 90sand00s -> Vevo '90s & '00s (priorit? Samsung)
+  "vevo 90sand00s": "Vevo '90s & '00s",
+  "vevo 90s 00s": "Vevo '90s & '00s",
+  "vevo 90s00s": "Vevo '90s & '00s",
+  "vevo 90s  00s": "Vevo '90s & '00s",
+  // Sony One Popolari + Gli Imperdibili -> Sony One Gli Imperdibili (priorit? DTT/LG)
+  "sony one  popolari": "Sony One Gli Imperdibili",
+  "sony one popolari": "Sony One Gli Imperdibili",
+  "sony one gli imperdibili": "Sony One Gli Imperdibili",
   "qello concerts by stingray": "Qello Concerts",
   "qello concert": "Qello Concerts",
   "qwest jazz": "Qwest",
@@ -439,8 +463,7 @@ const CHANNEL_ALIAS = {
   "sony one  film divertenti": "Sony One | Film divertenti",
   "sony one samsung chan film divertenti": "Sony One | Film divertenti",
   "sony one film divertenti": "Sony One | Film divertenti",
-  "sony one  popolari": "Sony One | Popolari",
-  "sony one popolari": "Sony One | Popolari",
+
   "sony one  serie da ridere": "Sony One | Serie da Ridere",
   "sony one serie da ridere": "Sony One | Serie da Ridere",
   "sony one  serie thriller": "Sony One | Serie Thriller",
@@ -483,7 +506,7 @@ const CHANNEL_ALIAS = {
 // Normalizza stringa per confronto alias
 function _normAlias(s){
   return s.toLowerCase()
-    .replace(/[|·•–—]/g," ")
+    .replace(/[|\u00b7\u2022\u2013\u2014]/g," ")
     .replace(/[\u2018\u2019`]/g,"")
     .replace(/[^\w\s]/g," ")
     .replace(/\s+/g," ")
@@ -524,9 +547,9 @@ function resolveAlias(name){
   return null;
 }
 
-// ── Sottogruppo forzato per canali specifici (override manuale) ───────────────
+// -- Sottogruppo forzato per canali specifici (override manuale) ---------------
 const CHANNEL_SUBGROUP_OVERRIDE = {
-  // → Cinema
+  // -> Cinema
   "alberto sordi e co": "Cinema",
   "alberto sordi co": "Cinema",
   "pluto tv donne protagoniste": "Cinema",
@@ -548,7 +571,7 @@ const CHANNEL_SUBGROUP_OVERRIDE = {
   "filmrise sci fi": "Cinema",
   "filmrise relc hunter": "Cinema",
   "brividy cinema": "Cinema",
-  // → Serie
+  // -> Serie
   "bbc series": "Serie",
   "bbc drama": "Serie",
   "hells kitchen": "Serie",
@@ -576,23 +599,23 @@ const CHANNEL_SUBGROUP_OVERRIDE = {
   "squadra speciale lipsia": "Serie",
   "serially crime": "Serie",
   "serie crime": "Serie",
-  // → Musica
-  "now 70s": "Musica",
-  "now 80s": "Musica",
-  "now 90s00s": "Musica",
-  "now rock": "Musica",
+  // -> Musica (nomi canonici post-merge)
+  "that s 70s": "Musica",
+  "that s 80s": "Musica",
+  "that s 90s00s": "Musica",
+  "that s rock": "Musica",
+  "vevo 90s  00s": "Musica",
+  "vevo 90s 00s": "Musica",
   "stingray music greatest hits": "Musica",
   "stingray greatest hits": "Musica",
   "vevo 90s and 00s": "Musica",
   "vevo 90s00s": "Musica",
   "vevo 90s  00s": "Musica",
-  "vevo 90s 00s": "Musica",
-  "vevo 90sand00s": "Musica",
-  "thats 70s": "Musica",
-  "thats 80s": "Musica",
-  "thats 90s00s": "Musica",
-  "thats rock": "Musica",
-  // → Food & Lifestyle
+  // -> Cinema
+  "sony one gli imperdibili": "Cinema",
+  // -> Kids
+  "deaplaneta kids": "Kids",
+  // -> Food & Lifestyle
   "per caso tv": "Food & Lifestyle",
   "brindiamo": "Food & Lifestyle",
   "gambero rosso": "Food & Lifestyle",
@@ -603,7 +626,7 @@ const CHANNEL_SUBGROUP_OVERRIDE = {
   "travel xp": "Food & Lifestyle",
   "beauty channel": "Food & Lifestyle",
   "fashiontv": "Food & Lifestyle",
-  // → News
+  // -> News
   "urania news": "News",
   "the reuters": "News",
   "newsworld": "News",
@@ -614,7 +637,7 @@ const CHANNEL_SUBGROUP_OVERRIDE = {
   "class cnbc": "News",
   "france 24": "News",
   "il sole 24 ore": "News",
-  // → Sport
+  // -> Sport
   "world billiards tv": "Sport",
   "rally tv": "Sport",
   "billiards tv": "Sport",
@@ -635,7 +658,7 @@ const CHANNEL_SUBGROUP_OVERRIDE = {
   "sportitalia": "Sport",
   "tennis": "Sport",
   "top barca": "Sport",
-  // → Kids
+  // -> Kids
   "duck tv": "Kids",
   "baby shark tv": "Kids",
   "bernard l orso": "Kids",
@@ -643,7 +666,7 @@ const CHANNEL_SUBGROUP_OVERRIDE = {
   "inazuma eleven": "Kids",
   "inuyasha": "Kids",
   "yu gi oh": "Kids",
-  // → Comedy
+  // -> Comedy
   "failarmy": "Comedy",
   "just for laughs": "Comedy",
   "mr bean": "Comedy",
@@ -651,7 +674,7 @@ const CHANNEL_SUBGROUP_OVERRIDE = {
   "revry": "Comedy",
   "risate al sud": "Comedy",
   "the pet collective": "Comedy",
-  // → Intrattenimento (True Crime subgroup)
+  // -> Intrattenimento (True Crime subgroup)
   "true crime": "Intrattenimento",
   "true samsung channels": "Intrattenimento",
   "true crime by serially": "Intrattenimento",
@@ -664,7 +687,7 @@ const CHANNEL_SUBGROUP_OVERRIDE = {
   "weatherspy": "Natura & Doc",
   "wedo big stories": "Natura & Doc",
   "80 anni 2a guerra mondiale": "Natura & Doc",
-  // → Intrattenimento
+  // -> Intrattenimento
   "16 anni e incinta": "Intrattenimento",
   "geordie shore": "Intrattenimento",
   "pluto tv real life": "Intrattenimento",
@@ -677,29 +700,29 @@ function applySubgroupOverride(name, subgroup) {
   if(!name) return subgroup;
   // Normalize: lowercase, remove punctuation/special chars, collapse spaces
   const k = name.toLowerCase()
-    .replace(/[|·•–—]/g," ")
+    .replace(/[|\u00b7\u2022\u2013\u2014]/g," ")
     .replace(/[\u2018\u2019`'']/g,"")
     .replace(/[^\w\s]/g," ")
     .replace(/\s+/g," ")
     .trim();
   if (CHANNEL_SUBGROUP_OVERRIDE[k] !== undefined) return CHANNEL_SUBGROUP_OVERRIDE[k];
-  // Rakuten Viki channels → Serie
+  // Rakuten Viki channels -> Serie
   if (subgroup === "Rakuten Viki") return "Serie";
   return subgroup;
 }
 
-// ── Estrae numero canale LG dal nome (es. "100 LG 1" → 100) ──────────────────
+// -- Estrae numero canale LG dal nome (es. "100 LG 1" -> 100) ------------------
 function extractLgNum(name){
   const m=name.match(/^(\d+)\s+/);
   return m?parseInt(m[1]):null;
 }
 
-// ── Rimuove prefisso numerico dal nome LG (es. "205 Sony One" → "Sony One") ──
+// -- Rimuove prefisso numerico dal nome LG (es. "205 Sony One" -> "Sony One") --
 function stripLgNum(name){
   return name.replace(/^\d+\s+/,"").trim();
 }
 
-// ── Parse M3U ─────────────────────────────────────────────────────────────────
+// -- Parse M3U -----------------------------------------------------------------
 function parseM3U(text){
   const lines=text.split(/\r?\n/);
   const raw=[];let cur=null;let _pos=0;
@@ -719,11 +742,11 @@ function parseM3U(text){
   return raw;
 }
 
-// ── Build merged channel list ─────────────────────────────────────────────────
+// -- Build merged channel list -------------------------------------------------
 function buildChannels(rawDTT, rawFree, rawRakuten, rawPluto){
   const map={};
 
-  // 1. Process tivustream (primary — highest priority)
+  // 1. Process tivustream (primary ? highest priority)
   for(const r of rawDTT){
     if(!r.url||!r.name)continue;
     if(r.url.includes("startend.avi"))continue;
@@ -857,14 +880,22 @@ function buildChannels(rawDTT, rawFree, rawRakuten, rawPluto){
     }
   }
 
-  // Label streams — ordina per priorità sorgente
+  // Label streams ? ordina per priorit? sorgente
   const SRC_PRIO={samsung:1,pluto:2,dtt:3,lg:3,wedo:4,free:4,rakuten:5};
+  const LG_FIRST_CHANNELS=["euronews"];
+  const RAKUTEN_FIRST_CHANNELS=["that's 70s","that's 80s","that's 90s00s","that's rock"];
   for(const ch of Object.values(map)){
     if(ch.group==="Streaming"){
       const isSony=ch.name.toLowerCase().includes("sony one");
+      const chk=ch.name.toLowerCase();
+      const isLgFirst=LG_FIRST_CHANNELS.includes(chk);
+      const isRakutenFirst=RAKUTEN_FIRST_CHANNELS.includes(chk);
       ch.streams.sort((a,b)=>{
-        const pa=isSony&&(a.source==="dtt"||a.source==="lg")?0:(SRC_PRIO[a.source]||9);
-        const pb=isSony&&(b.source==="dtt"||b.source==="lg")?0:(SRC_PRIO[b.source]||9);
+        let pa=SRC_PRIO[a.source]||9;
+        let pb=SRC_PRIO[b.source]||9;
+        if(isSony){if(a.source==="dtt"||a.source==="lg")pa=0;if(b.source==="dtt"||b.source==="lg")pb=0;}
+        if(isLgFirst){if(a.source==="lg")pa=0;if(b.source==="lg")pb=0;}
+        if(isRakutenFirst){if(a.source==="rakuten")pa=0;if(b.source==="rakuten")pb=0;}
         return pa-pb;
       });
     }
@@ -881,7 +912,7 @@ function buildChannels(rawDTT, rawFree, rawRakuten, rawPluto){
   return arr;
 }
 
-// ── Group sort order ──────────────────────────────────────────────────────────
+// -- Group sort order ----------------------------------------------------------
 function groupSortIdx(g){
   const i=GROUP_ORDER.indexOf(g);
   return i>=0?i:GROUP_ORDER.length;
@@ -894,12 +925,12 @@ function sortChannels(arr){
   });
 }
 
-// ── State ─────────────────────────────────────────────────────────────────────
+// -- State ---------------------------------------------------------------------
 let ALL=[];
 let activeGroup="Tutti";
 let activeCat="Tutte";
 
-// ── Tabs ──────────────────────────────────────────────────────────────────────
+// -- Tabs ----------------------------------------------------------------------
 function getGroups(){
   const present=new Set(ALL.map(c=>c.group));
   const base=["Tutti",...GROUP_ORDER.filter(g=>present.has(g))];
@@ -923,7 +954,7 @@ function renderTabs(){
   setTimeout(()=>updateArrows(document.getElementById("gtabs"),document.getElementById("tabs-left"),document.getElementById("tabs-right")),50);
 }
 
-// ── Cat strip ─────────────────────────────────────────────────────────────────
+// -- Cat strip -----------------------------------------------------------------
 function renderCats(){
   const el=document.getElementById("cstrip");el.innerHTML="";
   const vis=activeGroup==="Tutti"?ALL:ALL.filter(c=>c.group===activeGroup);
@@ -949,7 +980,7 @@ function renderCats(){
   setTimeout(()=>updateArrows(document.getElementById("cstrip"),document.getElementById("cats-left"),document.getElementById("cats-right")),50);
 }
 
-// ── Render ────────────────────────────────────────────────────────────────────
+// -- Render --------------------------------------------------------------------
 function render(){
   const q=document.getElementById("search").value.toLowerCase().trim();
   let vis=ALL;
@@ -1026,8 +1057,8 @@ function makeCard(ch){
   return card;
 }
 
-// ── Cache ─────────────────────────────────────────────────────────────────────
-const CACHE_KEY="dttstream_v4";
+// -- Cache ---------------------------------------------------------------------
+const CACHE_KEY="dttstream_v5";
 const CACHE_TTL=6*60*60*1000;
 function saveCache(dtt,free,samsung,pluto,rakuten){
   try{localStorage.setItem(CACHE_KEY,JSON.stringify({ts:Date.now(),dtt,free,samsung,pluto,rakuten}));}catch(e){}
@@ -1046,7 +1077,7 @@ async function fetchRace(url){
   ]).catch(()=>null);
 }
 
-// ── Playlist Rakuten incorporata direttamente ─────────────────────────────────
+// -- Playlist Rakuten incorporata direttamente ---------------------------------
 const RAKUTEN_M3U_EMBEDDED = `#EXTM3U
 
 #EXTINF:-1 tvg-num="400" tvg-logo="https://images-3.rakuten.tv/storage/global-live-channel/translation/artwork_negative/dc09b67f-ecd9-4ef0-81b5-abf2f63ed26e-baby-shark-tv-1643365877.png" group-title="Kids",Baby Shark TV
