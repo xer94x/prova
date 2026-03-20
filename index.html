@@ -243,6 +243,8 @@ function normalizeStreamingSubcat(sg){
 
 function freetvGroupFromUrl(name,url,rawGroup){
   const n=name.toLowerCase(),u=(url||"").toLowerCase();
+  if(/\brain\b|rai\s*\d|rai\s*(news|sport|movie|storia|scuola|gulp|yoyo|premium)/.test(n))return "RAI";
+  if(/canale\s*5|italia\s*1|rete\s*4|cine\s*34|\biris\b|la\s*5|top crime|tgcom|20 mediaset|27 twenty/.test(n))return "Mediaset";
   if(u.includes("stvp-")||u.includes("samsungcloud")||u.includes("samsung.wurl"))return "Streaming";
   if(u.includes("rakuten")||n.startsWith("rakuten tv"))return "Streaming";
   if(u.includes("mjh.nz/lg")||u.includes("lgchannels")||u.includes("lg.com/channels"))return "Streaming";
@@ -280,7 +282,7 @@ function getStreamingSubcatFromUrl(name,url,rawGroup,group){
   if(/romanc|amore/.test(n))return "Romantico";
   if(/family|famiglia/.test(n))return "Family";
   if(/\bdoc|nature|natur|discovery|animal/.test(n))return "Documentari";
-  if(/\bnews\b|notizie|euronews/.test(n))return "News";
+  if(/\bnews\b|notizie/.test(n))return "News";
   if(/\bsport\b|calcio|football/.test(n))return "Sport";
   if(/music|musica/.test(n))return "Musica";
   if(/serie|fiction|show/.test(n))return "Serie";
