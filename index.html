@@ -546,18 +546,51 @@ const CHANNEL_ALIAS = {
   "wedo big stories": "WeDo Big Stories",
 };
 
+// Normalizza stringa per confronto alias
+function _normAlias(s){
+  return s.toLowerCase()
+    .replace(/[|·•–—]/g," ")
+    .replace(/[\u2018\u2019`]/g,"")
+    .replace(/[^\w\s]/g," ")
+    .replace(/\s+/g," ")
+    .trim();
+}
+// Suffissi intercambiabili da ignorare nel matching
+const _IGNORE_SUFFIXES=[
+  " channel"," hd"," tv"," fast"," fast+"," international",
+  " samsung ch"," samsung channels"," samsung chan",
+  " rakuten tv"," rakuten",
+  " english"," espaniol"," italiano",
+  " live"," now"," plus"," 60"," animated",
+  " by stingray"," stingray",
+  " ita"," italy",
+  " in diretta"," diretta",
+  " collection",
+];
+function _stripSuf(s){
+  let r=s,changed=true;
+  while(changed){
+    changed=false;
+    for(const sf of _IGNORE_SUFFIXES){
+      if(r.endsWith(sf)){r=r.slice(0,r.length-sf.length).trim();changed=true;}
+    }
+  }
+  return r;
+}
 // Risolve il nome canonico dato un nome canale
 function resolveAlias(name){
-  const k=name.toLowerCase()
-    .replace(/[|·•–—]/g," ")
-    .replace(/\s+/g," ")
-    .replace(/[^\w\s]/g,"")
-    .trim();
-  // prova match esatto
+  const k=_normAlias(name);
+  // 1. match esatto
   if(CHANNEL_ALIAS[k]) return CHANNEL_ALIAS[k];
-  // prova match parziale (inizia con)
-  for(const [alias, canonical] of Object.entries(CHANNEL_ALIAS)){
-    if(k.startsWith(alias) || alias.startsWith(k)) return canonical;
+  // 2. match dopo strip suffissi
+  const ks=_stripSuf(k);
+  if(CHANNEL_ALIAS[ks]) return CHANNEL_ALIAS[ks];
+  // 3. confronto con ogni alias (anche dopo strip)
+  for(const [alias,canonical] of Object.entries(CHANNEL_ALIAS)){
+    const a=_normAlias(alias),as=_stripSuf(a);
+    if(k===a||k===as||ks===a||ks===as) return canonical;
+    if(k.startsWith(a+" ")||k.startsWith(as+" ")) return canonical;
+    if(a.startsWith(k+" ")||as.startsWith(ks+" ")) return canonical;
   }
   return null;
 }
