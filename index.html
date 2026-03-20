@@ -767,7 +767,6 @@ const CHANNEL_SUBGROUP_OVERRIDE = {
   "bbc earth": "News",
   "rai samsung channels 24": "News",
   "tv5 monde info": "News",
-  "euronews": "News",
 
   // -> Serie
   "h2o   friends": "Serie",
@@ -1008,9 +1007,10 @@ function buildChannels(rawDTT, rawFree, rawRakuten, rawPluto){
     const gl=freetvGroupFromUrl(cname,r.url||"",r.group||"");
     if(gl==="Streaming"){const fa=resolveAlias(cname);if(fa)cname=fa;else{const fs=_stripSuf(_normAlias(cname));const fa2=resolveAlias(fs);if(fa2)cname=fa2;}}
     const key=normKey(cname);
+    const freeStreamGroup=(r.url||"").toLowerCase().includes("stvp-")?"Samsung":gl;
 
     if(!map[key]){
-      const sg=gl==="Streaming"?applySubgroupOverride(cname,normalizeStreamingSubcat(getStreamingSubcatFromUrl(cname,r.url||"",r.group||"",gl))):null;
+      const sg=gl==="Streaming"?applySubgroupOverride(cname,normalizeStreamingSubcat(getStreamingSubcatFromUrl(cname,r.url||"",r.group||"",freeStreamGroup))):null;
       map[key]={name:cname,logo:r.logo||null,group:gl,subgroup:sg||null,_prio:gl==="Streaming"?4:null,dttNum:null,streams:[],seenUrls:new Set()};
     }
     const ch=map[key];
