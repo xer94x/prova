@@ -280,7 +280,7 @@ function getStreamingSubcatFromUrl(name,url,rawGroup,group){
   if(/romanc|amore/.test(n))return "Romantico";
   if(/family|famiglia/.test(n))return "Family";
   if(/\bdoc|nature|natur|discovery|animal/.test(n))return "Documentari";
-  if(/\bnews\b|notizie/.test(n))return "News";
+  if(/\bnews\b|notizie|euronews/.test(n))return "News";
   if(/\bsport\b|calcio|football/.test(n))return "Sport";
   if(/music|musica/.test(n))return "Musica";
   if(/serie|fiction|show/.test(n))return "Serie";
@@ -1016,11 +1016,6 @@ function buildChannels(rawDTT, rawFree, rawRakuten, rawPluto){
     if(gl==="Streaming"){
       if(!ch._prio||4<ch._prio){ch._prio=4;ch.name=cname;if(r.logo)ch.logo=r.logo;}
       else if(r.logo&&!ch.logo)ch.logo=r.logo;
-      // Se Samsung conosce il subgroup corretto, aggiorna (solo per Samsung)
-      if(freeStreamGroup==="Samsung"&&r.group){
-        const samSg=normalizeStreamingSubcat(getSamsungSubcat(r.group));
-        if(samSg&&samSg!=="Cinema")ch.subgroup=samSg;
-      }
     }else{if(r.logo&&!ch.logo)ch.logo=r.logo;}
     if(gl==="Streaming"){
       if(ch.group!=="Streaming"){
