@@ -197,7 +197,7 @@ const RAKUTEN_SUBCAT_ORDER=["Film","Serie","Crime","Comedy","Documentari","Sport
 // ── LG Channels: mappa numero canale → sottogruppo ───────────────────────────
 // Basata sui range numerici reali della playlist
 const LG_SUBCAT_ORDER=["Cinema","Serie & Fiction","Comedy","Crime","Intrattenimento","Food & Lifestyle","Natura & Doc","Sport","Rakuten Viki","Kids & Anime","Musica","News"];
-const STREAMING_SUBCAT_ORDER=['Novità su Pluto TV','Cinema','Film','Serie & Fiction','Serie','Serie Crime','True Crime','Sport','Kids & Anime','Animazione e Bambini','Comedy','Crime','Musica','Natura & Doc','Documentari','Food & Lifestyle','Lifestyle','News','Intrattenimento','Rakuten Viki','Motori e Sport','Horror e Paranormale','Sci-Fi','Donne protagoniste','Notti di...','Serie Classiche','Teen','Western','Altro'];
+const STREAMING_SUBCAT_ORDER=['Novità','Cinema','Serie','Sport','Kids','Musica','Natura & Doc','Food & Lifestyle','News','Comedy','Intrattenimento','Horror','True Crime','Western','Romance','Rakuten Viki','Donne protagoniste','Notti di...'];
 
 function getLgSubcat(num){
   if(!num) return "Cinema";
@@ -214,6 +214,31 @@ function getLgSubcat(num){
   if(num>=955&&num<=981) return "Musica";
   if(num>=985&&num<=998) return "News";
   return "Cinema";
+}
+
+// ── Normalizza i sottogruppi streaming in categorie unificate ────────────────
+function normalizeStreamingSubcat(sg){
+  if(!sg) return "Cinema";
+  const s=sg.toLowerCase().trim();
+  if(/serie|fiction|crime|sci.fi|classich/.test(s)) return "Serie";
+  if(/natura|doc/.test(s)) return "Natura & Doc";
+  if(/news|mondo/.test(s)) return "News";
+  if(/kids|anime|animaz|bambini|teen/.test(s)) return "Kids";
+  if(/sport|motori/.test(s)) return "Sport";
+  if(/cinema|film/.test(s)) return "Cinema";
+  if(/food|lifestyle/.test(s)) return "Food & Lifestyle";
+  if(/musica|music/.test(s)) return "Musica";
+  if(/comedy|commedia/.test(s)) return "Comedy";
+  if(/intrattenimento/.test(s)) return "Intrattenimento";
+  if(/rakuten viki|viki/.test(s)) return "Rakuten Viki";
+  if(/horror|paranormal/.test(s)) return "Horror";
+  if(/western/.test(s)) return "Western";
+  if(/romanc|romance/.test(s)) return "Romance";
+  if(/donne|protagoniste/.test(s)) return "Donne protagoniste";
+  if(/notti/.test(s)) return "Notti di...";
+  if(/novit/.test(s)) return "Novità";
+  if(/true crime/.test(s)) return "True Crime";
+  return sg;
 }
 
 function freetvGroupFromUrl(name,url,rawGroup){
@@ -344,12 +369,12 @@ function buildChannels(rawDTT, rawFree, rawRakuten, rawPluto){
     if(gl==="Streaming"){
       if(isLG){
         const lgNum=extractLgNum(r.name);
-        sg=getLgSubcat(lgNum);
+        sg=normalizeStreamingSubcat(getLgSubcat(lgNum));
         displayName=stripLgNum(displayName);
       }else if(isRakuten||isSamsung||isWedo){
-        sg=getStreamingSubcatFromUrl(cleanName(r.name),r.url||"",r.group||"",r.group==="Samsung Channels"?"Samsung":"Rakuten");
+        sg=normalizeStreamingSubcat(getStreamingSubcatFromUrl(cleanName(r.name),r.url||"",r.group||"",r.group==="Samsung Channels"?"Samsung":"Rakuten"));
       }else{
-        sg=getStreamingSubcatFromUrl(cleanName(r.name),r.url||"",r.group||"","Streaming");
+        sg=normalizeStreamingSubcat(getStreamingSubcatFromUrl(cleanName(r.name),r.url||"",r.group||"","Streaming"));
       }
     }else{
       sg=REGIONE_RAW[r.group||""]||(gl!=="Streaming"?null:null);
@@ -363,7 +388,7 @@ function buildChannels(rawDTT, rawFree, rawRakuten, rawPluto){
     const ch=map[key];
     if(r.logo&&!ch.logo)ch.logo=r.logo;
     // Aggiorna sottogruppo se calcolato
-    if(gl==="Streaming"&&sg)ch.subgroup=sg;
+    if(gl==="Streaming"&&sg)ch.subgroup=normalizeStreamingSubcat(sg);
     if(!ch.seenUrls.has(r.url)){
       ch.seenUrls.add(r.url);
       ch.streams.push({url:r.url,label:null,source:"dtt"});
@@ -376,7 +401,7 @@ function buildChannels(rawDTT, rawFree, rawRakuten, rawPluto){
     if(r.url.includes("youtube.com")||r.url.includes("twitch.tv"))continue;
     const cname=r.name.trim();
     const key=normKey(cname);
-    const rakSubgroup=r.group||"Film";
+    const rakSubgroup=normalizeStreamingSubcat(r.group||"Film");
 
     if(!map[key]){
       map[key]={name:cname,logo:r.logo||null,group:"Streaming",subgroup:rakSubgroup,brand:"Rakuten",dttNum:null,streams:[],seenUrls:new Set()};
@@ -396,7 +421,7 @@ function buildChannels(rawDTT, rawFree, rawRakuten, rawPluto){
     if(!r.url||!r.name)continue;
     const cname=r.name.trim();
     const key=normKey(cname);
-    const plutoSubgroup=r.group||"Film"; // group-title della playlist = sottogruppo corretto
+    const plutoSubgroup=normalizeStreamingSubcat(r.group||"Film");
 
     if(!map[key]){
       map[key]={name:cname,logo:r.logo||null,group:"Streaming",subgroup:plutoSubgroup,brand:"Pluto",dttNum:null,streams:[],seenUrls:new Set()};
@@ -432,7 +457,7 @@ function buildChannels(rawDTT, rawFree, rawRakuten, rawPluto){
       // Non sovrascrivere Rakuten (già categorizzato dalla playlist dedicata)
       if(ch.group!=="Streaming"){
         ch.group=gl;
-        const sg=getStreamingSubcatFromUrl(cname,r.url||"",r.group||"",gl);
+        const sg=normalizeStreamingSubcat(getStreamingSubcatFromUrl(cname,r.url||"",r.group||"",gl));
         if(sg)ch.subgroup=sg;
       }
     }
