@@ -196,7 +196,7 @@ const RAKUTEN_SUBCAT_ORDER=["Film","Serie","Crime","Comedy","Documentari","Sport
 
 // ── LG Channels: mappa numero canale → sottogruppo ───────────────────────────
 const LG_SUBCAT_ORDER=["Cinema","Serie & Fiction","Comedy","Crime","Intrattenimento","Food & Lifestyle","Natura & Doc","Sport","Rakuten Viki","Kids & Anime","Musica","News"];
-const STREAMING_SUBCAT_ORDER=['Novità','Cinema','Serie','Sport','Kids','Musica','Natura & Doc','Food & Lifestyle','News','Comedy','Intrattenimento','Horror','True Crime','Western','Romance','Rakuten Viki'];
+const STREAMING_SUBCAT_ORDER=['Novità','Cinema','Serie','Sport','Kids','Musica','Natura & Doc','Food & Lifestyle','News','Comedy','Intrattenimento','Horror','Western','Romance','Rakuten Viki'];
 
 function getLgSubcat(num){
   if(!num) return "Cinema";
@@ -236,7 +236,7 @@ function normalizeStreamingSubcat(sg){
   if(/donne|protagoniste/.test(s)) return "Cinema";
   if(/notti/.test(s)) return "Cinema";
   if(/novit/.test(s)) return "Novità";
-  if(/true crime/.test(s)) return "True Crime";
+  if(/true crime/.test(s)) return "Intrattenimento";
   if(/crime|sci.fi/.test(s)) return "Cinema";
   return sg;
 }
@@ -528,6 +528,7 @@ function resolveAlias(name){
 const CHANNEL_SUBGROUP_OVERRIDE = {
   // → Cinema
   "alberto sordi e co": "Cinema",
+  "alberto sordi co": "Cinema",
   "bizzarro movies": "Cinema",
   "cine amore": "Cinema",
   "cinema italiano": "Cinema",
@@ -583,6 +584,7 @@ const CHANNEL_SUBGROUP_OVERRIDE = {
   "vevo 90s and 00s": "Musica",
   "vevo 90s00s": "Musica",
   "vevo 90s  00s": "Musica",
+  "vevo 90s 00s": "Musica",
   "vevo 90sand00s": "Musica",
   "thats 70s": "Musica",
   "thats 80s": "Musica",
@@ -647,7 +649,11 @@ const CHANNEL_SUBGROUP_OVERRIDE = {
   "revry": "Comedy",
   "risate al sud": "Comedy",
   "the pet collective": "Comedy",
-  // → Natura & Doc
+  // → Intrattenimento (True Crime subgroup)
+  "true crime": "Intrattenimento",
+  "true samsung channels": "Intrattenimento",
+  "true crime by serially": "Intrattenimento",
+  "forensic files": "Intrattenimento",
   "cgtn documentary": "Natura & Doc",
   "guardia costiera": "Natura & Doc",
   "mayday": "Natura & Doc",
