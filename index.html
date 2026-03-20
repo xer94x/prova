@@ -1007,16 +1007,20 @@ function buildChannels(rawDTT, rawFree, rawRakuten, rawPluto){
     const gl=freetvGroupFromUrl(cname,r.url||"",r.group||"");
     if(gl==="Streaming"){const fa=resolveAlias(cname);if(fa)cname=fa;else{const fs=_stripSuf(_normAlias(cname));const fa2=resolveAlias(fs);if(fa2)cname=fa2;}}
     const key=normKey(cname);
-    const freeStreamGroup=(r.url||"").toLowerCase().includes("stvp-")?"Samsung":gl;
 
     if(!map[key]){
-      const sg=gl==="Streaming"?applySubgroupOverride(cname,normalizeStreamingSubcat(getStreamingSubcatFromUrl(cname,r.url||"",r.group||"",freeStreamGroup))):null;
+      const sg=gl==="Streaming"?applySubgroupOverride(cname,normalizeStreamingSubcat(getStreamingSubcatFromUrl(cname,r.url||"",r.group||"",gl))):null;
       map[key]={name:cname,logo:r.logo||null,group:gl,subgroup:sg||null,_prio:gl==="Streaming"?4:null,dttNum:null,streams:[],seenUrls:new Set()};
     }
     const ch=map[key];
     if(gl==="Streaming"){
       if(!ch._prio||4<ch._prio){ch._prio=4;ch.name=cname;if(r.logo)ch.logo=r.logo;}
       else if(r.logo&&!ch.logo)ch.logo=r.logo;
+      // Se Samsung conosce il subgroup corretto, aggiorna (solo per Samsung)
+      if(freeStreamGroup==="Samsung"&&r.group){
+        const samSg=normalizeStreamingSubcat(getSamsungSubcat(r.group));
+        if(samSg&&samSg!=="Cinema")ch.subgroup=samSg;
+      }
     }else{if(r.logo&&!ch.logo)ch.logo=r.logo;}
     if(gl==="Streaming"){
       if(ch.group!=="Streaming"){
