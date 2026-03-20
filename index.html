@@ -767,8 +767,6 @@ const CHANNEL_SUBGROUP_OVERRIDE = {
   "bbc earth": "News",
   "rai samsung channels 24": "News",
   "tv5 monde info": "News",
-  "euronews": "News",
-  "eurosamsung in diretta": "News",
 
   // -> Serie
   "h2o   friends": "Serie",
@@ -1018,6 +1016,9 @@ function buildChannels(rawDTT, rawFree, rawRakuten, rawPluto){
     if(gl==="Streaming"){
       if(!ch._prio||4<ch._prio){ch._prio=4;ch.name=cname;if(r.logo)ch.logo=r.logo;}
       else if(r.logo&&!ch.logo)ch.logo=r.logo;
+      // Aggiorna subgroup se Samsung porta un subgroup migliore (es. News invece di Cinema)
+      const newSg=applySubgroupOverride(cname,normalizeStreamingSubcat(getStreamingSubcatFromUrl(cname,r.url||"",r.group||"",gl)));
+      if(newSg&&newSg!=="Cinema")ch.subgroup=newSg;
     }else{if(r.logo&&!ch.logo)ch.logo=r.logo;}
     if(gl==="Streaming"){
       if(ch.group!=="Streaming"){
