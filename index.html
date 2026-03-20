@@ -430,10 +430,36 @@ const CHANNEL_ALIAS = {
   "vevo 90s 00s": "Vevo '90s & '00s",
   "vevo 90s00s": "Vevo '90s & '00s",
   "vevo 90s  00s": "Vevo '90s & '00s",
-  // Sony One Popolari + Gli Imperdibili -> Sony One Gli Imperdibili (priorità DTT/LG)
+  // ── Sony One: tutti i canali distinti ────────────────────────────────────────
+  // Sony One generico (es. playlist LG senza specificazione) -> Gli Imperdibili
+  "sony one": "Sony One Gli Imperdibili",
+  // Sony One Popolari / Gli Imperdibili -> nome canonico unico
   "sony one  popolari": "Sony One Gli Imperdibili",
   "sony one popolari": "Sony One Gli Imperdibili",
   "sony one gli imperdibili": "Sony One Gli Imperdibili",
+  // Sony One Film d'azione
+  "sony one  film dazione": "Sony One | Film d'azione",
+  "sony one samsung chan film dazione": "Sony One | Film d'azione",
+  "sony one film dazione": "Sony One | Film d'azione",
+  "sony one  film d azione": "Sony One | Film d'azione",
+  "sony one film d azione": "Sony One | Film d'azione",
+  "sony one samsung chan film d azione": "Sony One | Film d'azione",
+  "sony one samsung channels film d azione": "Sony One | Film d'azione",
+  "sony one samsung channels film dazione": "Sony One | Film d'azione",
+  // Sony One Film divertenti
+  "sony one  film divertenti": "Sony One | Film divertenti",
+  "sony one samsung chan film divertenti": "Sony One | Film divertenti",
+  "sony one samsung channels film divertenti": "Sony One | Film divertenti",
+  "sony one samsung channels dazione": "Sony One | Film d'azione",
+  "sony one samsung channels divertenti": "Sony One | Film divertenti",
+  "sony one film divertenti": "Sony One | Film divertenti",
+  // Sony One Serie da Ridere
+  "sony one  serie da ridere": "Sony One | Serie da Ridere",
+  "sony one serie da ridere": "Sony One | Serie da Ridere",
+  // Sony One Serie Thriller
+  "sony one  serie thriller": "Sony One | Serie Thriller",
+  "sony one serie thriller": "Sony One | Serie Thriller",
+  // ────────────────────────────────────────────────────────────────────────────
   "qello concerts by stingray": "Qello Concerts",
   "qello concert": "Qello Concerts",
   "qwest jazz": "Qwest",
@@ -463,7 +489,6 @@ const CHANNEL_ALIAS = {
   "sony one  film divertenti": "Sony One | Film divertenti",
   "sony one samsung chan film divertenti": "Sony One | Film divertenti",
   "sony one film divertenti": "Sony One | Film divertenti",
-
   "sony one  serie da ridere": "Sony One | Serie da Ridere",
   "sony one serie da ridere": "Sony One | Serie da Ridere",
   "sony one  serie thriller": "Sony One | Serie Thriller",
@@ -533,6 +558,13 @@ function _stripSuf(s){
   }
   return r;
 }
+
+// ── FIX: resolveAlias senza prefix-match inverso ──────────────────────────────
+// Il bug originale: "a.startsWith(k+' ')" causava che un nome generico come
+// "Sony One" matchasse "sony one popolari" -> "Sony One Gli Imperdibili",
+// assorbendo tutti i canali Sony One in uno solo.
+// Soluzione: rimosso il branch a.startsWith(k+" ") dal loop.
+// I casi legittimi che lo usavano sono ora coperti da alias espliciti.
 function resolveAlias(name){
   const k=_normAlias(name);
   if(CHANNEL_ALIAS[k]) return CHANNEL_ALIAS[k];
@@ -541,11 +573,13 @@ function resolveAlias(name){
   for(const [alias,canonical] of Object.entries(CHANNEL_ALIAS)){
     const a=_normAlias(alias),as=_stripSuf(a);
     if(k===a||k===as||ks===a||ks===as) return canonical;
+    // Solo match quando il nome cercato INIZIA con l'alias (es. "Euronews Fast" -> "Euronews")
+    // NON il contrario: evita che "Sony One" inghiotta "Sony One Film d'azione" etc.
     if(k.startsWith(a+" ")||k.startsWith(as+" ")) return canonical;
-    if(a.startsWith(k+" ")||as.startsWith(ks+" ")) return canonical;
   }
   return null;
 }
+// ─────────────────────────────────────────────────────────────────────────────
 
 // -- Sottogruppo forzato per canali specifici (override manuale) ---------------
 const CHANNEL_SUBGROUP_OVERRIDE = {
@@ -611,8 +645,12 @@ const CHANNEL_SUBGROUP_OVERRIDE = {
   "vevo 90s and 00s": "Musica",
   "vevo 90s00s": "Musica",
   "vevo 90s  00s": "Musica",
-  // -> Cinema
+  // -> Cinema (Sony One canali specifici)
   "sony one gli imperdibili": "Cinema",
+  "sony one | film d azione": "Cinema",
+  "sony one | film divertenti": "Cinema",
+  "sony one | serie da ridere": "Serie",
+  "sony one | serie thriller": "Serie",
   // -> Kids
   "deaplaneta kids": "Kids",
   // -> Food & Lifestyle
@@ -792,7 +830,6 @@ const CHANNEL_SUBGROUP_OVERRIDE = {
 
 function applySubgroupOverride(name, subgroup) {
   if(!name) return subgroup;
-  // Normalize: lowercase, remove punctuation/special chars, collapse spaces
   const k = name.toLowerCase()
     .replace(/[|\u00b7\u2022\u2013\u2014]/g," ")
     .replace(/[\u2018\u2019`'']/g,"")
@@ -800,7 +837,6 @@ function applySubgroupOverride(name, subgroup) {
     .replace(/\s+/g," ")
     .trim();
   if (CHANNEL_SUBGROUP_OVERRIDE[k] !== undefined) return CHANNEL_SUBGROUP_OVERRIDE[k];
-  // Rakuten Viki channels -> Serie
   if (subgroup === "Rakuten Viki") return "Serie";
   return subgroup;
 }
@@ -886,7 +922,6 @@ function buildChannels(rawDTT, rawFree, rawRakuten, rawPluto){
     if(r.logo&&!ch.logo)ch.logo=r.logo;
     if(gl==="Streaming"&&sg){
       ch.subgroup=normalizeStreamingSubcat(sg);
-      // Apply manual subgroup override
       ch.subgroup=applySubgroupOverride(ch.name,ch.subgroup);
     }
     if(!ch.seenUrls.has(r.url)){
