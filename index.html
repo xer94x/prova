@@ -316,6 +316,252 @@ function cleanName(name){
     .replace(/\s*\(stream\s*mdp\)/gi,"").replace(/[''`]/g,"'").trim();
 }
 
+
+// ── Mappa alias: varianti di nome → nome canonico ────────────────────────────
+// Usata per unire canali con nomi diversi ma stesso contenuto
+const CHANNEL_ALIAS = {
+  // 3BMeteo
+  "3bmeteo channel": "3BMeteo",
+  "3bmeteo": "3BMeteo",
+  // 80 Anni 2a Guerra Mondiale
+  "80 anni  2a guerra mondiale": "80 Anni 2a Guerra Mondiale",
+  "80 anni 2a guerra mondiale": "80 Anni 2a Guerra Mondiale",
+  "80 anni  2a guerra mondiale": "80 Anni 2a Guerra Mondiale",
+  // Adventure Sports TV
+  "adventure samsung ch": "Adventure Sports TV",
+  "adventure sports tv": "Adventure Sports TV",
+  // Azione
+  "azione  rakuten tv": "Azione",
+  "azione rakuten tv": "Azione",
+  "azione": "Azione",
+  // Beauty Channel
+  "beauty channel  il tocco": "Beauty Channel",
+  "beauty channel il tocco": "Beauty Channel",
+  "beauty channel": "Beauty Channel",
+  // Bloomberg TV+
+  "bloomberg tv plus": "Bloomberg TV+",
+  "bloomberg tv": "Bloomberg TV+",
+  // CG Grandi Film
+  "cg grandi rakuten tv": "CG Grandi Film",
+  "cg grandi samsung ch": "CG Grandi Film",
+  "cg grandi film": "CG Grandi Film",
+  // Commedia
+  "commedia  rakuten tv": "Commedia",
+  "commedia rakuten tv": "Commedia",
+  "commedia": "Commedia",
+  // Dark Matter
+  "dark matter tv italy": "Dark Matter",
+  "dark matter": "Dark Matter",
+  // Daystar
+  "daystar espaniol": "Daystar",
+  "daystar espaol": "Daystar",
+  "daystar español": "Daystar",
+  "daystar tv": "Daystar",
+  // Deluxe Lounge
+  "deluxe lounge hd": "Deluxe Lounge",
+  "deluxe lounge": "Deluxe Lounge",
+  // Dramma
+  "dramma  rakuten tv": "Dramma",
+  "dramma rakuten tv": "Dramma",
+  "dramma": "Dramma",
+  // Duck TV
+  "duck tv": "Duck TV",
+  "ducktv": "Duck TV",
+  // Euronews
+  "eurosamsung ch": "Euronews",
+  "euronews in diretta": "Euronews",
+  "euronews": "Euronews",
+  // FailArmy
+  "fail army": "FailArmy",
+  "failarmy": "FailArmy",
+  // Family
+  "family  rakuten tv": "Family",
+  "family rakuten tv": "Family",
+  "family": "Family",
+  // Fantascienza
+  "fantascienza  rakuten tv": "Fantascienza",
+  "fantascienza rakuten tv": "Fantascienza",
+  "fantascienza": "Fantascienza",
+  // Film Asiatici
+  "film asiatici  rakuten tv": "Film Asiatici",
+  "film asiatici rakuten tv": "Film Asiatici",
+  "film asiatici": "Film Asiatici",
+  // Film Top
+  "film top  rakuten tv": "Film Top",
+  "film top rakuten tv": "Film Top",
+  "film top": "Film Top",
+  // France 24
+  "france 24 fast english": "France 24",
+  "france 24 fast": "France 24",
+  "france 24": "France 24",
+  // Grjngo Film Western
+  "grjngo  rakuten tv west": "Grjngo Film Western",
+  "grjngo rakuten tv western": "Grjngo Film Western",
+  "grjngo  samsung ch": "Grjngo Film Western",
+  "grjngo samsung channel": "Grjngo Film Western",
+  "grjngo  film western": "Grjngo Film Western",
+  "grjngo film western": "Grjngo Film Western",
+  "grjngo": "Grjngo Film Western",
+  // Hard Knocks Fight
+  "hard knocks fighting ch": "Hard Knocks Fight",
+  "hard knocks fighting championship": "Hard Knocks Fight",
+  "hard knocks fight": "Hard Knocks Fight",
+  // Il Sole 24 Ore
+  "il sole 24 ore tv": "Il Sole 24 Ore",
+  "il sole 24 ore": "Il Sole 24 Ore",
+  // Inazuma Eleven
+  "inazuma eleven collection": "Inazuma Eleven",
+  "inazuma eleven go": "Inazuma Eleven",
+  "inazuma eleven": "Inazuma Eleven",
+  // Just For Laughs
+  "just for laughs gags": "Just For Laughs",
+  "just for laughs": "Just For Laughs",
+  // Mayday
+  "mayday disastro aereo": "Mayday",
+  "mayday air disaster": "Mayday",
+  "mayday": "Mayday",
+  // Motoretro
+  "motoretro": "Motoretro",
+  "motoretr": "Motoretro",
+  // Motorvision
+  "motorvision tv": "Motorvision",
+  "motorvisiontv": "Motorvision",
+  "motorvisiontv": "Motorvision",
+  // Move
+  "move  samsung ch": "Move",
+  "move samsung channel": "Move",
+  "move  sportivi in viaggio": "Move",
+  "move sportivi in viaggio": "Move",
+  "move": "Move",
+  // Mr. Bean
+  "mr bean animated": "Mr. Bean",
+  "mr bean live action": "Mr. Bean",
+  "mr bean  live action": "Mr. Bean",
+  "mr bean": "Mr. Bean",
+  // Nature Time
+  "naturetime": "Nature Time",
+  "nature time": "Nature Time",
+  // NBC News NOW
+  "nbc samsung channels": "NBC News NOW",
+  "nbc news now": "NBC News NOW",
+  // Now 90s00s
+  "now90s00s": "Now 90s00s",
+  "now 90s00s": "Now 90s00s",
+  // Qello Concerts
+  "qello concerts by stingray": "Qello Concerts",
+  "qello concert": "Qello Concerts",
+  // Qwest
+  "qwest jazz": "Qwest",
+  "qwest tv": "Qwest",
+  // Racer
+  "racer international": "Racer",
+  "racer": "Racer",
+  // Radio Italia Live
+  "radioitalia live": "Radio Italia Live",
+  "radio italia live": "Radio Italia Live",
+  // Rally TV
+  "rallytv fast": "Rally TV",
+  "rally tv fast": "Rally TV",
+  "rally tv": "Rally TV",
+  // Risate al Sud
+  "risate dal sud": "Risate al Sud",
+  "risate al sud": "Risate al Sud",
+  // Romance
+  "romance  rakuten tv": "Romance",
+  "romance rakuten tv": "Romance",
+  "romance": "Romance",
+  // Serie Crime (Rakuten)
+  "serially crime": "Serie Crime",
+  "serie crime": "Serie Crime",
+  // Sky News
+  "sky samsung channels in": "Sky News",
+  "sky news international": "Sky News",
+  "sky news": "Sky News",
+  // Solocalcio
+  "solosamsung channels": "Solocalcio",
+  "solocalcio": "Solocalcio",
+  // Sony One Film d'azione
+  "sony one  film dazione": "Sony One | Film d'azione",
+  "sony one samsung chan film dazione": "Sony One | Film d'azione",
+  "sony one film dazione": "Sony One | Film d'azione",
+  // Sony One Film divertenti
+  "sony one  film divertenti": "Sony One | Film divertenti",
+  "sony one samsung chan film divertenti": "Sony One | Film divertenti",
+  "sony one film divertenti": "Sony One | Film divertenti",
+  // Sony One Popolari
+  "sony one  popolari": "Sony One | Popolari",
+  "sony one popolari": "Sony One | Popolari",
+  // Sony One Serie da Ridere
+  "sony one  serie da ridere": "Sony One | Serie da Ridere",
+  "sony one serie da ridere": "Sony One | Serie da Ridere",
+  // Sony One Serie Thriller
+  "sony one  serie thriller": "Sony One | Serie Thriller",
+  "sony one serie thriller": "Sony One | Serie Thriller",
+  // Squadra Speciale Cobra
+  "squadra speciale cobra 11": "Squadra Speciale Cobra",
+  "squadra speciale cobra": "Squadra Speciale Cobra",
+  // Squadra Speciale Lipsia
+  "squadra speciale": "Squadra Speciale Lipsia",
+  "squadra speciale lipsia": "Squadra Speciale Lipsia",
+  // Stingray Hit List
+  "stingray music hit list": "Stingray Hit List",
+  "stingray hitlist": "Stingray Hit List",
+  "stingray hit list": "Stingray Hit List",
+  // Stingray Nature
+  "stingray naturescape": "Stingray Nature",
+  "stingray nature": "Stingray Nature",
+  // Stingray Remember 80s
+  "stingray music remembe": "Stingray Remember the 80s",
+  "stingray music remember 80s": "Stingray Remember the 80s",
+  "stingray remember the 8": "Stingray Remember the 80s",
+  "stingray remember the 80s": "Stingray Remember the 80s",
+  // Top Barca
+  "top barca": "TOP Barça",
+  "top barça": "TOP Barça",
+  // Trace Latina
+  "tracelatina": "Trace Latina",
+  "trace latina": "Trace Latina",
+  // Trace Urban
+  "traceurban": "Trace Urban",
+  "trace urban": "Trace Urban",
+  // Travel XP
+  "travel xp": "Travel XP",
+  "travelxp": "Travel XP",
+  // True Crime
+  "true samsung channels": "True Crime",
+  "true crime by serially": "True Crime",
+  "true crime": "True Crime",
+  // The Reuters
+  "the reuters 60": "The Reuters",
+  "the reuters": "The Reuters",
+  // Urania News
+  "urania samsung channels": "Urania News",
+  "urania news": "Urania News",
+  // Weather Spy
+  "weatherspy": "WeatherSpy",
+  "weather spy": "WeatherSpy",
+  // WeDo Big Stories
+  "wedo big stories ita": "WeDo Big Stories",
+  "wedotv big stories": "WeDo Big Stories",
+  "wedo big stories": "WeDo Big Stories",
+};
+
+// Risolve il nome canonico dato un nome canale
+function resolveAlias(name){
+  const k=name.toLowerCase()
+    .replace(/[|·•–—]/g," ")
+    .replace(/\s+/g," ")
+    .replace(/[^\w\s]/g,"")
+    .trim();
+  // prova match esatto
+  if(CHANNEL_ALIAS[k]) return CHANNEL_ALIAS[k];
+  // prova match parziale (inizia con)
+  for(const [alias, canonical] of Object.entries(CHANNEL_ALIAS)){
+    if(k.startsWith(alias) || alias.startsWith(k)) return canonical;
+  }
+  return null;
+}
+
 // ── Estrae numero canale LG dal nome (es. "100 LG 1" → 100) ──────────────────
 function extractLgNum(name){
   const m=name.match(/^(\d+)\s+/);
@@ -391,7 +637,7 @@ function buildChannels(rawDTT, rawFree, rawRakuten, rawPluto){
     if(gl==="Streaming"&&sg)ch.subgroup=normalizeStreamingSubcat(sg);
     if(!ch.seenUrls.has(r.url)){
       ch.seenUrls.add(r.url);
-      ch.streams.push({url:r.url,label:null,source:"dtt"});
+      ch.streams.push({url:r.url,label:null,source:isSamsung?"samsung":isLG?"lg":isRakuten?"rakuten":isWedo?"wedo":"dtt"});
     }
   }
 
@@ -399,12 +645,13 @@ function buildChannels(rawDTT, rawFree, rawRakuten, rawPluto){
   for(const r of rawRakuten){
     if(!r.url||!r.name)continue;
     if(r.url.includes("youtube.com")||r.url.includes("twitch.tv"))continue;
-    const cname=r.name.trim();
+    let cname=r.name.trim();
+    const rakAlias=resolveAlias(cname);if(rakAlias)cname=rakAlias;
     const key=normKey(cname);
     const rakSubgroup=normalizeStreamingSubcat(r.group||"Film");
 
     if(!map[key]){
-      map[key]={name:cname,logo:r.logo||null,group:"Streaming",subgroup:rakSubgroup,brand:"Rakuten",dttNum:null,streams:[],seenUrls:new Set()};
+      map[key]={name:cname,logo:r.logo||null,group:"Streaming",subgroup:rakSubgroup,brand:"Rakuten",_prio:5,dttNum:null,streams:[],seenUrls:new Set()};
     }
     const ch=map[key];
     if(r.logo)ch.logo=r.logo;
@@ -419,12 +666,13 @@ function buildChannels(rawDTT, rawFree, rawRakuten, rawPluto){
   // 2b. Process Pluto TV dedicato (seconda priorità — group-title autorevole)
   for(const r of (rawPluto||[])){
     if(!r.url||!r.name)continue;
-    const cname=r.name.trim();
+    let cname=r.name.trim();
+    const pluAlias=resolveAlias(cname);if(pluAlias)cname=pluAlias;
     const key=normKey(cname);
     const plutoSubgroup=normalizeStreamingSubcat(r.group||"Film");
 
     if(!map[key]){
-      map[key]={name:cname,logo:r.logo||null,group:"Streaming",subgroup:plutoSubgroup,brand:"Pluto",dttNum:null,streams:[],seenUrls:new Set()};
+      map[key]={name:cname,logo:r.logo||null,group:"Streaming",subgroup:plutoSubgroup,brand:"Pluto",_prio:2,dttNum:null,streams:[],seenUrls:new Set()};
     }
     const ch=map[key];
     if(r.logo&&!ch.logo)ch.logo=r.logo;
@@ -442,19 +690,21 @@ function buildChannels(rawDTT, rawFree, rawRakuten, rawPluto){
     if(!r.url||!r.name)continue;
     if(r.url.includes("youtube.com")||r.url.includes("twitch.tv"))continue;
 
-    const cname=r.name.replace(/\s*[ⓢⓣⓨⓖ⊕]/gu,"").trim();
-    const key=normKey(cname);
+    let cname=r.name.replace(/\s*[ⓢⓣⓨⓖ⊕]/gu,"").trim();
     const gl=freetvGroupFromUrl(cname,r.url||"",r.group||"");
+    if(gl==="Streaming"){const fa=resolveAlias(cname);if(fa)cname=fa;}
+    const key=normKey(cname);
 
     if(!map[key]){
-      const sg=STREAMING_GROUPS.includes(gl)?getStreamingSubcatFromUrl(cname,r.url||"",r.group||"",gl):null;
-      map[key]={name:cname,logo:r.logo||null,group:gl,subgroup:sg||null,dttNum:null,streams:[],seenUrls:new Set()};
+      const sg=gl==="Streaming"?normalizeStreamingSubcat(getStreamingSubcatFromUrl(cname,r.url||"",r.group||"",gl)):null;
+      map[key]={name:cname,logo:r.logo||null,group:gl,subgroup:sg||null,_prio:gl==="Streaming"?4:null,dttNum:null,streams:[],seenUrls:new Set()};
     }
     const ch=map[key];
-    if(r.logo&&!ch.logo)ch.logo=r.logo;
-    if(STREAMING_GROUPS.includes(gl)){
-      // Non sovrascrivere LG (già categorizzato con sottogruppi precisi)
-      // Non sovrascrivere Rakuten (già categorizzato dalla playlist dedicata)
+    if(gl==="Streaming"){
+      if(!ch._prio||4<ch._prio){ch._prio=4;ch.name=cname;if(r.logo)ch.logo=r.logo;}
+      else if(r.logo&&!ch.logo)ch.logo=r.logo;
+    }else{if(r.logo&&!ch.logo)ch.logo=r.logo;}
+    if(gl==="Streaming"){
       if(ch.group!=="Streaming"){
         ch.group=gl;
         const sg=normalizeStreamingSubcat(getStreamingSubcatFromUrl(cname,r.url||"",r.group||"",gl));
@@ -467,14 +717,24 @@ function buildChannels(rawDTT, rawFree, rawRakuten, rawPluto){
     }
   }
 
-  // Label streams
+  // Label streams — ordina per priorità sorgente
+  const SRC_PRIO={samsung:1,pluto:2,dtt:3,lg:3,wedo:4,free:4,rakuten:5};
   for(const ch of Object.values(map)){
+    if(ch.group==="Streaming"){
+      const isSony=ch.name.toLowerCase().includes("sony one");
+      ch.streams.sort((a,b)=>{
+        const pa=isSony&&(a.source==="dtt"||a.source==="lg")?0:(SRC_PRIO[a.source]||9);
+        const pb=isSony&&(b.source==="dtt"||b.source==="lg")?0:(SRC_PRIO[b.source]||9);
+        return pa-pb;
+      });
+    }
     const total=ch.streams.length;
     ch.streams.forEach((s,i)=>{
       s.label=total===1?"▶ Guarda":`▶ Link ${i+1}`;
-      s.isAlt=(s.source==="free");
+      s.isAlt=(s.source==="free"||s.source==="rakuten");
     });
     delete ch.seenUrls;
+    delete ch._prio;
   }
 
   const arr=Object.values(map).filter(ch=>ch.streams.length>0);
