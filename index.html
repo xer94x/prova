@@ -291,7 +291,7 @@ function getStreamingSubcatFromUrl(name,url,rawGroup,group){
   return "Film";
 }
 
-// -- Group order for display ---------------------------------------------------
+// -- Group sort order ----------------------------------------------------------
 const GROUP_ORDER=["RAI","Mediaset","Nazionali","Sport","News","Kids","Musica","Religiosi","Cinema","Streaming","Regioni","Altro"];
 const GROUP_EMOJI={
   "RAI":"📺","Mediaset":"📡","Nazionali":"🇮🇹","Sport":"⚽","News":"📰",
@@ -408,14 +408,14 @@ const CHANNEL_ALIAS = {
   "nature time": "Nature Time",
   "nbc samsung channels": "NBC News NOW",
   "nbc news now": "NBC News NOW",
-  // DeAPlaneta Kids + Bernard L'Orso -> DeAPlaneta Kids (priorit? Samsung)
+  // DeAPlaneta Kids + Bernard L'Orso -> DeAPlaneta Kids (priorità Samsung)
   "bernard l orso": "DeAPlaneta Kids",
   "bernard lorso": "DeAPlaneta Kids",
   "deaplaneta kids": "DeAPlaneta Kids",
-  // Euronews Samsung -> Euronews (priorit? LG)
+  // Euronews Samsung -> Euronews (priorità LG)
   "eurosamsung channels i": "Euronews",
   "euronews samsung": "Euronews",
-  // Now 70/80/90/Rock -> That's (priorit? Rakuten)
+  // Now 70/80/90/Rock -> That's (priorità Rakuten)
   "now 70s": "That's 70s",
   "now 80s": "That's 80s",
   "now90s00s": "That's 90s00s",
@@ -425,12 +425,12 @@ const CHANNEL_ALIAS = {
   "thats 80s": "That's 80s",
   "thats 90s00s": "That's 90s00s",
   "thats rock": "That's Rock",
-  // Vevo 90sand00s -> Vevo '90s & '00s (priorit? Samsung)
+  // Vevo 90sand00s -> Vevo '90s & '00s (priorità Samsung)
   "vevo 90sand00s": "Vevo '90s & '00s",
   "vevo 90s 00s": "Vevo '90s & '00s",
   "vevo 90s00s": "Vevo '90s & '00s",
   "vevo 90s  00s": "Vevo '90s & '00s",
-  // Sony One Popolari + Gli Imperdibili -> Sony One Gli Imperdibili (priorit? DTT/LG)
+  // Sony One Popolari + Gli Imperdibili -> Sony One Gli Imperdibili (priorità DTT/LG)
   "sony one  popolari": "Sony One Gli Imperdibili",
   "sony one popolari": "Sony One Gli Imperdibili",
   "sony one gli imperdibili": "Sony One Gli Imperdibili",
@@ -694,6 +694,100 @@ const CHANNEL_SUBGROUP_OVERRIDE = {
   "pluto tv shore": "Intrattenimento",
   "teen mom": "Intrattenimento",
   "pluto tv paranormal": "Intrattenimento",
+
+  // ── NUOVI OVERRIDE ──────────────────────────────────────────────────────────
+
+  // -> Sport
+  "dfb play tv": "Sport",
+  "rbn": "Sport",
+  "salto ostacoli": "Sport",
+  "samsung channelsitalia": "Sport",
+  "samsung channelsoutdoor tv": "Sport",
+  "samsung channelsoutdoor": "Sport",
+  "sportoutdoor tv": "Sport",
+  "motor1": "Sport",
+  "supertennis": "Sport",
+  "turbo": "Sport",
+  "solocalcio": "Sport",
+
+  // -> Intrattenimento
+  "discovery": "Intrattenimento",
+  "dmax": "Intrattenimento",
+  "giallo": "Intrattenimento",
+  "nove": "Intrattenimento",
+  "hgtv": "Intrattenimento",
+  "la 7": "Intrattenimento",
+  "la7": "Intrattenimento",
+  "dateline 24 7": "Intrattenimento",
+  "dateline 247": "Intrattenimento",
+  "real time": "Intrattenimento",
+  "real time samsung": "Intrattenimento",
+
+  // -> News
+  "giornale radio tv": "News",
+  "al jazeera": "News",
+  "bbc earth": "News",
+  "rai samsung channels 24": "News",
+  "tv5 monde info": "News",
+
+  // -> Serie
+  "h2o   friends": "Serie",
+  "h2o  friends": "Serie",
+  "h2o friends": "Serie",
+  "elisa di rivombrosa": "Serie",
+  "k drama": "Serie",
+  "k drama plus": "Serie",
+  "martial universe": "Serie",
+  "martial universe la seri": "Serie",
+  "mudù risate dal sud": "Serie",
+  "mudu risate dal sud": "Serie",
+  "mutant x": "Serie",
+  "piel salvaje": "Serie",
+  "sanctuary": "Serie",
+  "smtown": "Serie",
+  "star trek voyager": "Serie",
+  "un medico in famiglia": "Serie",
+  "velvet": "Serie",
+
+  // -> Musica
+  "70 80 it": "Musica",
+  "70 80it": "Musica",
+  "hip hop tv": "Musica",
+  "k pop by cj enm": "Musica",
+  "kpop by cj enm": "Musica",
+  "new kpop": "Musica",
+  "rock tv": "Musica",
+  "vevo 70s  80s": "Musica",
+  "vevo 70s 80s": "Musica",
+  "vevo 70s and 80s": "Musica",
+
+  // -> Food & Lifestyle
+  "5 minuti creativi": "Food & Lifestyle",
+  "foodnetwork": "Food & Lifestyle",
+  "food network": "Food & Lifestyle",
+  "a tavola": "Food & Lifestyle",
+  "adventure sports tv": "Food & Lifestyle",
+  "move": "Food & Lifestyle",
+  "italian fishing tv": "Food & Lifestyle",
+  "italianfishingtv": "Food & Lifestyle",
+
+  // -> Natura & Doc
+  "fireplace vibes": "Natura & Doc",
+  "ii guerra mondiale": "Natura & Doc",
+  "love the planet": "Natura & Doc",
+  "waterbear": "Natura & Doc",
+
+  // -> Kids
+  "looloo kids": "Kids",
+  "masha e orso": "Kids",
+  "pocoyo": "Kids",
+  "supertoons tv": "Kids",
+  "supertoons": "Kids",
+
+  // -> Comedy
+  "smile": "Comedy",
+  "teen vee": "Comedy",
+
 };
 
 function applySubgroupOverride(name, subgroup) {
@@ -746,7 +840,7 @@ function parseM3U(text){
 function buildChannels(rawDTT, rawFree, rawRakuten, rawPluto){
   const map={};
 
-  // 1. Process tivustream (primary ? highest priority)
+  // 1. Process tivustream (primary → highest priority)
   for(const r of rawDTT){
     if(!r.url||!r.name)continue;
     if(r.url.includes("startend.avi"))continue;
@@ -880,7 +974,7 @@ function buildChannels(rawDTT, rawFree, rawRakuten, rawPluto){
     }
   }
 
-  // Label streams ? ordina per priorit? sorgente
+  // Label streams → ordina per priorità sorgente
   const SRC_PRIO={samsung:1,pluto:2,dtt:3,lg:3,wedo:4,free:4,rakuten:5};
   const LG_FIRST_CHANNELS=["euronews"];
   const RAKUTEN_FIRST_CHANNELS=["that's 70s","that's 80s","that's 90s00s","that's rock"];
