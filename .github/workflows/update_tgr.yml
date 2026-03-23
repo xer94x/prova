@@ -1,0 +1,64 @@
+name: Aggiorna TGR Sicilia
+
+on:
+  # Lanciamo 4 slot al giorno: i due orari × i due fusi (CET e CEST).
+  # Lo script stesso controlla se siamo nel fuso giusto e skippa se no.
+  schedule:
+    - cron: "30 12 * * *"  # 14:30 CEST (UTC+2) — ora legale
+    - cron: "30 13 * * *"  # 14:30 CET  (UTC+1) — ora solare
+    - cron: "5 18 * * *"   # 20:05 CEST (UTC+2) — ora legale
+    - cron: "5 19 * * *"   # 20:05 CET  (UTC+1) — ora solare
+  workflow_dispatch:        # permette lancio manuale dal pannello GitHub
+
+jobs:
+  fetch-and-update:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Installa pytz
+        run: pip install pytz
+
+      - name: Controlla orario italiano e lancia lo script
+        run: |
+          python - <<'EOF'
+          import sys
+          from datetime import datetime
+          import pytz
+
+          it = pytz.timezone("Europe/Rome")
+          now = datetime.now(it)
+          h, m = now.hour, now.minute
+
+          # Finestre valide: 14:25-14:35 e 20:00-20:10
+          ok = (h == 14 and 25 <= m <= 35) or (h == 20 and 0 <= m <= 10)
+          offset = int(now.utcoffset().total_seconds() / 3600)
+          print(f"Ora italiana: {now.strftime('%H:%M')} (UTC{offset:+d}) — {'✅ eseguo' if ok else '⏭ skipped (fuso sbagliato)'}")
+          sys.exit(0 if ok else 42)
+          EOF
+        id: check_time
+        continue-on-error: true
+
+      - name: Esegui lo script
+        if: steps.check_time.outcome == 'success'
+        run: python fetch_tgr.py
+
+      - name: Commit e push del file M3U (solo se cambiato)
+        if: steps.check_time.outcome == 'success'
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add tgr_sicilia.m3u
+          git diff --cached --quiet && echo "Nessuna modifica." || (
+            git commit -m "🔄 Aggiorna TGR Sicilia $(date -u +'%Y-%m-%d %H:%M UTC')"
+            git push
+          )
