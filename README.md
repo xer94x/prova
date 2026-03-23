@@ -50,10 +50,9 @@ Sostituisci `TUO-UTENTE` con il tuo username GitHub.
 
 ## Aggiornamenti automatici
 
-Il workflow gira **3 volte al giorno**:
-- 07:00 ora italiana
-- 13:30 ora italiana  
-- 21:00 ora italiana
+Il workflow gira **2 volte al giorno**:
+- 14:30 ora italiana  
+- 20:05 ora italiana
 
 Puoi anche lanciarlo manualmente da GitHub > Actions in qualsiasi momento.
 
