@@ -27,14 +27,14 @@ header{background:var(--surface);border-bottom:1px solid var(--border);padding:1
 .channel-card:hover{background:var(--surface);border-color:var(--accent2)}
 .card-header{display:flex;flex-direction:column;gap:6px;padding:12px;background:var(--surface);border-bottom:1px solid var(--border);cursor:pointer}
 .channel-name{font-weight:700;font-size:16px;display:flex;justify-content:space-between;align-items:center}
-.current-program{font-size:12px;color:var(--accent2);margin-top:4px}
+.current-program{font-size:12px;color:var(--accent2);margin-top:4px;word-break:break-word}
 .program-details{padding:12px;border-top:1px solid var(--border);display:none}
 .program-details.open{display:block}
 .program-list{max-height:450px;overflow-y:auto}
 .program-item{padding:8px 0;border-bottom:1px solid var(--border2);font-size:13px}
-.program-time{font-weight:600;color:var(--gold);margin-right:12px;font-family:monospace;display:inline-block;width:70px}
+.program-time{font-weight:600;color:var(--gold);margin-right:12px;font-family:monospace}
 .program-title{font-weight:500}
-.program-desc{font-size:12px;color:var(--muted2);margin-top:4px;line-height:1.4;margin-left:70px}
+.program-desc{font-size:12px;color:var(--muted2);margin-top:4px;line-height:1.4}
 .loading,.error{text-align:center;padding:60px;color:var(--muted2)}
 .error button{background:var(--card);border:1px solid var(--border);padding:8px 20px;border-radius:30px;color:var(--text);margin-top:20px;cursor:pointer}
 .loader{border:2px solid var(--border);border-top:2px solid var(--accent);border-radius:50%;width:30px;height:30px;animation:spin 1s linear infinite;margin:20px auto}
@@ -55,117 +55,24 @@ header{background:var(--surface);border-bottom:1px solid var(--border);padding:1
 </div>
 
 <script>
-let epgData = null;
+let epgData = null;        // { channelMap: Map(normalizedKey -> { name, programs[] }) }
 let channelsList = [];
 let filteredChannels = [];
 
-async function fetchEPGWithProxy(url) {
-  // Tentativo con corsproxy.io (funziona bene per binari)
-  const proxy = "https://corsproxy.io/?" + encodeURIComponent(url);
-  const response = await fetch(proxy);
-  if (!response.ok) throw new Error(`HTTP ${response.status}`);
-  const blob = await response.blob();
-  const arrayBuffer = await blob.arrayBuffer();
-  // Se il content-type è text/plain o application/octet-stream, potremmo ricevere testo
-  const contentType = response.headers.get("content-type") || "";
-  if (contentType.includes("text") || contentType.includes("xml")) {
-    const text = await blob.text();
-    // Se il testo inizia con <?xml o #EXTM3U o è XML, proviamo a usarlo direttamente
-    if (text.trim().startsWith("<?xml") || text.trim().startsWith("<tv")) {
-      return text;
-    }
-    // altrimenti potrebbe essere base64?
-    try {
-      const decoded = atob(text);
-      return decoded;
-    } catch(e) {
-      return text;
-    }
-  }
-  // Altrimenti trattiamo come gzip binario
-  const bytes = new Uint8Array(arrayBuffer);
-  // Verifica se inizia con 0x1F 0x8B (gzip magic)
-  if (bytes.length >= 2 && bytes[0] === 0x1F && bytes[1] === 0x8B) {
-    const decompressed = pako.inflate(bytes, { to: "string" });
-    return decompressed;
-  }
-  // Se non è gzip, prova a interpretare come UTF-8
-  return new TextDecoder("utf-8").decode(bytes);
+// ---------- FUNZIONI PROXY MULTIPLI (come nella tua pagina) ----------
+async function fetchRace(url) {
+  const wrap = fn => new Promise((res, rej) => {
+    fn().then(t => (t && t.includes("<?xml") ? res(t) : rej())).catch(rej);
+  });
+  return Promise.any([
+    wrap(() => fetch(url).then(r => { if (!r.ok) throw 0; return r.text(); })),
+    wrap(() => fetch("https://api.allorigins.win/get?url=" + encodeURIComponent(url)).then(r => r.json()).then(j => j.contents || "")),
+    wrap(() => fetch("https://corsproxy.io/?" + encodeURIComponent(url)).then(r => { if (!r.ok) throw 0; return r.text(); })),
+    wrap(() => fetch("https://api.codetabs.com/v1/proxy?quest=" + encodeURIComponent(url)).then(r => { if (!r.ok) throw 0; return r.text(); }))
+  ]).catch(() => null);
 }
 
-async function fetchAndParseEPG() {
-  const statusDiv = document.getElementById("status");
-  statusDiv.textContent = "Scarico EPG...";
-  try {
-    const epgUrl = "https://www.epgitalia.tv/gzip";
-    let xmlText = null;
-    // Tentativo con corsproxy.io
-    try {
-      xmlText = await fetchEPGWithProxy(epgUrl);
-      console.log("Downloaded via corsproxy.io, length:", xmlText.length);
-    } catch (err) {
-      console.warn("corsproxy.io failed:", err);
-      // Fallback con allorigins
-      const proxy2 = "https://api.allorigins.win/get?url=" + encodeURIComponent(epgUrl);
-      const resp = await fetch(proxy2);
-      if (!resp.ok) throw new Error("Allorigins HTTP " + resp.status);
-      const json = await resp.json();
-      const content = json.contents;
-      if (!content) throw new Error("No content from allorigins");
-      // Potrebbe essere base64 o già testo
-      if (content.trim().startsWith("<?xml") || content.trim().startsWith("<tv")) {
-        xmlText = content;
-      } else {
-        try {
-          const decoded = atob(content);
-          xmlText = decoded;
-        } catch(e) {
-          xmlText = content;
-        }
-      }
-    }
-    // Verifica che sia XML
-    if (!xmlText || (!xmlText.includes("<?xml") && !xmlText.includes("<tv"))) {
-      throw new Error("Il contenuto non sembra XML valido");
-    }
-    const parser = new DOMParser();
-    const xmlDoc = parser.parseFromString(xmlText, "text/xml");
-    const parseError = xmlDoc.querySelector("parsererror");
-    if (parseError) throw new Error("Errore parsing XML");
-    const programmes = xmlDoc.querySelectorAll("programme");
-    const channelMap = new Map();
-    for (let prog of programmes) {
-      let channelId = prog.getAttribute("channel");
-      if (!channelId) continue;
-      let displayName = channelId;
-      const displayNameElem = prog.querySelector("display-name");
-      if (displayNameElem && displayNameElem.textContent.trim()) displayName = displayNameElem.textContent.trim();
-      const start = prog.getAttribute("start");
-      const stop = prog.getAttribute("stop");
-      const titleElem = prog.querySelector("title");
-      const descElem = prog.querySelector("desc");
-      const title = titleElem ? titleElem.textContent.trim() : "";
-      const desc = descElem ? descElem.textContent.trim() : "";
-      if (!title) continue;
-      const key = normalizeKey(channelId);
-      if (!channelMap.has(key)) {
-        channelMap.set(key, { name: displayName, programs: [] });
-      }
-      channelMap.get(key).programs.push({ start, stop, title, desc });
-    }
-    // Ordina programmi per start
-    for (let [_, ch] of channelMap.entries()) {
-      ch.programs.sort((a,b) => (a.start || "").localeCompare(b.start || ""));
-    }
-    statusDiv.textContent = `Pronto (${channelMap.size} canali)`;
-    return { channelMap };
-  } catch (err) {
-    console.error("Errore EPG:", err);
-    statusDiv.textContent = "Errore caricamento";
-    throw err;
-  }
-}
-
+// ---------- PARSING EPG ----------
 function normalizeKey(str) {
   return str.toLowerCase().replace(/[^\w\s]/g, '').replace(/\s+/g, ' ').trim();
 }
@@ -206,6 +113,74 @@ function escapeHtml(str) {
   });
 }
 
+// Carica e processa EPG usando fetchRace
+async function fetchAndParseEPG() {
+  const statusDiv = document.getElementById("status");
+  statusDiv.textContent = "Scarico EPG...";
+  try {
+    const url = "https://www.epgitalia.tv/gzip";
+    const responseText = await fetchRace(url);
+    if (!responseText) throw new Error("Nessun proxy ha restituito dati");
+    
+    // Il proxy potrebbe restituire il file già decompresso? No, è gzip. Dobbiamo decodificare.
+    // Il contenuto può essere base64? In realtà i proxy restituiscono il file binario codificato in base64? No, restituiscono testo binario.
+    // Dobbiamo verificare se è gzip: proviamo a decomprimere con pako, se fallisce usiamo come testo.
+    let decompressed = "";
+    try {
+      // Potrebbe essere binario, lo convertiamo in Uint8Array
+      const binaryString = responseText;
+      const bytes = new Uint8Array(binaryString.length);
+      for (let i = 0; i < binaryString.length; i++) bytes[i] = binaryString.charCodeAt(i);
+      decompressed = pako.inflate(bytes, { to: "string" });
+    } catch (e) {
+      // Se fallisce, forse è già testo (XML)
+      decompressed = responseText;
+    }
+    
+    // Verifica che sia XML valido
+    if (!decompressed.includes("<?xml") && !decompressed.includes("<tv>")) {
+      throw new Error("Il contenuto non sembra essere XML valido");
+    }
+    
+    const parser = new DOMParser();
+    const xmlDoc = parser.parseFromString(decompressed, "text/xml");
+    const programmes = xmlDoc.querySelectorAll("programme");
+    const channelMap = new Map(); // key normalized -> { name, programs: [] }
+    
+    for (let prog of programmes) {
+      let channelId = prog.getAttribute("channel");
+      if (!channelId) continue;
+      let displayName = channelId;
+      const displayNameElem = prog.querySelector("display-name");
+      if (displayNameElem && displayNameElem.textContent.trim()) displayName = displayNameElem.textContent.trim();
+      const start = prog.getAttribute("start");
+      const stop = prog.getAttribute("stop");
+      const titleElem = prog.querySelector("title");
+      const descElem = prog.querySelector("desc");
+      const title = titleElem ? titleElem.textContent.trim() : "";
+      const desc = descElem ? descElem.textContent.trim() : "";
+      if (!title) continue;
+      const key = normalizeKey(channelId);
+      if (!channelMap.has(key)) {
+        channelMap.set(key, { name: displayName, programs: [] });
+      }
+      channelMap.get(key).programs.push({ start, stop, title, desc });
+    }
+    
+    // Ordina programmi per ogni canale
+    for (let [_, channel] of channelMap.entries()) {
+      channel.programs.sort((a,b) => (a.start || "").localeCompare(b.start || ""));
+    }
+    
+    statusDiv.textContent = `Pronto (${channelMap.size} canali)`;
+    return { channelMap };
+  } catch (err) {
+    console.error("EPG fetch error:", err);
+    statusDiv.textContent = "Errore caricamento";
+    throw err;
+  }
+}
+
 function renderChannels(channels) {
   const container = document.getElementById("container");
   if (!channels.length) {
@@ -223,7 +198,7 @@ function renderChannels(channels) {
     header.className = "card-header";
     const nameDiv = document.createElement("div");
     nameDiv.className = "channel-name";
-    nameDiv.innerHTML = `<span>${escapeHtml(ch.name)}</span><span style="font-size:12px; color:var(--accent2);">📅</span>`;
+    nameDiv.innerHTML = `${escapeHtml(ch.name)} <span style="font-size:12px;">📅</span>`;
     const currentDiv = document.createElement("div");
     currentDiv.className = "current-program";
     if (current) {
@@ -285,8 +260,9 @@ async function init() {
     filteredChannels = [...channelsList];
     renderChannels(filteredChannels);
   } catch (err) {
+    console.error(err);
     container.innerHTML = `<div class="error">
-      <p>❌ Impossibile caricare la guida programmi.<br>Dettaglio: ${err.message}</p>
+      <p>❌ Impossibile caricare la guida programmi.</p>
       <button onclick="init()">⟳ Riprova</button>
     </div>`;
   }
