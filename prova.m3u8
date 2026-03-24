@@ -159,6 +159,9 @@ https://edge-001.streamup.eu/origin/bike_abr/playlist.m3u8
 #EXTINF:-1 tvg-chno="64" tvg-id="SuperTennis.it" tvg-name="SuperTennis" tvg-logo="https://i.ibb.co/GfjYBG2s/224-super-tennis-it.png" group-title="SPORT",SuperTennis
 https://live-embed.supertennix.hiway.media/restreamer/supertennix_client/gpu-a-c0-16/restreamer/outgest/aa3673f1-e178-44a9-a947-ef41db73211a/manifest.m3u8
 
+#EXTINF:-1 tvg-chno="110" tvg-id="ZONADAZN.it" tvg-name="DAZN 1" tvg-logo="https://i.ibb.co/hSnQ5q2/dazn1.png" group-title="SKY",DAZN 1
+https://cc1.screenistream.xyz:8080/stream/229/index.m3u8?token=T4Nz6WCt2Uwlqma4
+
 #EXTINF:-1 tvg-chno="111" tvg-id="SkySport24.it" tvg-name="Sky Sport 24" tvg-logo="https://i.ibb.co/KjsLXQpw/200-sky-sport-24-it.png" group-title="SKY",Sky Sport 24
 https://cc1.screenistream.xyz:8080/stream/238/index.m3u8?token=T4Nz6WCt2Uwlqma4
 
@@ -191,5 +194,15 @@ https://cc1.screenistream.xyz:8080/stream/237/index.m3u8?token=T4Nz6WCt2Uwlqma4
 
 #EXTINF:-1 tvg-chno="121" tvg-id="SkySportLegend.it" tvg-name="Sky Sports Legend" tvg-logo="https://i.ibb.co/r2qWYmqj/212-sky-sport-legend-it.png" group-title="SKY",Sky Sports Legend
 https://cc1.screenistream.xyz:8080/stream/240/index.m3u8?token=T4Nz6WCt2Uwlqma4
+
+#EXTINF:-1 tvg-chno="22" tvg-id="" tvg-name="Sky Sport Mix" tvg-logo="https://i.ibb.co/cXYSBfRP/211-sky-sport-mix-it.png" group-title="SKY",Sky Sport Mix
+https://cc1.screenistream.xyz:8080/stream/241/index.m3u8?token=T4Nz6WCt2Uwlqma4
+
+#EXTINF:-1 tvg-chno="23" tvg-id="RSILA1.it" tvg-name="RSI La1" tvg-logo="http://odmsto.com/uploads/tv_image/sm/rsi-la1.png" group-title="INTERNAZIONALE",RSI La1
+https://viamotionhsi.netplus.ch/live/eds/rsila1hd/browser-HLS8/rsila1hd.m3u8
+
+#EXTINF:-1 tvg-chno="24" tvg-id="RSILA2.it" tvg-name="RSI La2" tvg-logo="http://odmsto.com/uploads/tv_image/sm/rsi-la2-i2lwhb01iqwr.png" group-title="INTERNAZIONALE",RSI La2
+https://viamotionhsi.netplus.ch/live/eds/rsila2hd/browser-HLS8/rsila2hd.m3u8
+
 
 
