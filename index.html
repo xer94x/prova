@@ -1,0 +1,445 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DTTstream — Digitale Terrestre Italia</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;900&family=Barlow:wght@300;400;500;600&display=swap');
+:root{
+  --bg:#08080e;--surface:#0f0f1a;--card:#141420;--card2:#1a1a2a;
+  --border:#1e1e30;--border2:#2a2a40;
+  --accent:#2979ff;--accent2:#82b1ff;--adim:rgba(41,121,255,.1);
+  --red:#ff1744;--gold:#ffd740;
+  --text:#e2e2ee;--muted:#44445a;--muted2:#6a6a85;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--text);font-family:'Barlow',sans-serif;min-height:100vh; overflow-x: hidden;}
+::-webkit-scrollbar{width:5px;height:5px}
+::-webkit-scrollbar-track{background:var(--surface)}
+::-webkit-scrollbar-thumb{background:var(--border2);border-radius:3px}
+
+header{background:var(--surface);border-bottom:1px solid var(--border);padding:0 18px;height:52px;display:flex;align-items:center;gap:12px;position:sticky;top:0;z-index:200}
+.logo{font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:20px;letter-spacing:2px;text-transform:uppercase;display:flex;align-items:center;gap:5px}
+.logo-a{color:var(--accent)}.logo-b{color:var(--text)}
+#ch-count{font-size:11px;color:var(--muted2)}
+.hdr-r{margin-left:auto;display:flex;align-items:center;gap:8px}
+
+.pill{display:flex;align-items:center;gap:5px;font-size:10px;color:var(--muted2);background:var(--card);border:1px solid var(--border);border-radius:20px;padding:3px 9px}
+.pill .dot{width:6px;height:6px;border-radius:50%;background:var(--muted);flex-shrink:0;transition:background .3s}
+.pill.ok .dot{background:var(--accent);box-shadow:0 0 4px var(--accent)}
+.pill.err .dot{background:var(--red)}
+.pill.loading .dot{background:var(--accent2);animation:blink 1s infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.2}}
+
+.top-bar{background:var(--surface);border-bottom:1px solid var(--border);padding:7px 18px;display:flex;gap:7px;align-items:center;flex-wrap:wrap}
+#search{flex:1;max-width:320px;background:var(--card);border:1px solid var(--border2);border-radius:6px;padding:7px 12px;color:var(--text);font-family:'Barlow',sans-serif;font-size:13px;outline:none;transition:border-color .2s}
+#search:focus{border-color:var(--accent)}
+
+.btn{background:transparent;border:1px solid var(--border2);border-radius:6px;padding:6px 12px;color:var(--muted2);font-family:'Barlow',sans-serif;font-size:11px;cursor:pointer;transition:all .15s;white-space:nowrap}
+.btn:hover{border-color:var(--accent);color:var(--accent2)}
+
+.tabs-wrap,.cats-wrap{position:relative;border-bottom:1px solid var(--border)}
+.tabs-wrap{background:var(--surface);min-height:36px}
+.cats-wrap{background:var(--card);min-height:32px}
+
+.tabs-arrow,.cats-arrow{position:absolute;top:0;bottom:0;width:32px;display:flex;align-items:center;justify-content:center;border:none;color:var(--muted2);cursor:pointer;z-index:2;transition:color .15s;background:var(--surface)}
+.tabs-arrow:hover,.cats-arrow:hover{color:var(--accent2)}
+.tabs-arrow.left{left:0;background:linear-gradient(90deg,var(--surface) 60%,transparent)}
+.tabs-arrow.right{right:0;background:linear-gradient(270deg,var(--surface) 60%,transparent)}
+.cats-arrow.left{left:0;background:linear-gradient(90deg,var(--card) 60%,transparent)}
+.cats-arrow.right{right:0;background:linear-gradient(270deg,var(--card) 60%,transparent)}
+.hidden{display:none}
+
+.group-tabs,.cat-strip{display:flex;overflow-x:auto;scroll-behavior:smooth;align-items:center}
+.group-tabs::-webkit-scrollbar,.cat-strip::-webkit-scrollbar{display:none}
+.group-tabs{padding:0 36px; gap:0}
+.cat-strip{padding:5px 32px; gap:4px}
+
+.gtab{background:none;border:none;border-bottom:2px solid transparent;padding:9px 12px;font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted2);cursor:pointer;white-space:nowrap}
+.gtab.active{color:var(--accent2);border-bottom-color:var(--accent)}
+.cat-btn{background:var(--surface);border:1px solid var(--border);border-radius:4px;padding:2px 9px;font-size:10px;font-family:'Barlow Condensed',sans-serif;font-weight:700;text-transform:uppercase;color:var(--muted2);cursor:pointer;white-space:nowrap}
+.cat-btn.active{background:var(--adim);border-color:rgba(41,121,255,.4);color:var(--accent2)}
+
+.content{padding:14px 18px 60px}
+.ch-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(155px,1fr));gap:12px}
+
+/* CARD CANALE */
+.ch-card{background:var(--card);border:1px solid var(--border);border-radius:12px;overflow:hidden;display:flex;flex-direction:column;transition:all .2s; cursor: pointer; position: relative;}
+.ch-card:hover{background:var(--card2);border-color:var(--accent);transform:translateY(-3px);box-shadow:0 8px 24px rgba(0,0,0,0.5)}
+
+.ch-logo-wrap{height:85px;display:flex;align-items:center;justify-content:center;padding:15px;background:#1a1a2e;position:relative;}
+.ch-logo{max-width:100%;max-height:55px;object-fit:contain;z-index:1}
+.ch-num{position:absolute;top:6px;left:6px;font-size:9px;font-weight:900;color:#fff;background:rgba(0,0,0,0.6);padding:1px 5px;border-radius:4px;font-family:'Barlow Condensed'}
+.ch-src{position:absolute;top:6px;right:6px;font-size:8px;font-weight:700;padding:1px 5px;border-radius:4px;font-family:'Barlow Condensed'}
+.src-multi{background:rgba(41,121,255,0.2);color:var(--accent2);border:1px solid var(--adim)}
+
+.ch-info{padding:10px;display:flex;flex-direction:column;gap:5px;flex:1}
+.ch-name{font-size:13px;font-weight:700;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+
+/* STILE EPG NELLA CARD */
+.ch-epg{
+    background: rgba(0,0,0,0.25);
+    padding: 6px;
+    border-radius: 6px;
+    font-size: 10px;
+    border-left: 2px solid var(--accent);
+    margin: 2px 0;
+    cursor: help;
+}
+.epg-now{color: var(--accent2); font-weight: 700; display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-bottom: 2px;}
+.epg-time{color: var(--muted2); font-size: 9px; display: block;}
+.epg-progress-bg{height: 3px; background: var(--border2); border-radius: 2px; margin-top: 4px; overflow: hidden;}
+.epg-progress-bar{height: 100%; background: var(--accent); width: 0%; transition: width 0.5s;}
+
+.ch-links{display:flex;flex-wrap:wrap;gap:4px;margin-top:auto}
+.lnk-btn{flex:1;min-width:0;display:flex;align-items:center;justify-content:center;border-radius:5px;padding:5px;font-family:'Barlow Condensed',sans-serif;font-size:10px;font-weight:700;cursor:pointer;text-decoration:none;border:1px solid;transition: 0.2s;}
+.lnk-local{background:rgba(41,121,255,.12);border-color:rgba(41,121,255,.3);color:#82b1ff}
+.lnk-local:hover{background:var(--accent);color:#fff}
+
+/* MODALE EPG */
+#epg-modal{display:none; position:fixed; inset:0; background:rgba(0,0,0,0.85); z-index:1000; backdrop-filter:blur(6px); padding:20px; overflow-y:auto;}
+.modal-box{max-width:500px; margin:40px auto; background:var(--surface); border:1px solid var(--border); border-radius:16px; overflow:hidden; box-shadow:0 20px 50px rgba(0,0,0,0.5)}
+.modal-hdr{padding:18px; border-bottom:1px solid var(--border); display:flex; justify-content:space-between; align-items:center; background:var(--card)}
+.modal-body{padding:10px;}
+.prog-row{display:flex; gap:12px; padding:12px; border-bottom:1px solid var(--border2); align-items: flex-start;}
+.prog-row.active{background:var(--adim); border-left:4px solid var(--accent)}
+.prog-time{font-family:'Barlow Condensed'; font-weight:700; color:var(--accent2); font-size:13px; min-width:40px}
+.prog-info{display:flex; flex-direction:column; gap:2px}
+.prog-title{font-weight:600; font-size:14px; color:var(--text)}
+.prog-desc{font-size:11px; color:var(--muted2); line-height:1.4}
+
+.skeleton{border-radius:12px;min-height:180px;background:linear-gradient(90deg,var(--card) 25%,#181828 50%,var(--card) 75%);background-size:200% 100%;animation:shimmer 1.3s infinite}
+@keyframes shimmer{0%{background-position:200%}100%{background-position:-200%}}
+#empty{display:none;padding:60px;text-align:center;color:var(--muted2)}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo"><span class="logo-a">DTT</span><span class="logo-b">stream</span> 🇮🇹</div>
+  <span id="ch-count">Caricamento...</span>
+  <div class="hdr-r">
+    <div class="pill loading" id="epg-status"><div class="dot"></div><span id="epg-txt">EPG...</span></div>
+    <div class="pill loading" id="spill"><div class="dot"></div><span id="stxt">Carico...</span></div>
+  </div>
+</header>
+
+<div class="top-bar">
+  <input id="search" type="text" placeholder="🔍 Cerca canale o numero..." oninput="render()">
+  <button class="btn" id="rbtn" onclick="init(true)" disabled>↺ Ricarica</button>
+</div>
+
+<div class="tabs-wrap">
+  <button class="tabs-arrow left hidden" id="tabs-left" onclick="scrollTabs(-1)">&#8249;</button>
+  <div class="group-tabs" id="gtabs"></div>
+  <button class="tabs-arrow right hidden" id="tabs-right" onclick="scrollTabs(1)">&#8250;</button>
+</div>
+
+<div class="cats-wrap">
+  <button class="cats-arrow left hidden" id="cats-left" onclick="scrollCats(-1)">&#8249;</button>
+  <div class="cat-strip" id="cstrip"></div>
+  <button class="cats-arrow right hidden" id="cats-right" onclick="scrollCats(1)">&#8250;</button>
+</div>
+
+<div class="content" id="content">
+    <div class="ch-grid" id="skel"></div>
+</div>
+
+<div id="empty">Nessun canale trovato</div>
+
+<!-- Modale Programmazione -->
+<div id="epg-modal" onclick="closeEpg()">
+    <div class="modal-box" onclick="event.stopPropagation()">
+        <div class="modal-hdr">
+            <h3 id="m-name" style="font-family:'Barlow Condensed'; letter-spacing:1px">GUIDA TV</h3>
+            <button class="btn" onclick="closeEpg()">CHIUDI</button>
+        </div>
+        <div id="m-list" class="modal-body"></div>
+    </div>
+</div>
+
+<script>
+/** --- LOGICA CORE & EPG --- **/
+let ALL = [];
+let EPG_DATA = {}; 
+let activeGroup = "Tutti";
+let activeCat = "Tutte";
+
+// Normalizzazione nomi per EPG (Mappa canali principali)
+const EPG_MAP = {
+    "rai1": "Rai1.it", "rai2": "Rai2.it", "rai3": "Rai3.it", "rai4": "Rai4.it", "rai5": "Rai5.it",
+    "rai movie": "RaiMovie.it", "rai premium": "RaiPremium.it", "rai sport": "RaiSport.it",
+    "rai news 24": "RaiNews24.it", "rai storia": "RaiStoria.it", "rai gulp": "RaiGulp.it", "rai yoyo": "RaiYoyo.it",
+    "canale 5": "Canale5.it", "italia 1": "Italia1.it", "rete 4": "Rete4.it", "la7": "La7.it", "la7d": "La7d.it",
+    "iris": "Iris.it", "top crime": "TopCrime.it", "cine 34": "Cine34.it", "focus": "Focus.it", "20 mediaset": "Canale20.it",
+    "nove": "Nove.it", "real time": "RealTime.it", "dmax": "Dmax.it", "giallo": "Giallo.it", "motor trend": "MotorTrend.it",
+    "cielo": "Cielo.it", "tv8": "Tv8.it", "sky tg24": "SkyTg24.it", "super!": "Super.it", "frisbee": "Frisbee.it", "k2": "K2.it"
+};
+
+async function loadEPG() {
+    const status = document.getElementById("epg-status");
+    const txt = document.getElementById("epg-txt");
+    try {
+        const url = "https://www.epgitalia.tv/gzip";
+        const proxyUrl = "https://api.allorigins.win/get?url=" + encodeURIComponent(url);
+        
+        const res = await fetch(proxyUrl);
+        const json = await res.json();
+        // Decode base64 string from AllOrigins
+        const b64Data = json.contents.split(',')[1] || json.contents;
+        const binaryString = atob(b64Data);
+        const bytes = new Uint8Array(binaryString.length);
+        for (let i = 0; i < binaryString.length; i++) bytes[i] = binaryString.charCodeAt(i);
+
+        // Decompressione nativa GZIP
+        const ds = new DecompressionStream("gzip");
+        const decompressedStream = new Response(bytes).body.pipeThrough(ds);
+        const xmlText = await new Response(decompressedStream).text();
+        
+        const xml = new DOMParser().parseFromString(xmlText, "text/xml");
+        const programs = xml.getElementsByTagName("programme");
+
+        EPG_DATA = {};
+        for (let p of programs) {
+            const cid = p.getAttribute("channel");
+            if (!EPG_DATA[cid]) EPG_DATA[cid] = [];
+            EPG_DATA[cid].push({
+                s: parseEPGTime(p.getAttribute("start")),
+                e: parseEPGTime(p.getAttribute("stop")),
+                t: p.getElementsByTagName("title")[0]?.textContent || "Senza titolo",
+                d: p.getElementsByTagName("desc")[0]?.textContent || ""
+            });
+        }
+        status.className = "pill ok";
+        txt.textContent = "EPG ✓";
+        render(); // Aggiorna le card con i programmi
+    } catch (e) {
+        console.error("EPG Error:", e);
+        status.className = "pill err";
+        txt.textContent = "EPG ✗";
+    }
+}
+
+function parseEPGTime(ts) {
+    // 20240520103000 +0200
+    const y = ts.substring(0,4), m = ts.substring(4,6)-1, d = ts.substring(6,8);
+    const h = ts.substring(8,10), min = ts.substring(10,12);
+    return new Date(y, m, d, h, min);
+}
+
+function getChProgram(name) {
+    const clean = name.toLowerCase().replace(/hd/g, "").trim();
+    const eid = EPG_MAP[clean] || Object.keys(EPG_DATA).find(k => k.toLowerCase().includes(clean));
+    if (!eid || !EPG_DATA[eid]) return null;
+    const now = new Date();
+    const current = EPG_DATA[eid].find(p => now >= p.s && now < p.e);
+    return { current, all: EPG_DATA[eid], id: eid };
+}
+
+function showFullEpg(chName) {
+    const data = getChProgram(chName);
+    const modal = document.getElementById("epg-modal");
+    const list = document.getElementById("m-list");
+    document.getElementById("m-name").textContent = chName.toUpperCase();
+    list.innerHTML = "";
+
+    if (!data) {
+        list.innerHTML = "<div style='padding:20px; text-align:center; color:var(--muted2)'>Programmazione non disponibile per questo canale.</div>";
+    } else {
+        const now = new Date();
+        // Mostra i programmi dalle ultime 2 ore in poi
+        const filtered = data.all.filter(p => p.e > (now - 7200000)).slice(0, 30);
+        filtered.forEach(p => {
+            const isNow = now >= p.s && now < p.e;
+            const row = document.createElement("div");
+            row.className = `prog-row ${isNow ? 'active' : ''}`;
+            row.innerHTML = `
+                <div class="prog-time">${p.s.getHours().toString().padStart(2,'0')}:${p.s.getMinutes().toString().padStart(2,'0')}</div>
+                <div class="prog-info">
+                    <div class="prog-title">${p.t} ${isNow ? '• <small>IN ONDA</small>' : ''}</div>
+                    <div class="prog-desc">${p.d.substring(0, 160)}${p.d.length > 160 ? '...' : ''}</div>
+                </div>
+            `;
+            list.appendChild(row);
+        });
+    }
+    modal.style.display = "block";
+    document.body.style.overflow = "hidden";
+}
+
+function closeEpg() {
+    document.getElementById("epg-modal").style.display = "none";
+    document.body.style.overflow = "auto";
+}
+
+/** --- LOGICA UI ESISTENTE ADATTATA --- **/
+function updateArrows(el,lBtn,rBtn){lBtn.classList.toggle("hidden",el.scrollLeft<=4);rBtn.classList.toggle("hidden",el.scrollLeft>=el.scrollWidth-el.clientWidth-4);}
+function scrollTabs(d){document.getElementById("gtabs").scrollBy({left:d*200,behavior:"smooth"})}
+function scrollCats(d){document.getElementById("cstrip").scrollBy({left:d*200,behavior:"smooth"})}
+
+function makeCard(ch) {
+  const ini = ch.name.split(" ").filter(Boolean).slice(0,2).map(w=>w[0]||"").join("").toUpperCase()||"TV";
+  const card = document.createElement("div"); 
+  card.className = "ch-card";
+  
+  // Badge e Logo
+  const numBadge = ch.dttNum ? `<span class="ch-num">${String(ch.dttNum).padStart(3,"0")}</span>` : "";
+  let srcBadge = (ch.streams.length > 1) ? `<span class="ch-src src-multi">${ch.streams.length} LINK</span>` : "";
+  const logoHtml = ch.logo ? `<img class="ch-logo" src="${ch.logo}" alt="" loading="lazy" onerror="this.outerHTML='<div class=ch-logo-ph>${ini}</div>'">` : `<div class="ch-logo-ph">${ini}</div>`;
+  
+  // Parte EPG
+  const progData = getChProgram(ch.name);
+  let epgSnippet = `<div class="ch-epg" style="opacity:0.4"><span class="epg-now">Nessuna info guida</span></div>`;
+  
+  if (progData && progData.current) {
+      const p = progData.current;
+      const perc = Math.min(100, Math.max(0, ((new Date() - p.s) / (p.e - p.s)) * 100));
+      epgSnippet = `
+        <div class="ch-epg" onclick="event.stopPropagation(); showFullEpg('${ch.name.replace(/'/g,"\\'")}')">
+            <span class="epg-now">${p.t}</span>
+            <span class="epg-time">${p.s.getHours()}:${p.s.getMinutes().toString().padStart(2,'0')} - ${p.e.getHours()}:${p.e.getMinutes().toString().padStart(2,'0')}</span>
+            <div class="epg-progress-bg"><div class="epg-progress-bar" style="width:${perc}%"></div></div>
+        </div>`;
+  }
+
+  // Links
+  let linksHtml = "";
+  if(ch.streams.length === 1) {
+    linksHtml = `<a class="lnk-btn lnk-local" href="${ch.streams[0].url}" target="_blank" rel="noopener" onclick="event.stopPropagation()">▶ GUARDA</a>`;
+  } else {
+    linksHtml = ch.streams.map((s,i) => `<a class="lnk-btn lnk-local" href="${s.url}" target="_blank" rel="noopener" onclick="event.stopPropagation()">${i === 0 ? '▶ 1' : i+1}</a>`).join("");
+  }
+
+  card.innerHTML = `
+    <div class="ch-logo-wrap">${numBadge}${srcBadge}${logoHtml}</div>
+    <div class="ch-info">
+        <div class="ch-name" title="${ch.name}">${ch.name}</div>
+        ${epgSnippet}
+        <div class="ch-links">${linksHtml}</div>
+    </div>`;
+
+  card.onclick = () => window.open(ch.streams[0].url, "_blank");
+  return card;
+}
+
+// Re-implementazione funzioni di filtraggio e rendering originali (compattate)
+const GROUP_ORDER=["RAI","Mediaset","Nazionali","Internazionali","Sport","News","Kids","Musica","Religiosi","Cinema","Streaming","Regioni","Altro"];
+const GMAP={"Canali RAI":"RAI","Canali Mediaset":"Mediaset","Altri Canali Nazionali":"Nazionali","Canali per Bambini/Ragazzi":"Kids","Canali Sport Italiani":"Sport","News e Canali Istituzionali":"News","Canali Religiosi":"Religiosi","Canali Musicali (Web Radio)":"Musica","Samsung Channels":"Streaming","LG Channels":"Streaming","Rakuten Tv":"Streaming","Wedo Tv":"Streaming","Altro/HbbTv":"Altro"};
+
+function normKey(n){return n.toLowerCase().replace(/[''`]/g,"'").replace(/[^\w]/g,"").trim();}
+function cleanName(n){return n.replace(/\s*[\[\(].*?[\]\)]/g,"").replace(/\s*[\|\-–—].*$/g,"").trim();}
+
+function buildChannels(rd, rf, rk, rp, rw, rn) {
+  const map = {};
+  const add = (name, logo, group, url, src, num=null) => {
+    const k = normKey(name);
+    if(!map[k]) map[k] = {name: cleanName(name), logo, group, dttNum: num, streams: [], urls: new Set()};
+    if(!map[k].urls.has(url)){ map[k].urls.add(url); map[k].streams.push({url, source: src}); }
+    if(logo && !map[k].logo) map[k].logo = logo;
+    if(num && !map[k].dttNum) map[k].dttNum = num;
+  };
+
+  LOCAL_CHANNELS.forEach(c => c.urls.forEach(u => add(c.name, c.logo, c.group, u, 'local', c.num)));
+  rd.forEach(r => add(r.name, r.logo, GMAP[r.group]||"Altro", r.url, 'dtt'));
+  rf.forEach(r => add(r.name, r.logo, "Nazionali", r.url, 'free'));
+  
+  return Object.values(map).filter(c => c.streams.length > 0);
+}
+
+function render() {
+  const q = document.getElementById("search").value.toLowerCase();
+  let vis = ALL.filter(c => {
+    const matchSearch = c.name.toLowerCase().includes(q) || (c.dttNum && c.dttNum.includes(q));
+    const matchGroup = activeGroup === "Tutti" || c.group === activeGroup;
+    return matchSearch && matchGroup;
+  });
+
+  vis.sort((a,b) => (a.dttNum || 999) - (b.dttNum || 999) || a.name.localeCompare(b.name));
+
+  const content = document.getElementById("content");
+  content.innerHTML = "";
+  const grid = document.createElement("div"); grid.className = "ch-grid";
+  vis.forEach(ch => grid.appendChild(makeCard(ch)));
+  content.appendChild(grid);
+  document.getElementById("ch-count").textContent = vis.length + " canali";
+}
+
+function renderTabs() {
+  const el = document.getElementById("gtabs"); el.innerHTML = "";
+  ["Tutti", ...GROUP_ORDER].forEach(g => {
+    const b = document.createElement("button");
+    b.className = "gtab" + (g === activeGroup ? " active" : "");
+    b.textContent = g;
+    b.onclick = () => { activeGroup = g; renderTabs(); render(); };
+    el.appendChild(b);
+  });
+}
+
+function parseM3U(text) {
+  const lines = text.split('\n'), raw = []; let cur = null;
+  lines.forEach(l => {
+    if(l.startsWith("#EXTINF")) {
+      const nm = l.match(/,(.+)$/);
+      const lg = l.match(/tvg-logo="([^"]+)"/);
+      const gr = l.match(/group-title="([^"]+)"/);
+      cur = { name: nm?nm[1].trim():"Unknown", logo: lg?lg[1]:"", group: gr?gr[1]:"" };
+    } else if(l.trim() && !l.startsWith("#") && cur) {
+      cur.url = l.trim(); raw.push(cur); cur = null;
+    }
+  });
+  return raw;
+}
+
+async function init(force = false) {
+  document.getElementById("rbtn").disabled = true;
+  document.getElementById("stxt").textContent = "Carico...";
+  
+  try {
+    const proxy = "https://api.codetabs.com/v1/proxy?quest=";
+    const [dtt, free] = await Promise.all([
+      fetch(proxy + encodeURIComponent("https://tivustream.website/ios/tivustream_list.m3u")).then(r => r.text()),
+      fetch(proxy + encodeURIComponent("https://raw.githubusercontent.com/Free-TV/IPTV/master/playlists/playlist_italy.m3u8")).then(r => r.text())
+    ]);
+
+    ALL = buildChannels(parseM3U(dtt), parseM3U(free), [], [], [], []);
+    document.getElementById("stxt").textContent = "Pronto ✓";
+    document.getElementById("spill").className = "pill ok";
+    renderTabs();
+    render();
+    loadEPG(); // Carica EPG dopo i canali
+  } catch (e) {
+    document.getElementById("stxt").textContent = "Errore";
+    document.getElementById("spill").className = "pill err";
+  }
+  document.getElementById("rbtn").disabled = false;
+}
+
+// Inizializzazione frecce scorrimento
+const tabs=document.getElementById("gtabs"), tL=document.getElementById("tabs-left"), tR=document.getElementById("tabs-right");
+tabs.onscroll = () => updateArrows(tabs, tL, tR);
+
+/** --- DATI CANALI LOCALI --- **/
+const LOCAL_CHANNELS = [
+  { num:"001", name:"Rai 1", logo:"https://i.ibb.co/qMcsYXFB/101-rai-1-it.png", group:"RAI", urls:["https://viamotionhsi.netplus.ch/live/eds/rai1/browser-HLS8/rai1.m3u8","https://mediapolis.rai.it/relinker/relinkerServlet.htm?cont=2606803&output=16"] },
+  { num:"002", name:"Rai 2", logo:"https://i.ibb.co/zHZXx5Hw/102-rai-2-it.png", group:"RAI", urls:["https://viamotionhsi.netplus.ch/live/eds/rai2/browser-HLS8/rai2.m3u8","https://mediapolis.rai.it/relinker/relinkerServlet.htm?cont=308718&output=16"] },
+  { num:"003", name:"Rai 3", logo:"https://i.ibb.co/cqKGmMb/103-rai-3-it.png", group:"RAI", urls:["https://viamotionhsi.netplus.ch/live/eds/rai3/browser-HLS8/rai3.m3u8","https://mediapolis.rai.it/relinker/relinkerServlet.htm?cont=308709&output=16"] },
+  { num:"004", name:"Rete 4", logo:"https://i.ibb.co/jk3Fb0W0/104-rete4-it.png", group:"Mediaset", urls:["https://live02-seg.msf.cdn.mediaset.net/live/ch-r4/r4-clr.isml/index.m3u8"] },
+  { num:"005", name:"Canale 5", logo:"https://i.ibb.co/XfCQpn47/105-canale5-it.png", group:"Mediaset", urls:["https://live02-seg.msf.cdn.mediaset.net/live/ch-c5/c5-clr.isml/index.m3u8"] },
+  { num:"006", name:"Italia 1", logo:"https://i.ibb.co/Jj0PL8dX/106-italia1-it.png", group:"Mediaset", urls:["https://live02-seg.msf.cdn.mediaset.net/live/ch-i1/i1-clr.isml/index.m3u8"] },
+  { num:"007", name:"La7", logo:"https://i.ibb.co/zy1ywT5/107-la7-it.png", group:"Nazionali", urls:["https://viamotionhsi.netplus.ch/live/eds/la7/browser-HLS8/la7.m3u8"] },
+  { num:"008", name:"TV8", logo:"https://i.ibb.co/Mx9S1k1H/125-tv8-it.png", group:"Nazionali", urls:["https://hlslive-web-gcdn-skycdn-it.akamaized.net/TACT/11223/tv8web/master.m3u8"] },
+  { num:"009", name:"Nove", logo:"https://i.ibb.co/jPZ8bzRP/009-nove-it.png", group:"Nazionali", urls:["https://viamotionhsi.netplus.ch/live/eds/nove/browser-HLS8/nove.m3u8"] },
+  { num:"020", name:"20 Mediaset", logo:"https://i.imgur.com/It13jwX.png", group:"Mediaset", urls:["https://live02-seg.msf.cdn.mediaset.net/live/ch-lb/lb-clr.isml/index.m3u8"] },
+  { num:"024", name:"Rai News 24", logo:"https://i.ibb.co/nM1MwpzQ/024-rai-news-24-it.png", group:"RAI", urls:["https://mediapolis.rai.it/relinker/relinkerServlet.htm?cont=1&output=16"] },
+  { num:"025", name:"TgCom 24", logo:"https://i.ibb.co/4wsbVkC2/025-tgcom24-it.png", group:"Mediaset", urls:["https://live02-seg.msf.cdn.mediaset.net/live/ch-kf/kf-clr.isml/index.m3u8"] },
+  { num:"051", name:"SuperTennis", logo:"https://i.ibb.co/GfjYBG2s/224-super-tennis-it.png", group:"Sport", urls:["https://live-embed.supertennix.hiway.media/restreamer/supertennix_client/gpu-a-c0-16/restreamer/outgest/aa3673f1-e178-44a9-a947-ef41db73211a/manifest.m3u8"] }
+];
+
+// Avvio
+function buildSkel(){ const g=document.getElementById("skel"); for(let i=0;i<12;i++){ const d=document.createElement("div"); d.className="skeleton"; g.appendChild(d); } }
+buildSkel();
+init();
+</script>
+</body>
+</html>
