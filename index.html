@@ -488,8 +488,8 @@ function renderCats(){
   setTimeout(()=>updateArrows(document.getElementById("cstrip"),document.getElementById("cats-left"),document.getElementById("cats-right")),50);
 }
 
-// ----- EPG integration -----
-let epgData = null; // will store { channelMap: { normalizedName: [programs] } }
+// ----- EPG integration (fixed) -----
+let epgData = null; // { channelMap: Map(normName -> programs) }
 let epgLoading = false;
 
 async function fetchAndParseEPG() {
@@ -498,14 +498,20 @@ async function fetchAndParseEPG() {
   epgLoading = true;
   try {
     const url = "https://www.epgitalia.tv/gzip";
-    const response = await fetch(url);
+    const proxyUrl = "https://api.allorigins.win/get?url=" + encodeURIComponent(url);
+    const response = await fetch(proxyUrl);
     if (!response.ok) throw new Error("HTTP " + response.status);
-    const compressed = await response.arrayBuffer();
-    const decompressed = pako.inflate(compressed, { to: "string" });
+    const json = await response.json();
+    const compressedBase64 = json.contents;
+    if (!compressedBase64) throw new Error("Nessun contenuto");
+    const binaryString = atob(compressedBase64);
+    const bytes = new Uint8Array(binaryString.length);
+    for (let i = 0; i < binaryString.length; i++) bytes[i] = binaryString.charCodeAt(i);
+    const decompressed = pako.inflate(bytes, { to: "string" });
     const parser = new DOMParser();
     const xmlDoc = parser.parseFromString(decompressed, "text/xml");
     const programmes = xmlDoc.querySelectorAll("programme");
-    const channelMap = new Map(); // key: normalized channel name, value: array of programs sorted by start time
+    const channelMap = new Map();
     for (let prog of programmes) {
       const channel = prog.getAttribute("channel");
       if (!channel) continue;
@@ -520,7 +526,6 @@ async function fetchAndParseEPG() {
       if (!channelMap.has(normName)) channelMap.set(normName, []);
       channelMap.get(normName).push({ start, stop, title, desc });
     }
-    // sort each channel's programmes by start time
     for (let [_, arr] of channelMap.entries()) {
       arr.sort((a,b) => (a.start || "").localeCompare(b.start || ""));
     }
@@ -539,7 +544,6 @@ function getCurrentPrograms(programs) {
   if (!programs || programs.length === 0) return [];
   const now = new Date();
   const nowStr = now.toISOString().replace(/[-:]/g, "").slice(0, 14);
-  // find current program (start <= now < stop)
   let currentIndex = -1;
   for (let i = 0; i < programs.length; i++) {
     const p = programs[i];
@@ -549,11 +553,9 @@ function getCurrentPrograms(programs) {
     }
   }
   if (currentIndex === -1) {
-    // maybe between programs: return next upcoming
     const next = programs.find(p => p.start > nowStr);
     return next ? [next] : [];
   }
-  // return current and next 3 (or up to 4 total)
   const result = [programs[currentIndex]];
   for (let i = currentIndex+1; i < Math.min(currentIndex+4, programs.length); i++) {
     result.push(programs[i]);
@@ -563,7 +565,6 @@ function getCurrentPrograms(programs) {
 
 function formatEpgTime(startStr) {
   if (!startStr) return "";
-  // startStr format: YYYYMMDDhhmmss +0000
   const year = startStr.slice(0,4);
   const month = startStr.slice(4,6);
   const day = startStr.slice(6,8);
@@ -609,18 +610,17 @@ async function toggleEPG(cardId, channelName) {
     container.classList.remove("show");
     return;
   }
-  // show loading
   container.classList.add("show");
-  container.innerHTML = '<div class="epg-timeline"><div class="epg-item" style="width:100%; text-align:center;">Caricamento EPG...</div></div>';
+  container.innerHTML = '<div class="epg-timeline"><div class="epg-item" style="width:100%; text-align:center;">⏳ Caricamento EPG...</div></div>';
   const epg = await fetchAndParseEPG();
   if (!epg) {
-    container.innerHTML = '<div class="epg-timeline"><div class="epg-item" style="width:100%; text-align:center;">EPG non disponibile</div></div>';
+    container.innerHTML = '<div class="epg-timeline"><div class="epg-item" style="width:100%; text-align:center;">❌ EPG non disponibile (errore di rete o formato)</div></div>';
     return;
   }
   const normName = normKey(channelName);
   const programs = epg.channelMap.get(normName);
-  if (!programs) {
-    container.innerHTML = '<div class="epg-timeline"><div class="epg-item" style="width:100%; text-align:center;">Nessun programma trovato per questo canale</div></div>';
+  if (!programs || programs.length === 0) {
+    container.innerHTML = '<div class="epg-timeline"><div class="epg-item" style="width:100%; text-align:center;">📺 Nessun programma trovato per questo canale</div></div>';
     return;
   }
   const currentAndNext = getCurrentPrograms(programs);
