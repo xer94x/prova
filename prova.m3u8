@@ -177,4 +177,7 @@ https://viamotionhsi.netplus.ch/live/eds/raisport1/browser-HLS8/raisport1.m3u8
 #EXTINF:-1 tvg-chno="59" tvg-id="MotorTrend.it" tvg-name="Motor Trend" tvg-logo="https://i.ibb.co/PzP2JNHF/discoveryturbo.webp" group-title="DISCOVERY",Motor Trend
 https://d205m6k582pec4.cloudfront.net/v1/master/3722c60a815c199d9c0ef36c5b73da68a62b09d1/cc-asg5puyzdtnqu/Motortrend_IT.m3u8
 
+#EXTINF:-1 tvg-chno="60" tvg-id="" tvg-name="Sportitalia HD Plus" tvg-logo="https://i.imgur.com/hu56Ya5.png" group-title="SPORT",Sportitalia HD Plus
+https://sportsitalia-samsungitaly.amagi.tv/playlist.m3u8
+
 
