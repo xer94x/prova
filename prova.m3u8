@@ -273,8 +273,14 @@ https://ilglobotv-live.akamaized.net/channels/InterTV/Live.m3u8
 #EXTINF:-1 tvg-chno="106" tvg-id="" tvg-name="Inter TV 2" tvg-logo="https://i.ibb.co/qYkxLj4b/471-inter-tv-it.png" group-title="SPORT",Inter TV 2
 https://amg27604-amg27604c2-amgplt0148.playout.now3.amagi.tv/playlist/amg27604-amg27604c2-amgplt0148/playlist.m3u8
 
-#EXTINF:-1 tvg-chno="110" tvg-id="" tvg-name="Senato TV" tvg-logo="https://i.ibb.co/Fq3ywXcB/512-senato-tv-it.png" group-title="NAZIONALI",Senato TV
+#EXTINF:-1 tvg-chno="107" tvg-id="" tvg-name="Senato TV" tvg-logo="https://i.ibb.co/Fq3ywXcB/512-senato-tv-it.png" group-title="NAZIONALI",Senato TV
 https://senato-live.morescreens.com/SENATO_1_001/playlist.m3u8
+
+#EXTINF:-1 tvg-chno="108" tvg-id="RSILA1.it" tvg-name="RSI La1" tvg-logo="http://odmsto.com/uploads/tv_image/sm/rsi-la1.png" group-title="INTERNAZIONALE",RSI La1
+https://viamotionhsi.netplus.ch/live/eds/rsila1hd/browser-HLS8/rsila1hd.m3u8
+
+#EXTINF:-1 tvg-chno="109" tvg-id="RSILA2.it" tvg-name="RSI La2" tvg-logo="http://odmsto.com/uploads/tv_image/sm/rsi-la2-i2lwhb01iqwr.png" group-title="INTERNAZIONALE",RSI La2
+https://viamotionhsi.netplus.ch/live/eds/rsila2hd/browser-HLS8/rsila2hd.m3u8
 
 #EXTINF:-1 tvg-chno="110" tvg-id="ZONADAZN.it" tvg-name="DAZN 1" tvg-logo="https://i.ibb.co/hSnQ5q2/dazn1.png" group-title="SKY",DAZN 1
 https://cc1.screenistream.xyz:8080/stream/229/index.m3u8?token=T4Nz6WCt2Uwlqma4
@@ -315,11 +321,6 @@ https://cc1.screenistream.xyz:8080/stream/240/index.m3u8?token=T4Nz6WCt2Uwlqma4
 #EXTINF:-1 tvg-chno="122" tvg-id="" tvg-name="Sky Sport Mix" tvg-logo="https://i.ibb.co/cXYSBfRP/211-sky-sport-mix-it.png" group-title="SKY",Sky Sport Mix
 https://cc1.screenistream.xyz:8080/stream/241/index.m3u8?token=T4Nz6WCt2Uwlqma4
 
-#EXTINF:-1 tvg-chno="123" tvg-id="RSILA1.it" tvg-name="RSI La1" tvg-logo="http://odmsto.com/uploads/tv_image/sm/rsi-la1.png" group-title="INTERNAZIONALE",RSI La1
-https://viamotionhsi.netplus.ch/live/eds/rsila1hd/browser-HLS8/rsila1hd.m3u8
-
-#EXTINF:-1 tvg-chno="124" tvg-id="RSILA2.it" tvg-name="RSI La2" tvg-logo="http://odmsto.com/uploads/tv_image/sm/rsi-la2-i2lwhb01iqwr.png" group-title="INTERNAZIONALE",RSI La2
-https://viamotionhsi.netplus.ch/live/eds/rsila2hd/browser-HLS8/rsila2hd.m3u8
 
 
 
