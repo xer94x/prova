@@ -27,18 +27,6 @@ https://hlslive-web-gcdn-skycdn-it.akamaized.net/TACT/11223/tv8web/master.m3u8?h
 #EXTINF:-1 tvg-chno="9" tvg-id="NOVE.it" tvg-name="NOVE" tvg-logo="https://i.ibb.co/jPZ8bzRP/009-nove-it.png" group-title="DISCOVERY",NOVE
 https://viamotionhsi.netplus.ch/live/eds/nove/browser-HLS8/nove.m3u8
 
-#EXTINF:-1 tvg-chno="10" tvg-id="ZONADAZN.it" tvg-name="DAZN 1" tvg-logo="https://i.ibb.co/hSnQ5q2/dazn1.png" group-title="SKY",DAZN 1
-https://cc1.screenistream.xyz:8080/stream/229/index.m3u8?token=T4Nz6WCt2Uwlqma4
-
-#EXTINF:-1 tvg-chno="22" tvg-id="" tvg-name="Sky Sport Mix" tvg-logo="https://i.ibb.co/cXYSBfRP/211-sky-sport-mix-it.png" group-title="SKY",Sky Sport Mix
-https://cc1.screenistream.xyz:8080/stream/241/index.m3u8?token=T4Nz6WCt2Uwlqma4
-
-#EXTINF:-1 tvg-chno="23" tvg-id="RSILA1.it" tvg-name="RSI La1" tvg-logo="http://odmsto.com/uploads/tv_image/sm/rsi-la1.png" group-title="INTERNAZIONALE",RSI La1
-https://viamotionhsi.netplus.ch/live/eds/rsila1hd/browser-HLS8/rsila1hd.m3u8
-
-#EXTINF:-1 tvg-chno="24" tvg-id="RSILA2.it" tvg-name="RSI La2" tvg-logo="http://odmsto.com/uploads/tv_image/sm/rsi-la2-i2lwhb01iqwr.png" group-title="INTERNAZIONALE",RSI La2
-https://viamotionhsi.netplus.ch/live/eds/rsila2hd/browser-HLS8/rsila2hd.m3u8
-
 #EXTINF:-1 tvg-chno="25" tvg-id="La7D.it" tvg-name="La 7 Cinema" tvg-logo="https://i.ibb.co/0R997DLv/161-la7-cinema-it.png" group-title="NAZIONALI",La 7 Cinema
 https://viamotionhsi.netplus.ch/live/eds/la7d/browser-HLS8/la7d.m3u8
 
