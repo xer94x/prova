@@ -409,7 +409,13 @@ function variantScore(raw){
 // STATE
 // ═══════════════════════════════════════════════════
 let channels=[], programmes={}, activeChannel=null, activeDate=null, allDates=[], filterGroup='all';
-const CACHE_KEY='epgit_v6', CACHE_TTL=24*60*60*1000;
+const CACHE_KEY='epgit_v7', CACHE_TTL=24*60*60*1000;
+// La cache scade alla mezzanotte: se salvata ieri è invalida
+function isCacheValid(ts){
+  const saved=new Date(ts);
+  const midnight=new Date();midnight.setHours(0,0,0,0);
+  return saved>=midnight;
+}
 
 // ═══════════════════════════════════════════════════
 // CLOCK
@@ -433,9 +439,9 @@ async function saveCache(xml){
 }
 async function loadCache(){
   // prova IndexedDB
-  try{const db=await openIDB();const val=await new Promise((res,rej)=>{const tx=db.transaction(_IDB_STORE,'readonly');const req=tx.objectStore(_IDB_STORE).get(CACHE_KEY);req.onsuccess=e=>res(e.target.result);req.onerror=rej;});if(val){const c=JSON.parse(val);if(Date.now()-c.ts<CACHE_TTL)return c;}}catch(e){}
+  try{const db=await openIDB();const val=await new Promise((res,rej)=>{const tx=db.transaction(_IDB_STORE,'readonly');const req=tx.objectStore(_IDB_STORE).get(CACHE_KEY);req.onsuccess=e=>res(e.target.result);req.onerror=rej;});if(val){const c=JSON.parse(val);if(isCacheValid(c.ts))return c;}}catch(e){}
   // fallback localStorage/sessionStorage
-  for(const s of [localStorage,sessionStorage]){try{const c=JSON.parse(s.getItem(CACHE_KEY)||'null');if(c&&Date.now()-c.ts<CACHE_TTL)return c;}catch(e){}}
+  for(const s of [localStorage,sessionStorage]){try{const c=JSON.parse(s.getItem(CACHE_KEY)||'null');if(c&&isCacheValid(c.ts))return c;}catch(e){}}
   return null;
 }
 async function hardRefresh(){
@@ -474,16 +480,37 @@ async function extractXml(resp){
 }
 async function fetchEPG(url){
   const opts={signal:AbortSignal.timeout(12000)};
-  // 1. Direct
-  try{const r=await fetch(url,opts);if(r.ok){const t=await r.text();if(t&&t.includes('<tv'))return t;}}catch(e){}
-  // 2. corsproxy
-  try{const r=await fetch('https://corsproxy.io/?'+encodeURIComponent(url),{signal:AbortSignal.timeout(16000)});if(r.ok){const x=await extractXml(r);if(x)return x;}}catch(e){}
-  // 3. allorigins raw
-  try{const r=await fetch('https://api.allorigins.win/raw?url='+encodeURIComponent(url),{signal:AbortSignal.timeout(16000)});if(r.ok){const x=await extractXml(r);if(x)return x;}}catch(e){}
-  // 4. allorigins get
-  try{const r=await fetch('https://api.allorigins.win/get?url='+encodeURIComponent(url),{signal:AbortSignal.timeout(16000)});if(r.ok){const j=await r.json();if(j&&j.contents&&j.contents.includes('<tv'))return j.contents;}}catch(e){}
-  // 5. codetabs
-  try{const r=await fetch('https://api.codetabs.com/v1/proxy?quest='+encodeURIComponent(url),{signal:AbortSignal.timeout(16000)});if(r.ok){const x=await extractXml(r);if(x)return x;}}catch(e){}
+  const EPG_URLS=[
+    'https://www.epgitalia.tv/gzip',
+    'http://www.epgitalia.tv/xml/guide.gzip',
+    'https://www.epgitalia.tv/xml/guide.gzip',
+  ];
+  const PROXIES=[
+    u=>'https://corsproxy.io/?'+encodeURIComponent(u),
+    u=>'https://api.allorigins.win/raw?url='+encodeURIComponent(u),
+    u=>'https://api.codetabs.com/v1/proxy?quest='+encodeURIComponent(u),
+    u=>'https://thingproxy.freeboard.io/fetch/'+u,
+    u=>'https://api.allorigins.win/get?url='+encodeURIComponent(u),
+  ];
+  // 1. Prova diretto
+  for(const epgUrl of EPG_URLS){
+    try{const r=await fetch(epgUrl,{signal:AbortSignal.timeout(12000)});if(r.ok){const x=await extractXml(r);if(x)return x;}}catch(e){}
+  }
+  // 2. Prova ogni proxy con ogni URL EPG
+  for(const proxy of PROXIES){
+    for(const epgUrl of EPG_URLS){
+      try{
+        const r=await fetch(proxy(epgUrl),{signal:AbortSignal.timeout(18000)});
+        if(!r.ok) continue;
+        // allorigins /get risponde con JSON
+        if(proxy(epgUrl).includes('allorigins.win/get')){
+          const j=await r.json();if(j&&j.contents&&j.contents.includes('<tv'))return j.contents;
+        } else {
+          const x=await extractXml(r);if(x)return x;
+        }
+      }catch(e){}
+    }
+  }
   return null;
 }
 
@@ -492,19 +519,15 @@ async function fetchEPG(url){
 // ═══════════════════════════════════════════════════
 function parseDate(s){
   // Formato XMLTV: "20250324213000 +0100"
-  // Separa la parte numerica dal timezone
-  const parts = s.trim().split(/\s+/);
-  const m = parts[0];
-  const tz = parts[1] || '';
-  const iso = `${m.slice(0,4)}-${m.slice(4,6)}-${m.slice(6,8)}T${m.slice(8,10)||'00'}:${m.slice(10,12)||'00'}:${m.slice(12,14)||'00'}`;
-  if(tz && (tz[0]==='+' || tz[0]==='-')){
-    // "+0100" → "+01:00"
-    const sign = tz[0];
-    const hh = tz.slice(1,3);
-    const mm = tz.slice(3,5) || '00';
-    return new Date(`${iso}${sign}${hh}:${mm}`);
+  const parts=s.trim().split(/\s+/);
+  const m=parts[0];
+  const tz=parts[1]||'';
+  const iso=`${m.slice(0,4)}-${m.slice(4,6)}-${m.slice(6,8)}T${m.slice(8,10)||'00'}:${m.slice(10,12)||'00'}:${m.slice(12,14)||'00'}`;
+  if(tz&&(tz[0]==='+'||tz[0]==='-')){
+    const sign=tz[0],hh=tz.slice(1,3),mm2=tz.slice(3,5)||'00';
+    return new Date(`${iso}${sign}${hh}:${mm2}`);
   }
-  return new Date(iso + 'Z');
+  return new Date(iso+'Z');
 }
 
 function parseXMLTV(xml){
@@ -727,13 +750,8 @@ function selectChannel(ch,itemEl){
   const progs=programmes[ch.id]||[];
   allDates=buildDates(progs);
   const today=todayKey();
-  if(allDates.includes(today)){
-    activeDate=today;
-  } else {
-    activeDate=allDates.reduce((best,d)=>
-      Math.abs(new Date(d)-new Date(today)) < Math.abs(new Date(best)-new Date(today)) ? d : best
-    , allDates[0]||today);
-  }
+  if(allDates.includes(today)){activeDate=today;}
+  else{activeDate=allDates.reduce((best,d)=>Math.abs(new Date(d)-new Date(today))<Math.abs(new Date(best)-new Date(today))?d:best,allDates[0]||today);}
   renderDateTabs(); renderSchedule();
 }
 
