@@ -792,19 +792,25 @@ function showLocalChannels(){
 }
 
 function mergeEPGIntoChannels(parsed){
-  // Aggiorna i canali esistenti con dati EPG, aggiunge nuovi se non presenti
   const existingNames=new Set(parsed.channels.map(c=>c.name.toLowerCase()));
   for(const lc of LOCAL_CHANNELS){
     if(!existingNames.has(lc.name.toLowerCase())){
       parsed.channels.push({id:'local_'+lc.lcn,name:lc.name,logo:lc.logo,lcn:lc.lcn});
     }
   }
-  parsed.channels.sort((a,b)=>{
+  // Dedup by name keeping lowest lcn
+  const nameMap={};
+  for(const ch of parsed.channels){
+    const k=ch.name.toLowerCase();
+    if(!nameMap[k]||ch.lcn<nameMap[k].lcn) nameMap[k]=ch;
+  }
+  const deduped=Object.values(nameMap);
+  deduped.sort((a,b)=>{
     if(a.lcn<9999&&b.lcn<9999)return a.lcn-b.lcn;
     if(a.lcn<9999)return-1;if(b.lcn<9999)return 1;
     return a.name.localeCompare(b.name,'it');
   });
-  channels=parsed.channels;
+  channels=deduped;
   programmes=parsed.programmes;
 }
 
@@ -877,20 +883,35 @@ async function loadSecondaryEPG(forceRefresh, parsedPri){
 // Merge two parsed EPG results: primary takes precedence,
 // secondary fills only channels with no programmes in primary.
 function mergeEPGSources(primary, secondary){
-  // Start with primary programmes
-  const mergedProgrammes={...primary.programmes};
+  // Map final channel name (lower) → primary channel id
+  const priNameToId={};
+  for(const ch of primary.channels) priNameToId[ch.name.toLowerCase()]=ch.id;
 
-  // For each channel in secondary, add programmes only if primary has none
-  for(const [chId,progs] of Object.entries(secondary.programmes)){
-    if(!mergedProgrammes[chId]||mergedProgrammes[chId].length===0){
-      mergedProgrammes[chId]=progs;
+  const mergedProgrammes={...primary.programmes};
+  const extraChannels=[];
+
+  for(const sch of secondary.channels){
+    const nameKey=sch.name.toLowerCase();
+    const priId=priNameToId[nameKey];
+    if(priId!==undefined){
+      // Same channel by name — fill programmes only if primary has none
+      if(!mergedProgrammes[priId]||mergedProgrammes[priId].length===0){
+        mergedProgrammes[priId]=secondary.programmes[sch.id]||[];
+      }
+    } else {
+      // Truly new channel not in primary
+      extraChannels.push(sch);
+      if(secondary.programmes[sch.id]) mergedProgrammes[sch.id]=secondary.programmes[sch.id];
     }
   }
 
-  // Combine channel lists: primary channels first, add secondary-only channels
-  const primaryChIds=new Set(primary.channels.map(c=>c.id));
-  const extraChannels=secondary.channels.filter(c=>!primaryChIds.has(c.id));
-  const mergedChannels=[...primary.channels,...extraChannels];
+  // Final dedup by name just in case
+  const seen=new Set();
+  const mergedChannels=[];
+  for(const ch of [...primary.channels,...extraChannels]){
+    const k=ch.name.toLowerCase();
+    if(!seen.has(k)){seen.add(k);mergedChannels.push(ch);}
+  }
 
   return{channels:mergedChannels, programmes:mergedProgrammes};
 }
