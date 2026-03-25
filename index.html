@@ -33,8 +33,6 @@ header{background:var(--surface);border-bottom:1px solid var(--border);padding:0
 .status-dot.loading{background:var(--accent);animation:blink .8s infinite}
 .status-dot.err{background:var(--red)}
 @keyframes blink{0%,100%{opacity:1}50%{opacity:.2}}
-.cache-badge{font-size:9px;background:rgba(255,209,102,.1);border:1px solid rgba(255,209,102,.25);color:var(--gold);border-radius:3px;padding:1px 5px;font-weight:600;letter-spacing:.5px;cursor:pointer;transition:background .15s;white-space:nowrap}
-.cache-badge:hover{background:rgba(255,209,102,.2)}
 .main{display:flex;flex:1;overflow:hidden}
 .ch-panel{width:430px;flex-shrink:0;border-right:1px solid var(--border);display:flex;flex-direction:column;background:var(--surface)}
 .ch-list{flex:1;overflow-y:auto;overflow-x:hidden}
@@ -95,7 +93,6 @@ header{background:var(--surface);border-bottom:1px solid var(--border);padding:0
   <div class="logo"><span class="logo-epg">EPG</span><span class="logo-it">Italia</span><div class="logo-dot"></div></div>
   <div class="hdr-clock" id="clock">--:--:--</div>
   <input class="hdr-search" id="search" type="text" placeholder="🔍 Cerca canale..." oninput="filterChannels()">
-  <span class="cache-badge" id="cacheBadge" style="display:none" title="Dati da cache — clicca per aggiornare" onclick="hardRefresh()">⚡ CACHE</span>
   <div class="hdr-status"><div class="status-dot loading" id="sdot"></div><span id="stxt">Caricamento...</span></div>
 </header>
 <div class="main">
@@ -598,13 +595,13 @@ function parseXMLTV(xml){
   for(const [nameKey,ch] of Object.entries(nameMap)){
     const map=progMap[ch.id];
     if(map){
-      const sorted=[...map.values()].sort((a,b)=>a.start-b.start);
-      // deduplicazione: stesso titolo entro finestra 10 min
+      // Dedup definitivo: stessa chiave = arrotonda start al minuto + titolo normalizzato
+      const seen=new Set();
       const deduped=[];
-      for(const p of sorted){
-        const tKey=p.title.toLowerCase().trim();
-        const alreadyIn=deduped.some(x=>x.title.toLowerCase().trim()===tKey&&Math.abs(x.start-p.start)<600000);
-        if(!alreadyIn) deduped.push(p);
+      for(const p of [...map.values()].sort((a,b)=>a.start-b.start)){
+        const roundedMin=Math.round(p.start.getTime()/60000);
+        const k=roundedMin+'|'+p.title.toLowerCase().replace(/\s+/g,' ').trim();
+        if(!seen.has(k)){seen.add(k);deduped.push(p);}
       }
       programmes[ch.id]=deduped;
     }
@@ -785,14 +782,40 @@ function showSkeleton(){const el=document.getElementById('chList');el.innerHTML=
 // ═══════════════════════════════════════════════════
 // INIT
 // ═══════════════════════════════════════════════════
+function showLocalChannels(){
+  // Mostra subito tutti i canali LOCAL_CHANNELS mentre EPG carica
+  channels=LOCAL_CHANNELS.map(lc=>({id:'local_'+lc.lcn,name:lc.name,logo:lc.logo,lcn:lc.lcn}));
+  channels.sort((a,b)=>a.lcn-b.lcn);
+  programmes={};
+  renderChannels();
+}
+
+function mergeEPGIntoChannels(parsed){
+  // Aggiorna i canali esistenti con dati EPG, aggiunge nuovi se non presenti
+  const existingNames=new Set(parsed.channels.map(c=>c.name.toLowerCase()));
+  for(const lc of LOCAL_CHANNELS){
+    if(!existingNames.has(lc.name.toLowerCase())){
+      parsed.channels.push({id:'local_'+lc.lcn,name:lc.name,logo:lc.logo,lcn:lc.lcn});
+    }
+  }
+  parsed.channels.sort((a,b)=>{
+    if(a.lcn<9999&&b.lcn<9999)return a.lcn-b.lcn;
+    if(a.lcn<9999)return-1;if(b.lcn<9999)return 1;
+    return a.name.localeCompare(b.name,'it');
+  });
+  channels=parsed.channels;
+  programmes=parsed.programmes;
+}
+
 async function init(forceRefresh=false){
   setStatus('loading','Caricamento...');
-  showSkeleton();
+  // Mostra subito i canali locali senza aspettare EPG
+  showLocalChannels();
   const EPG_URL='https://www.epgitalia.tv/gzip';
-  let xmlText=null,fromCache=false;
+  let xmlText=null;
   if(!forceRefresh){
     const cached=await loadCache();
-    if(cached&&cached.xml){xmlText=cached.xml;fromCache=true;setStatus('loading','Da cache...');}
+    if(cached&&cached.xml){xmlText=cached.xml;setStatus('loading','Da cache...');}
   }
   if(!xmlText){
     setStatus('loading','Download EPG...');
@@ -800,51 +823,22 @@ async function init(forceRefresh=false){
     if(xmlText)await saveCache(xmlText);
   }
   if(!xmlText||!xmlText.includes('<tv')){
-    setStatus('err','Errore connessione');
-    document.getElementById('chList').innerHTML=`<div style="padding:28px 14px;text-align:center;color:var(--muted2);font-size:12px;line-height:1.9">❌ Impossibile caricare l'EPG.<br>I proxy CORS potrebbero non essere disponibili.<br><button class="retry-btn" onclick="init(true)">↺ Riprova</button></div>`;
-    return;
+    setStatus('err','Errore connessione — solo canali locali');
+    return; // canali locali già visibili
   }
   setStatus('loading','Elaborazione...');
   await new Promise(r=>setTimeout(r,10));
   let parsed;
   try{parsed=parseXMLTV(xmlText);}
   catch(e){
-    setStatus('err','Parsing fallito');
-    document.getElementById('chList').innerHTML=`<div style="padding:28px;text-align:center;color:var(--muted2);font-size:12px">❌ Errore XML.<br><button class="retry-btn" onclick="init(true)">↺ Riprova</button></div>`;
-    return;
+    setStatus('err','Errore parsing XML');
+    return; // canali locali già visibili
   }
-  channels=parsed.channels;
-  programmes=parsed.programmes;
-  if(!channels.length){setStatus('err','Nessun canale');return;}
-  // Aggiungi tutti i canali LOCAL_CHANNELS mancanti (senza corrispondenza EPG)
-  const existingNames=new Set(channels.map(c=>c.name.toLowerCase()));
-  for(const lc of LOCAL_CHANNELS){
-    if(!existingNames.has(lc.name.toLowerCase())){
-      channels.push({id:'local_'+lc.lcn,name:lc.name,logo:lc.logo,lcn:lc.lcn});
-    }
-  }
-  channels.sort((a,b)=>{
-    if(a.lcn<9999&&b.lcn<9999)return a.lcn-b.lcn;
-    if(a.lcn<9999)return-1;if(b.lcn<9999)return 1;
-    return a.name.localeCompare(b.name,'it');
-  });
-  const badge=document.getElementById('cacheBadge');
-  if(fromCache){
-    badge.style.display='';
-    const c=await loadCache();
-    badge.title=c?`Cache: ${new Date(c.ts).toLocaleTimeString('it-IT')} — clicca per aggiornare`:'';
-  } else badge.style.display='none';
+  mergeEPGIntoChannels(parsed);
   setStatus('ok',`${channels.length} canali`);
   buildFilters();
   renderChannels();
-  // Background refresh from network if served from cache
-  if(fromCache){
-    setTimeout(async()=>{
-      const fresh=await fetchEPG(EPG_URL);
-      if(fresh&&fresh.includes('<tv'))await saveCache(fresh);
-    },3000);
-  }
-  // Refresh "in onda" every minute
+  // Refresh in onda ogni minuto
   setTimeout(function refresh(){
     if(channels.length){renderChannels();}
     if(activeChannel)renderSchedule();
