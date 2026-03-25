@@ -129,134 +129,213 @@ header{background:var(--surface);border-bottom:1px solid var(--border);padding:0
 </div>
 <script>
 // ═══════════════════════════════════════════════════
-// LOGO DATABASE
+// DATABASE LOCALE CANALI ITALIANI
+// Numerazione ufficiale + logo tvchannellists.com
+// Mapping EPG: ogni entry ha aliases per abbinare i
+// nomi che arriva dal feed EPG Italia
 // ═══════════════════════════════════════════════════
-const LOGO_DB={
-'rai 1':'https://i.ibb.co/qMcsYXFB/101-rai-1-it.png','rai1':'https://i.ibb.co/qMcsYXFB/101-rai-1-it.png',
-'rai 2':'https://i.ibb.co/zHZXx5Hw/102-rai-2-it.png','rai2':'https://i.ibb.co/zHZXx5Hw/102-rai-2-it.png',
-'rai 3':'https://i.ibb.co/cqKGmMb/103-rai-3-it.png','rai3':'https://i.ibb.co/cqKGmMb/103-rai-3-it.png',
-'rete 4':'https://i.ibb.co/jk3Fb0W0/104-rete4-it.png','rete4':'https://i.ibb.co/jk3Fb0W0/104-rete4-it.png',
-'canale 5':'https://i.ibb.co/XfCQpn47/105-canale5-it.png','canale5':'https://i.ibb.co/XfCQpn47/105-canale5-it.png',
-'italia 1':'https://i.ibb.co/Jj0PL8dX/106-italia1-it.png','italia1':'https://i.ibb.co/Jj0PL8dX/106-italia1-it.png',
-'la7':'https://i.ibb.co/zy1ywT5/107-la7-it.png','la 7':'https://i.ibb.co/zy1ywT5/107-la7-it.png',
-'tv8':'https://i.ibb.co/Mx9S1k1H/125-tv8-it.png',
-'nove':'https://i.ibb.co/jPZ8bzRP/009-nove-it.png',
-'rai 4':'https://i.ibb.co/gFLmgvx3/010-rai-4-it.png','rai4':'https://i.ibb.co/gFLmgvx3/010-rai-4-it.png',
-'iris':'https://i.ibb.co/21d8kNv4/011-iris-it.png',
-'la 5':'https://i.ibb.co/zhCBwNnx/012-la5-it.png','la5':'https://i.ibb.co/zhCBwNnx/012-la5-it.png',
-'rai 5':'https://i.ibb.co/Lh9fVBsy/013-rai-5-it.png','rai5':'https://i.ibb.co/Lh9fVBsy/013-rai-5-it.png',
-'rai movie':'https://i.ibb.co/CsTvnR4J/014-rai-movie-it.png','raimovie':'https://i.ibb.co/CsTvnR4J/014-rai-movie-it.png',
-'rai premium':'https://i.ibb.co/VWthYJvQ/015-rai-premium-it.png',
-'italia 2':'https://i.ibb.co/4Z0L375W/175-italia2-it.png','italia2':'https://i.ibb.co/4Z0L375W/175-italia2-it.png',
-'mediaset extra':'https://i.ibb.co/FLbMGYzT/163-mediaset-extra-it.png',
-'tv 2000':'https://i.ibb.co/rGT01MYQ/tv2000.webp','tv2000':'https://i.ibb.co/rGT01MYQ/tv2000.webp',
-'cielo':'https://i.ibb.co/Pvhzbh95/126-cielo-it.png',
-'twentyseven':'https://i.ibb.co/hJXr29MC/158-twenty-seven-it.png','20 mediaset':'https://i.imgur.com/It13jwX.png',
-'rai sport':'https://i.ibb.co/23VcZNvF/021-rai-sport-it.png',
-'focus':'https://i.ibb.co/chy2kgvM/033-focus-it.png',
-'rai storia':'https://i.ibb.co/24WHm4Y/023-rai-storia-it.png',
-'rai news 24':'https://i.ibb.co/nM1MwpzQ/024-rai-news-24-it.png','rainews24':'https://i.ibb.co/nM1MwpzQ/024-rai-news-24-it.png',
-'tgcom 24':'https://i.ibb.co/4wsbVkC2/025-tgcom24-it.png','tgcom24':'https://i.ibb.co/4wsbVkC2/025-tgcom24-it.png',
-'rai scuola':'https://i.ibb.co/zTz3R1qL/026-rai-scuola-it.png',
-'dmax':'https://i.ibb.co/XrHwmCcM/dmax.webp',
-'la7d':'https://i.ibb.co/0R997DLv/161-la7-cinema-it.png','la7 cinema':'https://i.ibb.co/0R997DLv/161-la7-cinema-it.png',
-'sky tg24':'https://i.ibb.co/GGkB6Q0/100-sky-tg24-it.png','skytg24':'https://i.ibb.co/GGkB6Q0/100-sky-tg24-it.png',
-'real time':'https://i.ibb.co/3mJW8zXZ/031-real-time-it.png',
-'food network':'https://i.ibb.co/tMnYd6sM/food-network.webp',
-'cine 34':'https://i.ibb.co/C3D9hnf5/034-cine34-it.png','cine34':'https://i.ibb.co/C3D9hnf5/034-cine34-it.png',
-'discovery channel':'https://i.ibb.co/twW2yzWj/discovery.webp','discovery':'https://i.ibb.co/twW2yzWj/discovery.webp',
-'hgtv':'https://i.ibb.co/SHtZkcW/homeandgarden.webp',
-'motor trend':'https://i.ibb.co/PzP2JNHF/discoveryturbo.webp','motortrend':'https://i.ibb.co/PzP2JNHF/discoveryturbo.webp',
-'giallo':'https://i.ibb.co/spWmJ86z/038-giallo-it.png',
-'top crime':'https://i.ibb.co/RkFtcYCr/168-top-crime-it.png','topcrime':'https://i.ibb.co/RkFtcYCr/168-top-crime-it.png',
-'boing':'https://i.ibb.co/KpNs2DtL/040-boing-it.png',
-'cartoonito':'https://i.ibb.co/WN3kfPZH/041-cartoonito-it.png',
-'rai gulp':'https://i.ibb.co/k2jVpQj7/042-rai-gulp-it.png',
-'rai yoyo':'https://i.ibb.co/bctKkZ8/043-rai-yoyo-it.png',
-'frisbee':'https://i.ibb.co/TqkNKv3z/044-frisbee-it.png',
-'k2':'https://i.ibb.co/5xXFtzPV/046-k2-it.png',
-'super!':'https://i.ibb.co/TDgnwjQP/047-super-it.png',
-'supertennis':'https://i.ibb.co/GfjYBG2s/224-super-tennis-it.png',
-'deejay tv':'https://i.ibb.co/Qj3Nd2fP/714-deejay-tv-it.png',
-'radio italia':'https://i.ibb.co/0jVtmkvB/726-radio-italia-it.png',
-'rtl 102.5':'https://i.ibb.co/0Vs5Dpmv/736-rtl-1025-it.png',
-'gambero rosso':'https://i.ibb.co/BV0Xvcg6/133-gambero-rosso-it.png',
-'sky uno':'https://i.ibb.co/HfGrqCwX/108-sky-uno-it.png',
-'sky serie':'https://i.ibb.co/bM00GndD/112-sky-serie-it.png',
-'sky sport 24':'https://i.ibb.co/KjsLXQpw/200-sky-sport-24-it.png',
-'sky sport uno':'https://i.ibb.co/TdjtqJx/201-sky-sport-uno-it.png',
-'sky sport calcio':'https://i.ibb.co/xSzDbc4t/202-sky-sport-calcio-it.png',
-'sky sport tennis':'https://i.ibb.co/p6zyRkvR/203-sky-sport-tennis-it.png',
-'sky sport arena':'https://i.ibb.co/whBhzVtn/204-sky-sport-arena-it.png',
-'sky sport max':'https://i.ibb.co/nqjx0yw5/206-sky-sport-max-it.png',
-'sky sport f1':'https://i.ibb.co/20tDZcbD/207-sky-sport-f1-it.png',
-'sky sport motogp':'https://i.ibb.co/LXTpB4ms/208-sky-sport-motogp-it.png',
-'sky sport golf':'https://i.ibb.co/HvC5fbK/209-sky-sport-golf-it.png',
-'sky cinema uno':'https://i.ibb.co/233vBPNW/301-sky-cinema-uno-it.png',
-'sky cinema collection':'https://i.ibb.co/Pvn17BDm/303-sky-cinema-collection-it.png',
-'sky cinema action':'https://i.ibb.co/ds59MFd4/305-sky-cinema-action-it.png',
-'sky cinema suspense':'https://i.ibb.co/svrH453R/306-sky-cinema-suspense-it.png',
-'sky cinema drama':'https://i.ibb.co/pv7y2gY0/308-sky-cinema-drama-it.png',
-'sky cinema comedy':'https://i.ibb.co/9H7Zsrhf/309-sky-cinema-comedy-it.png',
-'sky cinema romance':'https://i.ibb.co/sp7tCTJ4/307-sky-cinema-romance-it.png',
-'sky cinema family':'https://i.ibb.co/YBW1KNGP/304-sky-cinema-family-it.png',
-'eurosport 1':'https://i.ibb.co/994HHVQS/eurosport1.png','eurosport1':'https://i.ibb.co/994HHVQS/eurosport1.png',
-'eurosport 2':'https://i.ibb.co/PswYht9n/eurosport-2.png','eurosport2':'https://i.ibb.co/PswYht9n/eurosport-2.png',
-'dazn 1':'https://i.ibb.co/hSnQ5q2/dazn1.png',
-'milan tv':'https://i.ibb.co/7JjWdcgr/470-milan-tv-it.png',
-'inter tv':'https://i.ibb.co/qYkxLj4b/471-inter-tv-it.png',
-'sportitalia':'https://i.imgur.com/hu56Ya5.png',
-'euronews':'https://upload.wikimedia.org/wikipedia/commons/thumb/9/9d/Euronews_logo.svg/240px-Euronews_logo.svg.png',
-'rsi la1':'http://odmsto.com/uploads/tv_image/sm/rsi-la1.png',
-'rsi la2':'http://odmsto.com/uploads/tv_image/sm/rsi-la2-i2lwhb01iqwr.png',
-'france 24':'https://upload.wikimedia.org/wikipedia/commons/thumb/a/a1/France_24_logo.svg/240px-France_24_logo.svg.png',
-'sky news':'https://upload.wikimedia.org/wikipedia/commons/thumb/1/18/Sky_News_logo.svg/240px-Sky_News_logo.svg.png',
-'bloomberg':'https://upload.wikimedia.org/wikipedia/commons/thumb/5/5d/Bloomberg_logo.svg/240px-Bloomberg_logo.svg.png',
-'mtv':'https://upload.wikimedia.org/wikipedia/commons/thumb/d/de/MTV_2021.svg/180px-MTV_2021.svg.png',
-'vevo':'https://upload.wikimedia.org/wikipedia/commons/thumb/6/6e/Vevo_logo.svg/240px-Vevo_logo.svg.png',
-};
+const LOCAL_CHANNELS=[
+  // ── DTT / TIVÙSAT ──────────────────────────────
+  {lcn:1,  name:'Rai 1',            logo:'https://www.tvchannellists.com/wiki/images/1/13/Rai_1.svg',             aliases:['rai 1','rai1','rai uno']},
+  {lcn:2,  name:'Rai 2',            logo:'https://www.tvchannellists.com/wiki/images/5/58/Rai_2.svg',             aliases:['rai 2','rai2','rai due']},
+  {lcn:3,  name:'Rai 3',            logo:'https://www.tvchannellists.com/wiki/images/7/76/Rai_3.svg',             aliases:['rai 3','rai3','rai tre']},
+  {lcn:4,  name:'Rete 4',           logo:'https://www.tvchannellists.com/wiki/images/2/28/Rete_4.svg',            aliases:['rete 4','rete4','rete quattro']},
+  {lcn:5,  name:'Canale 5',         logo:'https://www.tvchannellists.com/wiki/images/a/ae/Canale_5.svg',          aliases:['canale 5','canale5','canale cinque']},
+  {lcn:6,  name:'Italia 1',         logo:'https://www.tvchannellists.com/wiki/images/e/e2/Italia_1.svg',          aliases:['italia 1','italia1']},
+  {lcn:7,  name:'LA7',              logo:'https://www.tvchannellists.com/wiki/images/6/66/La_7.svg',              aliases:['la7','la 7']},
+  {lcn:8,  name:'TV8',              logo:'https://www.tvchannellists.com/wiki/images/8/8c/TV8_Italy.svg',         aliases:['tv8','tv 8']},
+  {lcn:9,  name:'Nove',             logo:'https://www.tvchannellists.com/wiki/images/2/2c/Nove.svg',              aliases:['nove']},
+  {lcn:10, name:'Rai 4',            logo:'https://www.tvchannellists.com/wiki/images/3/37/Rai_4.svg',             aliases:['rai 4','rai4']},
+  {lcn:11, name:'Iris',             logo:'https://www.tvchannellists.com/wiki/images/c/c0/Iris.svg',              aliases:['iris']},
+  {lcn:12, name:'La 5',             logo:'https://www.tvchannellists.com/wiki/images/f/f9/La_5.svg',              aliases:['la 5','la5']},
+  {lcn:13, name:'Rai 5',            logo:'https://www.tvchannellists.com/wiki/images/6/65/Rai_5.svg',             aliases:['rai 5','rai5']},
+  {lcn:14, name:'Rai Movie',        logo:'https://www.tvchannellists.com/wiki/images/9/9e/Rai_Movie.svg',         aliases:['rai movie','raimovie']},
+  {lcn:15, name:'Rai Premium',      logo:'https://www.tvchannellists.com/wiki/images/f/fc/Rai_Premium.svg',       aliases:['rai premium','raipremium']},
+  {lcn:16, name:'Italia 2',         logo:'https://www.tvchannellists.com/wiki/images/6/60/Italia_2.svg',          aliases:['italia 2','italia2']},
+  {lcn:17, name:'Mediaset Extra',   logo:'https://www.tvchannellists.com/wiki/images/8/8e/Mediaset_Extra.svg',    aliases:['mediaset extra']},
+  {lcn:18, name:'TV2000',           logo:'https://www.tvchannellists.com/wiki/images/3/3f/TV2000.svg',            aliases:['tv2000','tv 2000']},
+  {lcn:19, name:'Cielo',            logo:'https://www.tvchannellists.com/wiki/images/thumb/0/06/Cielo.png/70px-Cielo.png', aliases:['cielo']},
+  {lcn:20, name:'20',               logo:'https://www.tvchannellists.com/wiki/images/8/82/20.svg',                aliases:['20','venti','twentyseven','twenty','20 mediaset']},
+  {lcn:21, name:'Rai Sport',        logo:'https://www.tvchannellists.com/wiki/images/1/10/Rai_Sport.svg',         aliases:['rai sport','raisport']},
+  {lcn:22, name:'Focus',            logo:'https://www.tvchannellists.com/wiki/images/6/6e/Focus.svg',             aliases:['focus']},
+  {lcn:23, name:'Rai Storia',       logo:'https://www.tvchannellists.com/wiki/images/3/31/Rai_Storia.svg',        aliases:['rai storia','raistoria']},
+  {lcn:24, name:'Rai News 24',      logo:'https://www.tvchannellists.com/wiki/images/8/84/Rai_News_24.svg',       aliases:['rai news 24','rainews24','rai news']},
+  {lcn:25, name:'TGcom24',          logo:'https://www.tvchannellists.com/wiki/images/thumb/9/90/TGcom24.png/90px-TGcom24.png', aliases:['tgcom24','tgcom 24','tg com 24']},
+  {lcn:26, name:'Rai Scuola',       logo:'https://www.tvchannellists.com/wiki/images/b/b6/Rai_Scuola.svg',        aliases:['rai scuola','raiscuola']},
+  {lcn:27, name:'TwentySeven',      logo:'https://www.tvchannellists.com/wiki/images/8/89/TwentySeven.svg',       aliases:['twentyseven','27','twenty seven']},
+  {lcn:28, name:'DMAX',             logo:'https://www.tvchannellists.com/wiki/images/a/ab/DMAX_UK.svg',           aliases:['dmax']},
+  {lcn:29, name:'La7 Cinema',       logo:'https://www.tvchannellists.com/wiki/images/thumb/d/df/LA7_Cinema.png/50px-LA7_Cinema.png', aliases:['la7 cinema','la7d','la 7 cinema','la7cinema']},
+  {lcn:30, name:'wedotv Movies',    logo:'https://www.tvchannellists.com/wiki/images/thumb/e/e9/Wedotv_Movies.png/80px-Wedotv_Movies.png', aliases:['wedotv movies','wedotv']},
+  {lcn:31, name:'Real Time',        logo:'https://www.tvchannellists.com/wiki/images/7/7f/Real_Time.svg',         aliases:['real time','realtime']},
+  {lcn:32, name:'QVC',              logo:'https://www.tvchannellists.com/wiki/images/4/48/QVC.svg',               aliases:['qvc']},
+  {lcn:33, name:'Food Network',     logo:'https://www.tvchannellists.com/wiki/images/d/d8/Food_Network.svg',      aliases:['food network','foodnetwork']},
+  {lcn:34, name:'Cine34',           logo:'https://www.tvchannellists.com/wiki/images/9/9d/Cine34.svg',            aliases:['cine34','cine 34']},
+  {lcn:35, name:'Radio Italia TV',  logo:'https://www.tvchannellists.com/wiki/images/7/71/Radio_Italia_TV.svg',   aliases:['radio italia tv','radioitalia tv']},
+  {lcn:36, name:'RTL 102.5 TV',     logo:'https://www.tvchannellists.com/wiki/images/a/a9/RTL_102.5.svg',         aliases:['rtl 102.5 tv','rtl 102.5','rtl102.5']},
+  {lcn:37, name:'Discovery',        logo:'https://www.tvchannellists.com/wiki/images/f/fe/Discovery_Channel.svg', aliases:['discovery','discovery channel']},
+  {lcn:38, name:'Giallo',           logo:'https://www.tvchannellists.com/wiki/images/0/01/Giallo.svg',            aliases:['giallo']},
+  {lcn:39, name:'Top Crime',        logo:'https://www.tvchannellists.com/wiki/images/d/d3/Top_Crime.svg',         aliases:['top crime','topcrime']},
+  {lcn:40, name:'Boing',            logo:'https://www.tvchannellists.com/wiki/images/e/e0/Boing.svg',             aliases:['boing']},
+  {lcn:41, name:'Cartoonito',       logo:'https://www.tvchannellists.com/wiki/images/4/4c/Cartoonito.svg',        aliases:['cartoonito']},
+  {lcn:42, name:'Rai Gulp',         logo:'https://www.tvchannellists.com/wiki/images/d/d8/Rai_Gulp.svg',          aliases:['rai gulp','raigulp']},
+  {lcn:43, name:'Rai Yoyo',         logo:'https://www.tvchannellists.com/wiki/images/5/58/Rai_Yoyo.svg',          aliases:['rai yoyo','raiyoyo']},
+  {lcn:44, name:'Frisbee',          logo:'https://www.tvchannellists.com/wiki/images/d/d4/Frisbee.svg',           aliases:['frisbee']},
+  {lcn:46, name:'K2',               logo:'https://www.tvchannellists.com/wiki/images/8/8b/K2_Italy.svg',          aliases:['k2']},
+  {lcn:47, name:'Super!',           logo:'https://www.tvchannellists.com/wiki/images/9/9f/Super%21.svg',          aliases:['super!','super']},
+  {lcn:48, name:'ARTE',             logo:'https://www.tvchannellists.com/wiki/images/0/07/Arte.svg',              aliases:['arte']},
+  {lcn:49, name:'Mezzo',            logo:'https://www.tvchannellists.com/wiki/images/b/b1/Mezzo.svg',             aliases:['mezzo']},
+  {lcn:50, name:'RDS Social TV',    logo:'https://www.tvchannellists.com/wiki/images/6/6e/RDS_Social_TV.svg',     aliases:['rds social tv','rds']},
+  {lcn:56, name:'HGTV',             logo:'https://www.tvchannellists.com/wiki/images/b/b8/HGTV.svg',              aliases:['hgtv','home garden','home & garden']},
+  {lcn:58, name:'Euronews',         logo:'https://www.tvchannellists.com/wiki/images/4/47/Euronews.svg',          aliases:['euronews','euro news']},
+  {lcn:59, name:'Discovery Turbo',  logo:'https://www.tvchannellists.com/wiki/images/0/09/Discovery_Turbo_2026.svg', aliases:['discovery turbo','motor trend','motortrend','discoveryturbo']},
+  {lcn:60, name:'wedotv Big Stories',logo:'https://www.tvchannellists.com/wiki/images/thumb/6/6a/Wedotv_Big_Stories.png/90px-Wedotv_Big_Stories.png', aliases:['wedotv big stories']},
+  {lcn:62, name:'RTL 102.5 Caliente',logo:'https://www.tvchannellists.com/wiki/images/a/a9/RTL_102.5.svg',        aliases:['rtl 102.5 caliente','rtl caliente']},
+  {lcn:63, name:'Radio Italia Live TV',logo:'https://www.tvchannellists.com/wiki/images/thumb/3/3a/Radio_Italia_Live_TV.png/70px-Radio_Italia_Live_TV.png', aliases:['radio italia live tv','radio italia live']},
+  {lcn:64, name:'Radio Kiss Kiss TV',logo:'https://www.tvchannellists.com/wiki/images/thumb/7/70/Radio_Kiss_Kiss.png/50px-Radio_Kiss_Kiss.png', aliases:['radio kiss kiss tv','kiss kiss tv']},
+  {lcn:65, name:'Radio Zeta TV',    logo:'https://www.tvchannellists.com/wiki/images/0/05/Radio_Zeta.svg',        aliases:['radio zeta tv','radio zeta']},
+  {lcn:66, name:'Radio Freccia TV', logo:'https://www.tvchannellists.com/wiki/images/thumb/d/d8/Radio_Freccia.png/80px-Radio_Freccia.png', aliases:['radio freccia tv','radio freccia']},
+  {lcn:67, name:'Radio Monte Carlo TV',logo:'https://www.tvchannellists.com/wiki/images/thumb/7/72/RMC_Logo.png/30px-RMC_Logo.png', aliases:['radio monte carlo tv','rmc tv','monte carlo tv']},
+  {lcn:68, name:'Virgin Radio TV',  logo:'https://www.tvchannellists.com/wiki/images/e/e1/Virgin_Radio.svg',      aliases:['virgin radio tv','virgin radio']},
+  {lcn:69, name:'France 24 English',logo:'https://www.tvchannellists.com/wiki/images/0/03/France_24.svg',         aliases:['france 24 english','france 24']},
+  {lcn:70, name:'BBC News',         logo:'https://www.tvchannellists.com/wiki/images/f/ff/BBC_News.svg',          aliases:['bbc news','bbcnews']},
+  {lcn:71, name:'Al Jazeera English',logo:'https://www.tvchannellists.com/wiki/images/3/31/Al_Jazeera_English.svg', aliases:['al jazeera english','al jazeera']},
+  {lcn:72, name:'TRT World',        logo:'https://www.tvchannellists.com/wiki/images/2/27/TRT_World.svg',         aliases:['trt world','trtworld']},
+  {lcn:73, name:'NHK World TV',     logo:'https://www.tvchannellists.com/wiki/images/f/f3/NHK_World-Japan.svg',   aliases:['nhk world tv','nhk world','nhk']},
+  {lcn:75, name:'France 24 Français',logo:'https://www.tvchannellists.com/wiki/images/0/03/France_24.svg',        aliases:['france 24 français','france 24 francais','france 24 en français']},
+  {lcn:77, name:'Al Jazeera Arabic', logo:'https://www.tvchannellists.com/wiki/images/0/0f/Al_Jazeera.svg',       aliases:['al jazeera arabic','al jazeera arabe']},
+  {lcn:81, name:'CNBC',             logo:'https://www.tvchannellists.com/wiki/images/b/bc/CNBC_2025.svg',         aliases:['cnbc']},
+  {lcn:82, name:'Bloomberg',        logo:'https://www.tvchannellists.com/wiki/images/c/cb/Bloomberg.svg',         aliases:['bloomberg','bloomberg television','bloomberg tv']},
+  {lcn:83, name:'Daystar',          logo:'https://www.tvchannellists.com/wiki/images/4/43/Daystar.svg',           aliases:['daystar']},
+  {lcn:85, name:'DW English',       logo:'https://www.tvchannellists.com/wiki/images/f/fb/DW.svg',                aliases:['dw english','dw','deutsche welle']},
+  {lcn:86, name:'Euronews English', logo:'https://www.tvchannellists.com/wiki/images/4/47/Euronews.svg',          aliases:['euronews english']},
+  {lcn:87, name:'CGTN',             logo:'https://www.tvchannellists.com/wiki/images/8/81/CGTN.svg',              aliases:['cgtn']},
+  {lcn:88, name:'CGTN Documentary', logo:'https://www.tvchannellists.com/wiki/images/2/24/CGTN_Documentary.svg',  aliases:['cgtn documentary']},
+  {lcn:89, name:'Senato TV',        logo:'https://www.tvchannellists.com/wiki/images/7/73/Senato_TV.svg',         aliases:['senato tv','senato']},
+  {lcn:90, name:'Camera dei Deputati',logo:'https://www.tvchannellists.com/wiki/images/thumb/6/6e/Camera_dei_deputati.png/50px-Camera_dei_deputati.png', aliases:['camera dei deputati','camera']},
+  {lcn:91, name:'KBS World',        logo:'https://www.tvchannellists.com/wiki/images/e/e8/KBS_World.svg',         aliases:['kbs world','kbs']},
+  {lcn:92, name:'CCTV-4 Europe',    logo:'https://www.tvchannellists.com/wiki/images/1/18/CCTV-4.svg',            aliases:['cctv-4 europe','cctv4','cctv 4']},
+  // ── SKY ────────────────────────────────────────
+  {lcn:100,name:'Sky TG24',         logo:'https://www.tvchannellists.com/wiki/images/4/44/Sky_TG24.svg',          aliases:['sky tg24','skytg24','sky tg 24']},
+  {lcn:108,name:'Sky Uno',          logo:'https://www.tvchannellists.com/wiki/images/5/5c/Sky_Uno.svg',           aliases:['sky uno']},
+  {lcn:109,name:'Sky Uno +1',       logo:'https://www.tvchannellists.com/wiki/images/d/dc/Sky_Uno_%2B.svg',       aliases:['sky uno +1','sky uno+1','sky uno +']},
+  {lcn:110,name:'Sky Cinema Uno',   logo:'https://www.tvchannellists.com/wiki/images/d/de/Sky_Cinema_Uno.svg',    aliases:['sky cinema uno']},
+  {lcn:111,name:'Sky Atlantic',     logo:'https://www.tvchannellists.com/wiki/images/d/d3/Sky_Atlantic.svg',      aliases:['sky atlantic']},
+  {lcn:112,name:'Sky Serie',        logo:'https://www.tvchannellists.com/wiki/images/5/54/Sky_Serie.svg',         aliases:['sky serie']},
+  {lcn:113,name:'Sky Investigation',logo:'https://www.tvchannellists.com/wiki/images/8/8d/Sky_Investigation.svg', aliases:['sky investigation']},
+  {lcn:114,name:'Sky Collection',   logo:'https://www.tvchannellists.com/wiki/images/5/52/Sky_Collection.svg',    aliases:['sky collection']},
+  {lcn:115,name:'Sky Crime',        logo:'https://www.tvchannellists.com/wiki/images/8/8a/Sky_Crime.svg',         aliases:['sky crime']},
+  {lcn:116,name:'History',          logo:'https://www.tvchannellists.com/wiki/images/d/d2/History.svg',           aliases:['history','history channel']},
+  {lcn:117,name:'Sky Documentaries',logo:'https://www.tvchannellists.com/wiki/images/8/81/Sky_Documentaries.svg', aliases:['sky documentaries']},
+  {lcn:118,name:'Sky Adventure',    logo:'https://www.tvchannellists.com/wiki/images/thumb/f/f9/Sky_Adventure.png/100px-Sky_Adventure.png', aliases:['sky adventure']},
+  {lcn:119,name:'Sky Nature',       logo:'https://www.tvchannellists.com/wiki/images/a/a9/Sky_Nature.svg',        aliases:['sky nature']},
+  {lcn:120,name:'Sky Arte',         logo:'https://www.tvchannellists.com/wiki/images/a/ad/Sky_Arte.svg',          aliases:['sky arte']},
+  {lcn:129,name:'Comedy Central',   logo:'https://www.tvchannellists.com/wiki/images/5/54/Comedy_Central.svg',    aliases:['comedy central']},
+  {lcn:131,name:'MTV',              logo:'https://www.tvchannellists.com/wiki/images/5/5e/MTV.svg',               aliases:['mtv']},
+  {lcn:133,name:'Gambero Rosso Channel',logo:'https://www.tvchannellists.com/wiki/images/thumb/2/21/Gambero_Rosso.png/90px-Gambero_Rosso.png', aliases:['gambero rosso channel','gambero rosso']},
+  // ── SKY SPORT ──────────────────────────────────
+  {lcn:200,name:'Sky Sport 24',     logo:'https://www.tvchannellists.com/wiki/images/5/59/Sky_Sport_24.svg',      aliases:['sky sport 24']},
+  {lcn:201,name:'Sky Sport Uno',    logo:'https://www.tvchannellists.com/wiki/images/1/12/Sky_Sport_Uno.svg',     aliases:['sky sport uno','sky sport 1']},
+  {lcn:202,name:'Sky Sport Calcio', logo:'https://www.tvchannellists.com/wiki/images/e/e9/Sky_Sport_Calcio.svg',  aliases:['sky sport calcio']},
+  {lcn:203,name:'Sky Sport Tennis', logo:'https://www.tvchannellists.com/wiki/images/c/c8/Sky_Sport_Tennis.svg',  aliases:['sky sport tennis']},
+  {lcn:204,name:'Sky Sport Arena',  logo:'https://www.tvchannellists.com/wiki/images/d/d1/Sky_Sport_Arena.svg',   aliases:['sky sport arena']},
+  {lcn:205,name:'Sky Sport Basket', logo:'https://www.tvchannellists.com/wiki/images/8/84/Sky_Sport_Basket_-_Logo_2025.svg', aliases:['sky sport basket']},
+  {lcn:206,name:'Sky Sport Max',    logo:'https://www.tvchannellists.com/wiki/images/thumb/f/fb/Sky_Sport_Max.png/100px-Sky_Sport_Max.png', aliases:['sky sport max']},
+  {lcn:207,name:'Sky Sport F1',     logo:'https://www.tvchannellists.com/wiki/images/d/d3/Sky_Sport_F1.svg',      aliases:['sky sport f1','sky f1']},
+  {lcn:208,name:'Sky Sport MotoGP', logo:'https://www.tvchannellists.com/wiki/images/a/a0/Sky_Sport_MotoGP_-_2024.svg', aliases:['sky sport motogp','sky motogp']},
+  {lcn:209,name:'Sky Sport Golf',   logo:'https://www.tvchannellists.com/wiki/images/6/63/Sky_Sport_Golf.svg',    aliases:['sky sport golf']},
+  {lcn:210,name:'Sky Sport Legend', logo:'https://www.tvchannellists.com/wiki/images/9/98/Sky_Sport_Legend.svg',  aliases:['sky sport legend']},
+  {lcn:211,name:'Sky Sport Mix',    logo:'https://www.tvchannellists.com/wiki/images/f/f8/Sky_Sport_Mix.svg',     aliases:['sky sport mix']},
+  {lcn:212,name:'SuperTennis',      logo:'https://www.tvchannellists.com/wiki/images/thumb/1/11/SuperTennis_-_Logo_2016.png/90px-SuperTennis_-_Logo_2016.png', aliases:['supertennis','super tennis']},
+  {lcn:214,name:'DAZN 1',          logo:'https://www.tvchannellists.com/wiki/images/f/f5/DAZN1_Logo.svg',        aliases:['dazn 1','dazn1']},
+  {lcn:215,name:'DAZN 2',          logo:'https://www.tvchannellists.com/wiki/images/7/76/DAZN_2.svg',            aliases:['dazn 2','dazn2']},
+  {lcn:216,name:'Eurosport 1',      logo:'https://www.tvchannellists.com/wiki/images/c/c8/Eurosport_1.svg',       aliases:['eurosport 1','eurosport1']},
+  {lcn:217,name:'Eurosport 2',      logo:'https://www.tvchannellists.com/wiki/images/f/fe/Discovery_Channel.svg', aliases:['eurosport 2','eurosport2']},
+  {lcn:221,name:'Horse TV',         logo:'https://www.tvchannellists.com/wiki/images/thumb/e/e8/Horse_TV.png/80px-Horse_TV.png', aliases:['horse tv','horsetv']},
+  {lcn:222,name:'Bike Channel',     logo:'https://www.tvchannellists.com/wiki/images/thumb/f/fc/Bike_Channel.png/70px-Bike_Channel.png', aliases:['bike channel']},
+  {lcn:227,name:'Rai Sport',        logo:'https://www.tvchannellists.com/wiki/images/1/10/Rai_Sport.svg',         aliases:[]}, // duplicate DTT entry for Sky lcn
+  {lcn:230,name:'Milan TV',         logo:'https://www.tvchannellists.com/wiki/images/thumb/c/c0/Milan_TV.png/80px-Milan_TV.png', aliases:['milan tv','milantv']},
+  {lcn:232,name:'Inter TV',         logo:'https://www.tvchannellists.com/wiki/images/thumb/f/f8/Inter_TV.png/80px-Inter_TV.png', aliases:['inter tv','intertv']},
+  // ── SKY CINEMA ─────────────────────────────────
+  {lcn:301,name:'Sky Cinema Uno',   logo:'https://www.tvchannellists.com/wiki/images/d/de/Sky_Cinema_Uno.svg',    aliases:[]},
+  {lcn:302,name:'Sky Cinema Due',   logo:'https://www.tvchannellists.com/wiki/images/6/62/Sky_Cinema_Due.svg',    aliases:['sky cinema due','sky cinema 2']},
+  {lcn:303,name:'Sky Cinema Collection',logo:'https://www.tvchannellists.com/wiki/images/3/3b/Sky_Cinema_Collection.svg', aliases:['sky cinema collection']},
+  {lcn:304,name:'Sky Cinema Family',logo:'https://www.tvchannellists.com/wiki/images/e/ec/Sky_Cinema_Family.svg', aliases:['sky cinema family']},
+  {lcn:305,name:'Sky Cinema Action',logo:'https://www.tvchannellists.com/wiki/images/8/8b/Sky_Cinema_Action.svg', aliases:['sky cinema action']},
+  {lcn:306,name:'Sky Cinema Suspense',logo:'https://www.tvchannellists.com/wiki/images/b/ba/Sky_Cinema_Suspense.svg', aliases:['sky cinema suspense']},
+  {lcn:307,name:'Sky Cinema Comedy',logo:'https://www.tvchannellists.com/wiki/images/e/e3/Sky_Cinema_Comedy.svg', aliases:['sky cinema comedy']},
+  {lcn:308,name:'Sky Cinema Romance',logo:'https://www.tvchannellists.com/wiki/images/7/74/Sky_Cinema_Romance.svg', aliases:['sky cinema romance']},
+  {lcn:309,name:'Sky Cinema Drama',  logo:'https://www.tvchannellists.com/wiki/images/c/c7/Sky_Cinema_Drama.svg', aliases:['sky cinema drama']},
+  // ── SKY NEWS ───────────────────────────────────
+  {lcn:500,name:'Sky TG24',         logo:'https://www.tvchannellists.com/wiki/images/4/44/Sky_TG24.svg',          aliases:[]},
+  {lcn:507,name:'Class CNBC',       logo:'https://www.tvchannellists.com/wiki/images/5/57/Class_CNBC.svg',        aliases:['class cnbc']},
+  {lcn:521,name:'Euronews IT',      logo:'https://www.tvchannellists.com/wiki/images/4/47/Euronews.svg',          aliases:[]},
+  {lcn:522,name:'Sky News',         logo:'https://www.tvchannellists.com/wiki/images/c/c7/Sky_News.svg',          aliases:['sky news']},
+  {lcn:526,name:'CNN International',logo:'https://www.tvchannellists.com/wiki/images/4/4f/CNN_International.svg', aliases:['cnn international','cnn']},
+  {lcn:530,name:'BBC World News',   logo:'https://www.tvchannellists.com/wiki/images/2/2a/BBC_World_News.svg',    aliases:['bbc world news','bbc world']},
+  {lcn:531,name:'France 24',        logo:'https://www.tvchannellists.com/wiki/images/0/03/France_24.svg',         aliases:[]},
+  {lcn:532,name:'Al Jazeera Int.',  logo:'https://www.tvchannellists.com/wiki/images/3/31/Al_Jazeera_English.svg',aliases:['al jazeera international']},
+  {lcn:534,name:'Arirang TV',       logo:'https://www.tvchannellists.com/wiki/images/5/5f/Arirang_TV.svg',        aliases:['arirang tv','arirang']},
+  {lcn:541,name:'France 24 FR',     logo:'https://www.tvchannellists.com/wiki/images/0/03/France_24.svg',         aliases:['france 24 fr','france 24 français']},
+  {lcn:543,name:'Deutsche Welle',   logo:'https://www.tvchannellists.com/wiki/images/f/fb/DW.svg',                aliases:['deutsche welle','dw deutsch']},
+  {lcn:550,name:'San Marino RTV',   logo:'https://www.tvchannellists.com/wiki/images/2/22/San_Marino_RTV.svg',    aliases:['san marino rtv']},
+  {lcn:552,name:'TVP Polonia',      logo:'https://www.tvchannellists.com/wiki/images/b/bb/TVP_Polonia.svg',       aliases:['tvp polonia']},
+  {lcn:560,name:'Al Jazeera Arabic',logo:'https://www.tvchannellists.com/wiki/images/0/0f/Al_Jazeera.svg',        aliases:['al jazeera arabic']},
+  {lcn:561,name:'Al Arabiya',       logo:'https://www.tvchannellists.com/wiki/images/c/c6/Al_Arabiya.svg',        aliases:['al arabiya']},
+  {lcn:562,name:'BBC Arabic',       logo:'https://www.tvchannellists.com/wiki/images/thumb/d/da/BBC_Arabic.png/90px-BBC_Arabic.png', aliases:['bbc arabic']},
+  {lcn:563,name:'Sky News Arabia',  logo:'https://www.tvchannellists.com/wiki/images/0/01/Sky_News_Arabia.svg',   aliases:['sky news arabia']},
+  {lcn:564,name:'TRT World',        logo:'https://www.tvchannellists.com/wiki/images/2/27/TRT_World.svg',         aliases:[]},
+  // ── SKY KIDS ───────────────────────────────────
+  {lcn:601,name:'DeA Kids',         logo:'https://www.tvchannellists.com/wiki/images/5/57/DeA_Kids.svg',          aliases:['dea kids']},
+  {lcn:602,name:'Nick Jr.',         logo:'https://www.tvchannellists.com/wiki/images/7/76/Nick_Jr._Outline.svg',  aliases:['nick jr','nick jr.','nickjr']},
+  {lcn:603,name:'Nickelodeon',      logo:'https://www.tvchannellists.com/wiki/images/b/b9/Nickelodeon.svg',       aliases:['nickelodeon']},
+  {lcn:604,name:'Disney Jr.',       logo:'https://www.tvchannellists.com/wiki/images/d/da/Disney_Jr.svg',         aliases:['disney jr','disney jr.','disney junior']},
+  {lcn:605,name:'DeA Junior',       logo:'https://www.tvchannellists.com/wiki/images/thumb/e/eb/DeA_Junior.png/90px-DeA_Junior.png', aliases:['dea junior']},
+  {lcn:606,name:'Cartoon Network',  logo:'https://www.tvchannellists.com/wiki/images/b/ba/Cartoon_Network.svg',   aliases:['cartoon network','cartoonnetwork']},
+  {lcn:607,name:'Boomerang',        logo:'https://www.tvchannellists.com/wiki/images/8/82/Boomerang.svg',         aliases:['boomerang']},
+  // ── SKY MUSICA ─────────────────────────────────
+  {lcn:714,name:'Deejay TV',        logo:'https://www.tvchannellists.com/wiki/images/thumb/b/b5/Logo_DeeJay.png/60px-Logo_DeeJay.png', aliases:['deejay tv','dj tv']},
+  {lcn:716,name:'Radio Monte Carlo TV',logo:'https://www.tvchannellists.com/wiki/images/thumb/7/72/RMC_Logo.png/30px-RMC_Logo.png', aliases:[]},
+  {lcn:717,name:'Virgin Radio TV',  logo:'https://www.tvchannellists.com/wiki/images/e/e1/Virgin_Radio.svg',      aliases:[]},
+  {lcn:725,name:'Radio Italia TV',  logo:'https://www.tvchannellists.com/wiki/images/7/71/Radio_Italia_TV.svg',   aliases:[]},
+  {lcn:726,name:'Radio Italia Live TV',logo:'https://www.tvchannellists.com/wiki/images/thumb/3/3a/Radio_Italia_Live_TV.png/70px-Radio_Italia_Live_TV.png', aliases:[]},
+  {lcn:727,name:'Radio Kiss Kiss TV',logo:'https://www.tvchannellists.com/wiki/images/thumb/7/70/Radio_Kiss_Kiss.png/50px-Radio_Kiss_Kiss.png', aliases:[]},
+  {lcn:730,name:'Radionorba TV',    logo:'https://www.tvchannellists.com/wiki/images/thumb/a/a0/Radio_Norba_TV.png/80px-Radio_Norba_TV.png', aliases:['radionorba tv','radio norba']},
+  {lcn:735,name:'Radio Zeta TV',    logo:'https://www.tvchannellists.com/wiki/images/thumb/1/1c/Radio_Zeta.png/50px-Radio_Zeta.png', aliases:[]},
+  {lcn:736,name:'RTL 102.5 TV',     logo:'https://www.tvchannellists.com/wiki/images/thumb/e/eb/RTL_102.5_TV.png/50px-RTL_102.5_TV.png', aliases:[]},
+  {lcn:738,name:'Radio Freccia TV', logo:'https://www.tvchannellists.com/wiki/images/thumb/d/d8/Radio_Freccia.png/80px-Radio_Freccia.png', aliases:[]},
+];
 
-function lookupLogo(name){
+// Build lookup maps from LOCAL_CHANNELS
+const LOCAL_BY_LCN={};
+const LOCAL_BY_ALIAS={};
+for(const ch of LOCAL_CHANNELS){
+  LOCAL_BY_LCN[ch.lcn]=ch;
+  LOCAL_BY_ALIAS[ch.name.toLowerCase()]=ch;
+  for(const a of ch.aliases) LOCAL_BY_ALIAS[a.toLowerCase()]=ch;
+}
+
+function lookupLocal(name){
   if(!name) return null;
-  let k=name.toLowerCase().replace(/\s+/g,' ').trim();
-  if(LOGO_DB[k]) return LOGO_DB[k];
-  // strip quality suffixes
+  const k=name.toLowerCase().replace(/\s+/g,' ').trim();
+  if(LOCAL_BY_ALIAS[k]) return LOCAL_BY_ALIAS[k];
   const stripped=k.replace(/\s+(hd\+1|\+1\s*hd|full\s*hd|fhd|h\.?265|uhd|4k|\+1|\+2|hd|sd|ita|italy|italia|it)\s*$/i,'').trim();
-  if(stripped!==k&&LOGO_DB[stripped]) return LOGO_DB[stripped];
+  if(stripped!==k&&LOCAL_BY_ALIAS[stripped]) return LOCAL_BY_ALIAS[stripped];
   // prefix match
-  for(const [key,url] of Object.entries(LOGO_DB)){
-    if(k===key||k.startsWith(key+' ')||stripped===key||stripped.startsWith(key+' ')) return url;
+  for(const [key,ch] of Object.entries(LOCAL_BY_ALIAS)){
+    if(k.startsWith(key+' ')||stripped.startsWith(key+' ')) return ch;
   }
   return null;
 }
 
-// ═══════════════════════════════════════════════════
-// SKY LCN ORDER
-// ═══════════════════════════════════════════════════
-const SKY_LCN={
-'rai 1':1,'rai 2':2,'rai 3':3,'rete 4':4,'canale 5':5,'italia 1':6,'la7':7,'la 7':7,
-'tv8':8,'nove':9,'rai 4':10,'iris':11,'la 5':12,'rai 5':13,'rai movie':14,'rai premium':15,
-'italia 2':16,'mediaset extra':17,'tv 2000':18,'tv2000':18,'cielo':19,'twentyseven':20,
-'20 mediaset':20,'rai sport':21,'focus':35,'dmax':28,'la7d':29,'la7 cinema':29,
-'sky tg24':30,'real time':31,'food network':33,'cine 34':34,'discovery channel':35,
-'hgtv':36,'motor trend':37,'giallo':38,'top crime':39,'boing':40,'cartoonito':41,
-'rai gulp':42,'rai yoyo':43,'frisbee':44,'k2':46,'super!':47,'rai news 24':48,
-'rai scuola':57,'tgcom 24':55,'supertennis':51,'sportitalia':60,
-'sky uno':108,'sky serie':112,
-'sky sport 24':200,'sky sport uno':201,'sky sport calcio':202,'sky sport tennis':203,
-'sky sport arena':204,'sky sport max':206,'sky sport f1':207,'sky sport motogp':208,
-'sky sport golf':209,'eurosport 1':210,'eurosport 2':211,'dazn 1':214,
-'sky cinema uno':301,'sky cinema collection':303,'sky cinema action':304,
-'sky cinema suspense':305,'sky cinema drama':306,'sky cinema comedy':307,
-'sky cinema romance':308,'sky cinema family':309,
-'rsi la1':500,'rsi la2':501,'france 24':560,'euronews':561,'sky news':562,
-};
+function lookupLogo(name){
+  const ch=lookupLocal(name);
+  return ch?ch.logo:null;
+}
+
 function getLCN(name){
   if(!name) return 9999;
-  const k=name.toLowerCase().replace(/\s+/g,' ').trim();
-  if(SKY_LCN[k]!==undefined) return SKY_LCN[k];
-  const s=k.replace(/\s+(hd\+1|\+1\s*hd|full\s*hd|fhd|h\.?265|uhd|4k|\+1|\+2|hd|sd)\s*$/i,'').trim();
-  if(SKY_LCN[s]!==undefined) return SKY_LCN[s];
+  const ch=lookupLocal(name);
+  if(ch) return ch.lcn;
   return 9999;
 }
 
@@ -417,12 +496,15 @@ function parseXMLTV(xml){
     programmes[canon]=[...map.values()].sort((a,b)=>a.start-b.start);
   }
 
-  const chList=Object.entries(canonMap).map(([canon,entry])=>({
-    id:canon,
-    name:canon,
-    logo:lookupLogo(canon)||(entry.logo||''),
-    lcn:getLCN(canon),
-  }));
+  const chList=Object.entries(canonMap).map(([canon,entry])=>{
+    const local=lookupLocal(canon);
+    return {
+      id:canon,
+      name:local?local.name:canon,
+      logo:local?local.logo:(entry.logo||''),
+      lcn:local?local.lcn:getLCN(canon),
+    };
+  });
 
   return{channels:chList,programmes};
 }
