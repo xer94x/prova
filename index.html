@@ -408,10 +408,7 @@ function variantScore(raw){
 // STATE
 // ═══════════════════════════════════════════════════
 let channels=[], programmes={}, activeChannel=null, activeDate=null, allDates=[], filterGroup='all';
-const CACHE_KEY='epgit_v7', CACHE_TTL=24*60*60*1000;
-const EPG_PRIMARY='https://iptv-epg.org/files/epg-it.xml';
-const EPG_SECONDARY='https://www.epgitalia.tv/gzip';
-const CACHE_KEY_PRI='epgit_pri_v1', CACHE_KEY_SEC='epgit_sec_v1';
+const CACHE_KEY='epgit_v6', CACHE_TTL=24*60*60*1000;
 
 // ═══════════════════════════════════════════════════
 // CLOCK
@@ -426,22 +423,24 @@ function setStatus(s,t){ document.getElementById('sdot').className='status-dot '
 // Cache con IndexedDB (primario) + localStorage (fallback) per persistenza anche su file://
 const _IDB_NAME='epgcache',_IDB_STORE='data',_IDB_VER=1;
 function openIDB(){return new Promise((res,rej)=>{const r=indexedDB.open(_IDB_NAME,_IDB_VER);r.onupgradeneeded=e=>e.target.result.createObjectStore(_IDB_STORE);r.onsuccess=e=>res(e.target.result);r.onerror=rej;});}
-async function saveCache(xml, cacheKey){
+async function saveCache(xml){
   const payload=JSON.stringify({ts:Date.now(),xml});
-  try{const db=await openIDB();await new Promise((res,rej)=>{const tx=db.transaction(_IDB_STORE,'readwrite');tx.objectStore(_IDB_STORE).put(payload,cacheKey);tx.oncomplete=res;tx.onerror=rej;});return;}catch(e){}
-  for(const s of [localStorage,sessionStorage]){try{s.setItem(cacheKey,payload);return;}catch(e){}}
+  // prova IndexedDB
+  try{const db=await openIDB();await new Promise((res,rej)=>{const tx=db.transaction(_IDB_STORE,'readwrite');tx.objectStore(_IDB_STORE).put(payload,CACHE_KEY);tx.oncomplete=res;tx.onerror=rej;});return;}catch(e){}
+  // fallback localStorage/sessionStorage
+  for(const s of [localStorage,sessionStorage]){try{s.setItem(CACHE_KEY,payload);return;}catch(e){}}
 }
-async function loadCache(cacheKey){
-  try{const db=await openIDB();const val=await new Promise((res,rej)=>{const tx=db.transaction(_IDB_STORE,'readonly');const req=tx.objectStore(_IDB_STORE).get(cacheKey);req.onsuccess=e=>res(e.target.result);req.onerror=rej;});if(val){const c=JSON.parse(val);if(Date.now()-c.ts<CACHE_TTL)return c;}}catch(e){}
-  for(const s of [localStorage,sessionStorage]){try{const c=JSON.parse(s.getItem(cacheKey)||'null');if(c&&Date.now()-c.ts<CACHE_TTL)return c;}catch(e){}}
+async function loadCache(){
+  // prova IndexedDB
+  try{const db=await openIDB();const val=await new Promise((res,rej)=>{const tx=db.transaction(_IDB_STORE,'readonly');const req=tx.objectStore(_IDB_STORE).get(CACHE_KEY);req.onsuccess=e=>res(e.target.result);req.onerror=rej;});if(val){const c=JSON.parse(val);if(Date.now()-c.ts<CACHE_TTL)return c;}}catch(e){}
+  // fallback localStorage/sessionStorage
+  for(const s of [localStorage,sessionStorage]){try{const c=JSON.parse(s.getItem(CACHE_KEY)||'null');if(c&&Date.now()-c.ts<CACHE_TTL)return c;}catch(e){}}
   return null;
 }
 async function hardRefresh(){
-  for(const k of [CACHE_KEY_PRI,CACHE_KEY_SEC,CACHE_KEY]){
-    try{const db=await openIDB();db.transaction(_IDB_STORE,'readwrite').objectStore(_IDB_STORE).delete(k);}catch(e){}
-    try{localStorage.removeItem(k);}catch(e){}
-    try{sessionStorage.removeItem(k);}catch(e){}
-  }
+  try{const db=await openIDB();db.transaction(_IDB_STORE,'readwrite').objectStore(_IDB_STORE).delete(CACHE_KEY);}catch(e){}
+  try{localStorage.removeItem(CACHE_KEY);}catch(e){}
+  try{sessionStorage.removeItem(CACHE_KEY);}catch(e){}
   document.getElementById('cacheBadge').style.display='none';
   init(true);
 }
@@ -792,128 +791,59 @@ function showLocalChannels(){
 }
 
 function mergeEPGIntoChannels(parsed){
+  // Aggiorna i canali esistenti con dati EPG, aggiunge nuovi se non presenti
   const existingNames=new Set(parsed.channels.map(c=>c.name.toLowerCase()));
   for(const lc of LOCAL_CHANNELS){
     if(!existingNames.has(lc.name.toLowerCase())){
       parsed.channels.push({id:'local_'+lc.lcn,name:lc.name,logo:lc.logo,lcn:lc.lcn});
     }
   }
-  // Dedup by name keeping lowest lcn
-  const nameMap={};
-  for(const ch of parsed.channels){
-    const k=ch.name.toLowerCase();
-    if(!nameMap[k]||ch.lcn<nameMap[k].lcn) nameMap[k]=ch;
-  }
-  const deduped=Object.values(nameMap);
-  deduped.sort((a,b)=>{
+  parsed.channels.sort((a,b)=>{
     if(a.lcn<9999&&b.lcn<9999)return a.lcn-b.lcn;
     if(a.lcn<9999)return-1;if(b.lcn<9999)return 1;
     return a.name.localeCompare(b.name,'it');
   });
-  channels=deduped;
+  channels=parsed.channels;
   programmes=parsed.programmes;
 }
 
 async function init(forceRefresh=false){
   setStatus('loading','Caricamento...');
+  // Mostra subito i canali locali senza aspettare EPG
   showLocalChannels();
-
-  // ── 1. Fetch PRIMARY EPG (iptv-epg.org) ──────────────
-  let xmlPrimary=null;
-  if(!forceRefresh){const cached=await loadCache(CACHE_KEY_PRI);if(cached&&cached.xml){xmlPrimary=cached.xml;}}
-  if(!xmlPrimary){
-    setStatus('loading','Download EPG primario...');
-    xmlPrimary=await fetchEPG(EPG_PRIMARY);
-    if(xmlPrimary) await saveCache(xmlPrimary,CACHE_KEY_PRI);
+  const EPG_URL='https://www.epgitalia.tv/gzip';
+  let xmlText=null;
+  if(!forceRefresh){
+    const cached=await loadCache();
+    if(cached&&cached.xml){xmlText=cached.xml;setStatus('loading','Da cache...');}
   }
-
-  // ── 2. Parse & show primary immediately ──────────────
-  let parsedPri=null;
-  if(xmlPrimary&&xmlPrimary.includes('<tv')){
-    setStatus('loading','Elaborazione primario...');
-    await new Promise(r=>setTimeout(r,10));
-    try{parsedPri=parseXMLTV(xmlPrimary);}catch(e){parsedPri=null;}
+  if(!xmlText){
+    setStatus('loading','Download EPG...');
+    xmlText=await fetchEPG(EPG_URL);
+    if(xmlText)await saveCache(xmlText);
   }
-  if(parsedPri){
-    mergeEPGIntoChannels(parsedPri);
-    setStatus('ok',`${channels.length} canali · completamento in corso...`);
-    buildFilters();
-    renderChannels();
-  } else if(!xmlPrimary){
-    setStatus('loading','EPG primario non disponibile, provo secondario...');
+  if(!xmlText||!xmlText.includes('<tv')){
+    setStatus('err','Errore connessione — solo canali locali');
+    return; // canali locali già visibili
   }
-
-  // ── 3. Fetch SECONDARY in background (non blocca UI) ─
-  loadSecondaryEPG(forceRefresh, parsedPri);
-
-  // ── 4. Refresh ogni minuto ───────────────────────────
+  setStatus('loading','Elaborazione...');
+  await new Promise(r=>setTimeout(r,10));
+  let parsed;
+  try{parsed=parseXMLTV(xmlText);}
+  catch(e){
+    setStatus('err','Errore parsing XML');
+    return; // canali locali già visibili
+  }
+  mergeEPGIntoChannels(parsed);
+  setStatus('ok',`${channels.length} canali`);
+  buildFilters();
+  renderChannels();
+  // Refresh in onda ogni minuto
   setTimeout(function refresh(){
     if(channels.length){renderChannels();}
     if(activeChannel)renderSchedule();
     setTimeout(refresh,60000);
   },60000);
-}
-
-async function loadSecondaryEPG(forceRefresh, parsedPri){
-  let xmlSecondary=null;
-  if(!forceRefresh){const cached=await loadCache(CACHE_KEY_SEC);if(cached&&cached.xml){xmlSecondary=cached.xml;}}
-  if(!xmlSecondary){
-    xmlSecondary=await fetchEPG(EPG_SECONDARY);
-    if(xmlSecondary) await saveCache(xmlSecondary,CACHE_KEY_SEC);
-  }
-  if(!xmlSecondary||!xmlSecondary.includes('<tv')){
-    // Secondario non disponibile — se anche primario era vuoto segnala errore
-    if(!parsedPri) setStatus('err','Errore connessione — solo canali locali');
-    else setStatus('ok',`${channels.length} canali`);
-    return;
-  }
-  let parsedSec=null;
-  try{parsedSec=parseXMLTV(xmlSecondary);}catch(e){}
-  if(!parsedSec){setStatus('ok',`${channels.length} canali`);return;}
-
-  // Merge: primario vince, secondario riempie i gap
-  const merged = parsedPri ? mergeEPGSources(parsedPri,parsedSec) : parsedSec;
-  mergeEPGIntoChannels(merged);
-  setStatus('ok',`${channels.length} canali`);
-  buildFilters();
-  renderChannels();
-  if(activeChannel) renderSchedule();
-}
-
-// Merge two parsed EPG results: primary takes precedence,
-// secondary fills only channels with no programmes in primary.
-function mergeEPGSources(primary, secondary){
-  // Map final channel name (lower) → primary channel id
-  const priNameToId={};
-  for(const ch of primary.channels) priNameToId[ch.name.toLowerCase()]=ch.id;
-
-  const mergedProgrammes={...primary.programmes};
-  const extraChannels=[];
-
-  for(const sch of secondary.channels){
-    const nameKey=sch.name.toLowerCase();
-    const priId=priNameToId[nameKey];
-    if(priId!==undefined){
-      // Same channel by name — fill programmes only if primary has none
-      if(!mergedProgrammes[priId]||mergedProgrammes[priId].length===0){
-        mergedProgrammes[priId]=secondary.programmes[sch.id]||[];
-      }
-    } else {
-      // Truly new channel not in primary
-      extraChannels.push(sch);
-      if(secondary.programmes[sch.id]) mergedProgrammes[sch.id]=secondary.programmes[sch.id];
-    }
-  }
-
-  // Final dedup by name just in case
-  const seen=new Set();
-  const mergedChannels=[];
-  for(const ch of [...primary.channels,...extraChannels]){
-    const k=ch.name.toLowerCase();
-    if(!seen.has(k)){seen.add(k);mergedChannels.push(ch);}
-  }
-
-  return{channels:mergedChannels, programmes:mergedProgrammes};
 }
 init();
 </script>
