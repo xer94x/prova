@@ -491,11 +491,20 @@ async function fetchEPG(url){
 // XMLTV PARSER WITH DEDUPLICATION
 // ═══════════════════════════════════════════════════
 function parseDate(s){
-  const m=s.replace(/\s.*/,'');
-  const iso=`${m.slice(0,4)}-${m.slice(4,6)}-${m.slice(6,8)}T${m.slice(8,10)||'00'}:${m.slice(10,12)||'00'}:${m.slice(12,14)||'00'}`;
-  const tz=s.slice(m.length).trim();
-  if(tz) return new Date(iso+(tz[0]==='+'||tz[0]==='-'?tz[0]+tz.slice(1,3)+':'+tz.slice(3,5)||'00':'+00:00'));
-  return new Date(iso+'Z');
+  // Formato XMLTV: "20250324213000 +0100"
+  // Separa la parte numerica dal timezone
+  const parts = s.trim().split(/\s+/);
+  const m = parts[0];
+  const tz = parts[1] || '';
+  const iso = `${m.slice(0,4)}-${m.slice(4,6)}-${m.slice(6,8)}T${m.slice(8,10)||'00'}:${m.slice(10,12)||'00'}:${m.slice(12,14)||'00'}`;
+  if(tz && (tz[0]==='+' || tz[0]==='-')){
+    // "+0100" → "+01:00"
+    const sign = tz[0];
+    const hh = tz.slice(1,3);
+    const mm = tz.slice(3,5) || '00';
+    return new Date(`${iso}${sign}${hh}:${mm}`);
+  }
+  return new Date(iso + 'Z');
 }
 
 function parseXMLTV(xml){
@@ -636,14 +645,12 @@ function getGroup(name){
 // ═══════════════════════════════════════════════════
 function getCurrentProgram(programs, now) {
   if (!programs || programs.length === 0) return null;
-  // Solo programmi di OGGI
   const todayStr = todayKey();
   const overlapping = programs.filter(p =>
     ldk(p.start) === todayStr &&
     p.start <= now && p.stop && p.stop > now
   );
   if (overlapping.length === 0) return null;
-  // choose the one with the latest start (most recent started)
   return overlapping.reduce((latest, p) => p.start > latest.start ? p : latest, overlapping[0]);
 }
 
@@ -663,7 +670,6 @@ function renderChannels(){
     shown++;
     const progs=programmes[ch.id]||[];
     const current = getCurrentProgram(progs, now);
-    // Nella sidebar mostra solo programmi di oggi per il "prossimo"
     const todayProgs = progs.filter(p => ldk(p.start) === todayKey());
     const nowP = current || todayProgs.find(p => p.start > now);
     let pct=0;
@@ -721,11 +727,9 @@ function selectChannel(ch,itemEl){
   const progs=programmes[ch.id]||[];
   allDates=buildDates(progs);
   const today=todayKey();
-  // Forza sempre "Oggi" come data attiva se disponibile, altrimenti la più vicina
   if(allDates.includes(today)){
     activeDate=today;
   } else {
-    // Cerca la data più vicina a oggi (futura o passata)
     activeDate=allDates.reduce((best,d)=>
       Math.abs(new Date(d)-new Date(today)) < Math.abs(new Date(best)-new Date(today)) ? d : best
     , allDates[0]||today);
