@@ -631,6 +631,17 @@ function getGroup(name){
 }
 
 // ═══════════════════════════════════════════════════
+// UTILITY: get current program (the one started most recently among overlapping)
+// ═══════════════════════════════════════════════════
+function getCurrentProgram(programs, now) {
+  if (!programs || programs.length === 0) return null;
+  const overlapping = programs.filter(p => p.start <= now && p.stop && p.stop > now);
+  if (overlapping.length === 0) return null;
+  // choose the one with the latest start (most recent started)
+  return overlapping.reduce((latest, p) => p.start > latest.start ? p : latest, overlapping[0]);
+}
+
+// ═══════════════════════════════════════════════════
 // RENDER CHANNELS
 // ═══════════════════════════════════════════════════
 function renderChannels(){
@@ -645,10 +656,11 @@ function renderChannels(){
     if(q&&!ch.name.toLowerCase().includes(q)) continue;
     shown++;
     const progs=programmes[ch.id]||[];
-    const nowP=progs.find(p=>p.start<=now&&p.stop&&p.stop>now)||progs.find(p=>p.start>now);
+    const current = getCurrentProgram(progs, now);
+    const nowP = current || progs.find(p => p.start > now);
     let pct=0;
-    if(nowP&&nowP.stop&&nowP.start<=now&&nowP.stop>now)
-      pct=Math.min(100,((now-nowP.start)/(nowP.stop-nowP.start))*100);
+    if(current && current.stop && current.start<=now && current.stop>now)
+      pct=Math.min(100,((now-current.start)/(current.stop-current.start))*100);
     const ini=ch.name.split(' ').slice(0,2).map(w=>w[0]||'').join('').toUpperCase()||'TV';
     const item=document.createElement('div');
     item.className='ch-item'+(activeChannel&&activeChannel.id===ch.id?' active':'');
@@ -745,10 +757,12 @@ function renderSchedule(){
     el.innerHTML=`<div class="center-msg"><div class="icon">📋</div><div class="sub">Nessun programma per questa data</div></div>`;
     return;
   }
+  // determina il programma corrente (se presente) usando la funzione helper
+  const currentProgram = getCurrentProgram(progs, now);
   el.innerHTML='';let scrollTo=null;
   for(const p of progs){
-    const isNow=p.start<=now&&p.stop&&p.stop>now;
-    const isPast=p.stop&&p.stop<=now;
+    const isNow = (currentProgram === p);
+    const isPast = p.stop && p.stop <= now;
     const item=document.createElement('div');
     item.className='prog-item'+(isNow?' now':'')+(isPast?' past':'');
     const ss=p.start.toLocaleTimeString('it-IT',{hour:'2-digit',minute:'2-digit'});
