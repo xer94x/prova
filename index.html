@@ -36,18 +36,18 @@ header{background:var(--surface);border-bottom:1px solid var(--border);padding:0
 .cache-badge{font-size:9px;background:rgba(255,209,102,.1);border:1px solid rgba(255,209,102,.25);color:var(--gold);border-radius:3px;padding:1px 5px;font-weight:600;letter-spacing:.5px;cursor:pointer;transition:background .15s;white-space:nowrap}
 .cache-badge:hover{background:rgba(255,209,102,.2)}
 .main{display:flex;flex:1;overflow:hidden}
-.ch-panel{width:380px;flex-shrink:0;border-right:1px solid var(--border);display:flex;flex-direction:column;background:var(--surface)}
+.ch-panel{width:430px;flex-shrink:0;border-right:1px solid var(--border);display:flex;flex-direction:column;background:var(--surface)}
 .ch-list{flex:1;overflow-y:auto;overflow-x:hidden}
-.ch-item{display:flex;align-items:center;gap:10px;padding:12px 12px;border-bottom:1px solid rgba(255,255,255,.025);cursor:pointer;transition:background .1s;position:relative;min-height:72px}
+.ch-item{display:flex;align-items:center;gap:10px;padding:14px 14px;border-bottom:1px solid rgba(255,255,255,.025);cursor:pointer;transition:background .1s;position:relative;min-height:86px}
 .ch-item:hover{background:var(--card)}
 .ch-item.active{background:var(--card2);border-left:2px solid var(--accent)}
-.ch-num{font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:500;color:var(--muted);width:28px;text-align:right;flex-shrink:0}
-.ch-logo-wrap{width:46px;height:32px;display:flex;align-items:center;justify-content:center;background:rgba(255,255,255,.04);border-radius:4px;flex-shrink:0;overflow:hidden}
-.ch-logo{max-width:42px;max-height:28px;object-fit:contain;display:block}
+.ch-num{font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:500;color:var(--muted);width:30px;text-align:right;flex-shrink:0}
+.ch-logo-wrap{width:50px;height:34px;display:flex;align-items:center;justify-content:center;background:rgba(255,255,255,.04);border-radius:4px;flex-shrink:0;overflow:hidden}
+.ch-logo{max-width:46px;max-height:30px;object-fit:contain;display:block}
 .ch-logo-ph{font-size:9px;font-weight:700;color:var(--muted2);text-align:center;padding:2px}
 .ch-info{flex:1;min-width:0}
-.ch-name{font-size:14px;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1.3}
-.ch-now{font-size:13px;color:var(--muted3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:3px;line-height:1.2}
+.ch-name{font-size:16px;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1.3}
+.ch-now{font-size:14px;color:var(--muted3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:4px;line-height:1.2}
 .ch-now-title{color:var(--accent2);font-weight:500}
 .ch-prog-bar{position:absolute;bottom:0;left:0;height:2px;background:linear-gradient(90deg,var(--accent2),var(--accent));opacity:.45}
 .epg-panel{flex:1;display:flex;flex-direction:column;overflow:hidden}
@@ -287,34 +287,34 @@ const LOCAL_CHANNELS=[
   {lcn:210,name:'Sky Sport Legend', logo:'https://upload.wikimedia.org/wikipedia/commons/thumb/4/4e/RTL_102.5.svg/200px-RTL_102.5.svg.png', aliases:['sky sport legend']},
   {lcn:211,name:'Sky Sport Mix',    logo:'https://upload.wikimedia.org/wikipedia/commons/thumb/4/4e/RTL_102.5.svg/200px-RTL_102.5.svg.png', aliases:['sky sport mix']},
   {lcn:213,name:'Sky Sport 4K',     logo:'https://upload.wikimedia.org/wikipedia/commons/thumb/4/4e/RTL_102.5.svg/200px-RTL_102.5.svg.png', aliases:['sky sport 4k']},
-  {lcn:220,name:'EQUtv (Sport)',    logo:'https://upload.wikimedia.org/wikipedia/commons/thumb/4/4e/RTL_102.5.svg/200px-RTL_102.5.svg.png', aliases:[]},
+  {lcn:220,name:'EQUtv',    logo:'https://upload.wikimedia.org/wikipedia/commons/thumb/4/4e/RTL_102.5.svg/200px-RTL_102.5.svg.png', aliases:[]},
   {lcn:221,name:'Horse TV',         logo:'https://upload.wikimedia.org/wikipedia/commons/thumb/4/4e/RTL_102.5.svg/200px-RTL_102.5.svg.png', aliases:['horse tv']},
   {lcn:222,name:'Bike Channel',     logo:'https://upload.wikimedia.org/wikipedia/commons/thumb/4/4e/RTL_102.5.svg/200px-RTL_102.5.svg.png', aliases:['bike channel']},
   {lcn:235,name:'Caccia',           logo:'https://upload.wikimedia.org/wikipedia/commons/thumb/4/4e/RTL_102.5.svg/200px-RTL_102.5.svg.png', aliases:['caccia']},
   {lcn:236,name:'Pesca',            logo:'https://upload.wikimedia.org/wikipedia/commons/thumb/4/4e/RTL_102.5.svg/200px-RTL_102.5.svg.png', aliases:['pesca']},
-  {lcn:400,name:'Sky Arte (400)',   logo:'https://upload.wikimedia.org/wikipedia/commons/thumb/a/ad/Sky_Arte.svg/200px-Sky_Arte.svg.png', aliases:[]},
-  {lcn:402,name:'Sky Documentaries (402)',logo:'https://upload.wikimedia.org/wikipedia/commons/thumb/8/81/Sky_Documentaries.svg/200px-Sky_Documentaries.svg.png', aliases:[]},
-  {lcn:404,name:'Sky Nature (404)', logo:'https://upload.wikimedia.org/wikipedia/commons/thumb/a/a9/Sky_Nature.svg/200px-Sky_Nature.svg.png', aliases:[]},
-  {lcn:405,name:'Sky Crime (405)',  logo:'https://upload.wikimedia.org/wikipedia/commons/thumb/8/8a/Sky_Crime.svg/200px-Sky_Crime.svg.png', aliases:[]},
-  {lcn:407,name:'Sky Adventure (407)',logo:'https://upload.wikimedia.org/wikipedia/commons/thumb/4/4e/RTL_102.5.svg/200px-RTL_102.5.svg.png', aliases:[]},
-  {lcn:409,name:'History (409)',    logo:'https://upload.wikimedia.org/wikipedia/commons/thumb/0/0b/History_Channel_logo.svg/200px-History_Channel_logo.svg.png', aliases:[]},
-  {lcn:415,name:'Gambero Rosso (415)',logo:'https://upload.wikimedia.org/wikipedia/commons/thumb/2/21/Gambero_Rosso_logo.png/200px-Gambero_Rosso_logo.png', aliases:[]},
+  {lcn:400,name:'Sky Arte',   logo:'https://upload.wikimedia.org/wikipedia/commons/thumb/a/ad/Sky_Arte.svg/200px-Sky_Arte.svg.png', aliases:[]},
+  {lcn:402,name:'Sky Documentaries',logo:'https://upload.wikimedia.org/wikipedia/commons/thumb/8/81/Sky_Documentaries.svg/200px-Sky_Documentaries.svg.png', aliases:[]},
+  {lcn:404,name:'Sky Nature', logo:'https://upload.wikimedia.org/wikipedia/commons/thumb/a/a9/Sky_Nature.svg/200px-Sky_Nature.svg.png', aliases:[]},
+  {lcn:405,name:'Sky Crime',  logo:'https://upload.wikimedia.org/wikipedia/commons/thumb/8/8a/Sky_Crime.svg/200px-Sky_Crime.svg.png', aliases:[]},
+  {lcn:407,name:'Sky Adventure',logo:'https://upload.wikimedia.org/wikipedia/commons/thumb/4/4e/RTL_102.5.svg/200px-RTL_102.5.svg.png', aliases:[]},
+  {lcn:409,name:'History',    logo:'https://upload.wikimedia.org/wikipedia/commons/thumb/0/0b/History_Channel_logo.svg/200px-History_Channel_logo.svg.png', aliases:[]},
+  {lcn:415,name:'Gambero Rosso',logo:'https://upload.wikimedia.org/wikipedia/commons/thumb/2/21/Gambero_Rosso_logo.png/200px-Gambero_Rosso_logo.png', aliases:[]},
   {lcn:475,name:'QVC (475)',        logo:'https://upload.wikimedia.org/wikipedia/commons/thumb/a/a6/QVC_Logo.svg/200px-QVC_Logo.svg.png', aliases:[]},
   {lcn:489,name:'Fashion TV',       logo:'https://upload.wikimedia.org/wikipedia/commons/thumb/4/4e/RTL_102.5.svg/200px-RTL_102.5.svg.png', aliases:['fashion tv']},
   {lcn:490,name:'Value 24 TV',      logo:'https://upload.wikimedia.org/wikipedia/commons/thumb/4/4e/RTL_102.5.svg/200px-RTL_102.5.svg.png', aliases:['value 24 tv']},
-  {lcn:500,name:'Sky TG24 (500)',   logo:'https://upload.wikimedia.org/wikipedia/commons/thumb/4/48/Sky_TG24_logo.svg/200px-Sky_TG24_logo.svg.png', aliases:[]},
+  {lcn:500,name:'Sky TG24',   logo:'https://upload.wikimedia.org/wikipedia/commons/thumb/4/48/Sky_TG24_logo.svg/200px-Sky_TG24_logo.svg.png', aliases:[]},
   {lcn:501,name:'Sky TG24 Primo Piano',logo:'https://upload.wikimedia.org/wikipedia/commons/thumb/4/48/Sky_TG24_logo.svg/200px-Sky_TG24_logo.svg.png', aliases:['sky tg24 primo piano']},
   {lcn:502,name:'Sky Meteo 24',     logo:'https://upload.wikimedia.org/wikipedia/commons/thumb/4/48/Sky_TG24_logo.svg/200px-Sky_TG24_logo.svg.png', aliases:['sky meteo 24','sky meteo']},
-  {lcn:503,name:'Sky Sport 24 (503)',logo:'https://upload.wikimedia.org/wikipedia/commons/thumb/5/59/Sky_Sport_24.svg/200px-Sky_Sport_24.svg.png', aliases:[]},
+  {lcn:503,name:'Sky Sport 24',logo:'https://upload.wikimedia.org/wikipedia/commons/thumb/5/59/Sky_Sport_24.svg/200px-Sky_Sport_24.svg.png', aliases:[]},
   {lcn:515,name:'Vatican Media Europe',logo:'https://upload.wikimedia.org/wikipedia/commons/thumb/4/4e/RTL_102.5.svg/200px-RTL_102.5.svg.png', aliases:['vatican media europe','vatican media']},
   {lcn:519,name:'TRM',              logo:'https://upload.wikimedia.org/wikipedia/commons/thumb/4/4e/RTL_102.5.svg/200px-RTL_102.5.svg.png', aliases:['trm']},
-  {lcn:521,name:'Euronews (521)',   logo:'https://upload.wikimedia.org/wikipedia/commons/thumb/9/9d/Euronews_logo.svg/200px-Euronews_logo.svg.png', aliases:[]},
+  {lcn:521,name:'Euronews',   logo:'https://upload.wikimedia.org/wikipedia/commons/thumb/9/9d/Euronews_logo.svg/200px-Euronews_logo.svg.png', aliases:[]},
   {lcn:522,name:'Sky News',         logo:'https://upload.wikimedia.org/wikipedia/commons/thumb/1/18/Sky_News_logo.svg/200px-Sky_News_logo.svg.png', aliases:['sky news']},
   {lcn:526,name:'CNN International',logo:'https://upload.wikimedia.org/wikipedia/commons/thumb/b/b1/CNN.svg/200px-CNN.svg.png', aliases:['cnn international','cnn']},
   {lcn:530,name:'BBC World News',   logo:'https://upload.wikimedia.org/wikipedia/commons/thumb/c/c4/BBC_World_News_2022.svg/200px-BBC_World_News_2022.svg.png', aliases:['bbc world news','bbc world']},
   {lcn:532,name:'Al Jazeera International',logo:'https://upload.wikimedia.org/wikipedia/commons/thumb/f/f5/Logo_of_Al_Jazeera_English.svg/200px-Logo_of_Al_Jazeera_English.svg.png', aliases:['al jazeera international']},
   {lcn:534,name:'Arirang TV',       logo:'https://upload.wikimedia.org/wikipedia/commons/thumb/5/5f/Arirang_TV.svg/200px-Arirang_TV.svg.png', aliases:['arirang tv','arirang']},
-  {lcn:538,name:'Euronews English (538)',logo:'https://upload.wikimedia.org/wikipedia/commons/thumb/9/9d/Euronews_logo.svg/200px-Euronews_logo.svg.png', aliases:[]},
+  {lcn:538,name:'Euronews English',logo:'https://upload.wikimedia.org/wikipedia/commons/thumb/9/9d/Euronews_logo.svg/200px-Euronews_logo.svg.png', aliases:[]},
   {lcn:541,name:'France 24 Français',logo:'https://upload.wikimedia.org/wikipedia/commons/thumb/a/a1/France_24_logo.svg/200px-France_24_logo.svg.png', aliases:['france 24 français','france 24 francais']},
   {lcn:543,name:'Deutsche Welle',   logo:'https://upload.wikimedia.org/wikipedia/commons/thumb/7/75/Deutsche_Welle_symbol_2012.svg/200px-Deutsche_Welle_symbol_2012.svg.png', aliases:['deutsche welle','dw']},
   {lcn:550,name:'San Marino RTV',   logo:'https://upload.wikimedia.org/wikipedia/commons/thumb/2/22/San_Marino_RTV.svg/200px-San_Marino_RTV.svg.png', aliases:['san marino rtv']},
@@ -337,16 +337,16 @@ const LOCAL_CHANNELS=[
   {lcn:607,name:'Boomerang',        logo:'https://upload.wikimedia.org/wikipedia/commons/thumb/8/8b/Boomerang_%28TV_channel%29_logo.svg/200px-Boomerang_%28TV_channel%29_logo.svg.png', aliases:['boomerang']},
   {lcn:714,name:'Deejay TV',        logo:'https://upload.wikimedia.org/wikipedia/commons/thumb/b/b5/Logo_DeeJay.png/200px-Logo_DeeJay.png', aliases:['deejay tv','dj tv']},
   {lcn:716,name:'Radio Monte Carlo TV',logo:'https://upload.wikimedia.org/wikipedia/commons/thumb/4/4e/RTL_102.5.svg/200px-RTL_102.5.svg.png', aliases:[]},
-  {lcn:717,name:'Virgin Radio TV (717)',logo:'https://upload.wikimedia.org/wikipedia/commons/thumb/9/94/Virgin_Radio_logo.svg/200px-Virgin_Radio_logo.svg.png', aliases:[]},
-  {lcn:724,name:'RDS Social TV (724)',logo:'https://upload.wikimedia.org/wikipedia/commons/thumb/3/3d/RDS_logo.svg/200px-RDS_logo.svg.png', aliases:[]},
-  {lcn:725,name:'Radio Italia TV (725)',logo:'https://upload.wikimedia.org/wikipedia/commons/thumb/6/65/Radio_Italia_TV_logo.svg/200px-Radio_Italia_TV_logo.svg.png', aliases:[]},
+  {lcn:717,name:'Virgin Radio TV',logo:'https://upload.wikimedia.org/wikipedia/commons/thumb/9/94/Virgin_Radio_logo.svg/200px-Virgin_Radio_logo.svg.png', aliases:[]},
+  {lcn:724,name:'RDS Social TV',logo:'https://upload.wikimedia.org/wikipedia/commons/thumb/3/3d/RDS_logo.svg/200px-RDS_logo.svg.png', aliases:[]},
+  {lcn:725,name:'Radio Italia TV',logo:'https://upload.wikimedia.org/wikipedia/commons/thumb/6/65/Radio_Italia_TV_logo.svg/200px-Radio_Italia_TV_logo.svg.png', aliases:[]},
   {lcn:726,name:'Radio Italia Live TV',logo:'https://upload.wikimedia.org/wikipedia/commons/thumb/6/65/Radio_Italia_TV_logo.svg/200px-Radio_Italia_TV_logo.svg.png', aliases:[]},
-  {lcn:727,name:'Radio Kiss Kiss TV (727)',logo:'https://upload.wikimedia.org/wikipedia/commons/thumb/9/9a/Radio_Kiss_Kiss_logo.svg/200px-Radio_Kiss_Kiss_logo.svg.png', aliases:[]},
+  {lcn:727,name:'Radio Kiss Kiss TV',logo:'https://upload.wikimedia.org/wikipedia/commons/thumb/9/9a/Radio_Kiss_Kiss_logo.svg/200px-Radio_Kiss_Kiss_logo.svg.png', aliases:[]},
   {lcn:730,name:'Radionorba TV',    logo:'https://upload.wikimedia.org/wikipedia/commons/thumb/4/4e/RTL_102.5.svg/200px-RTL_102.5.svg.png', aliases:['radionorba tv','radionorba']},
-  {lcn:735,name:'Radio Zeta TV (735)',logo:'https://upload.wikimedia.org/wikipedia/commons/thumb/a/a8/Radio_Zeta_logo.svg/200px-Radio_Zeta_logo.svg.png', aliases:[]},
-  {lcn:736,name:'RTL 102.5 TV (736)',logo:'https://upload.wikimedia.org/wikipedia/commons/thumb/4/4e/RTL_102.5.svg/200px-RTL_102.5.svg.png', aliases:[]},
+  {lcn:735,name:'Radio Zeta TV',logo:'https://upload.wikimedia.org/wikipedia/commons/thumb/a/a8/Radio_Zeta_logo.svg/200px-Radio_Zeta_logo.svg.png', aliases:[]},
+  {lcn:736,name:'RTL 102.5 TV',logo:'https://upload.wikimedia.org/wikipedia/commons/thumb/4/4e/RTL_102.5.svg/200px-RTL_102.5.svg.png', aliases:[]},
   {lcn:737,name:'RTL 102.5 Caliente',logo:'https://upload.wikimedia.org/wikipedia/commons/thumb/4/4e/RTL_102.5.svg/200px-RTL_102.5.svg.png', aliases:[]},
-  {lcn:738,name:'Radio Freccia TV (738)',logo:'https://upload.wikimedia.org/wikipedia/commons/thumb/4/4e/RTL_102.5.svg/200px-RTL_102.5.svg.png', aliases:[]},
+  {lcn:738,name:'Radio Freccia TV',logo:'https://upload.wikimedia.org/wikipedia/commons/thumb/4/4e/RTL_102.5.svg/200px-RTL_102.5.svg.png', aliases:[]},
 ];
 
 // Build lookup maps from LOCAL_CHANNELS
@@ -411,7 +411,7 @@ function variantScore(raw){
 // STATE
 // ═══════════════════════════════════════════════════
 let channels=[], programmes={}, activeChannel=null, activeDate=null, allDates=[], filterGroup='all';
-const CACHE_KEY='epgit_v6', CACHE_TTL=4*60*60*1000;
+const CACHE_KEY='epgit_v6', CACHE_TTL=24*60*60*1000;
 
 // ═══════════════════════════════════════════════════
 // CLOCK
@@ -423,9 +423,27 @@ function setStatus(s,t){ document.getElementById('sdot').className='status-dot '
 // ═══════════════════════════════════════════════════
 // CACHE
 // ═══════════════════════════════════════════════════
-function saveCache(xml){ try{ localStorage.setItem(CACHE_KEY,JSON.stringify({ts:Date.now(),xml})); }catch(e){} }
-function loadCache(){ try{ const c=JSON.parse(localStorage.getItem(CACHE_KEY)||'null'); if(c&&Date.now()-c.ts<CACHE_TTL) return c; }catch(e){} return null; }
-function hardRefresh(){ try{localStorage.removeItem(CACHE_KEY);}catch(e){} document.getElementById('cacheBadge').style.display='none'; init(true); }
+function getStorage(){try{localStorage.setItem('_t','1');localStorage.removeItem('_t');return localStorage;}catch(e){try{return sessionStorage;}catch(e2){return null;}}}
+function saveCache(xml){
+  const store=getStorage();
+  if(!store) return;
+  try{store.setItem(CACHE_KEY,JSON.stringify({ts:Date.now(),xml}));}catch(e){
+    // localStorage pieno: prova sessionStorage
+    try{sessionStorage.setItem(CACHE_KEY,JSON.stringify({ts:Date.now(),xml}));}catch(e2){}
+  }
+}
+function loadCache(){
+  for(const store of [localStorage,sessionStorage]){
+    try{const c=JSON.parse(store.getItem(CACHE_KEY)||'null');if(c&&Date.now()-c.ts<CACHE_TTL)return c;}catch(e){}
+  }
+  return null;
+}
+function hardRefresh(){
+  try{localStorage.removeItem(CACHE_KEY);}catch(e){}
+  try{sessionStorage.removeItem(CACHE_KEY);}catch(e){}
+  document.getElementById('cacheBadge').style.display='none';
+  init(true);
+}
 
 // ═══════════════════════════════════════════════════
 // GZIP DECOMPRESSION
@@ -576,7 +594,16 @@ function parseXMLTV(xml){
   const programmes={};
   for(const [nameKey,ch] of Object.entries(nameMap)){
     const map=progMap[ch.id];
-    if(map) programmes[ch.id]=[...map.values()].sort((a,b)=>a.start-b.start);
+    if(map){
+      // deduplicazione secondaria per titolo+orario (elimina doppioni residui)
+      const seen=new Set();
+      const deduped=[];
+      for(const p of [...map.values()].sort((a,b)=>a.start-b.start)){
+        const key=p.start.getTime()+'|'+p.title;
+        if(!seen.has(key)){seen.add(key);deduped.push(p);}
+      }
+      programmes[ch.id]=deduped;
+    }
   }
 
   const chList=Object.values(nameMap);
