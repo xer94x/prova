@@ -6,448 +6,115 @@
 <title>EPG Italia — Guida TV</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
-:root {
-  --bg: #080c10;
-  --surface: #0d1117;
-  --card: #111720;
-  --card2: #161e2a;
-  --border: #1c2535;
-  --border2: #253040;
-  --accent: #00d4ff;
-  --accent2: #0099cc;
-  --accentdim: rgba(0,212,255,.1);
-  --red: #ff4d6d;
-  --gold: #ffd166;
-  --green: #06d6a0;
-  --text: #dde4f0;
-  --muted: #3a4a5a;
-  --muted2: #5a7080;
-  --muted3: #8090a0;
+:root{
+  --bg:#080c10;--surface:#0d1117;--card:#111720;--card2:#161e2a;
+  --border:#1c2535;--border2:#253040;
+  --accent:#00d4ff;--accent2:#0099cc;--accentdim:rgba(0,212,255,.1);
+  --red:#ff4d6d;--gold:#ffd166;--green:#06d6a0;
+  --text:#dde4f0;--muted:#3a4a5a;--muted2:#5a7080;--muted3:#8090a0;
 }
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 body{background:var(--bg);color:var(--text);font-family:'Space Grotesk',sans-serif;height:100vh;display:flex;flex-direction:column;overflow:hidden}
 ::-webkit-scrollbar{width:4px;height:4px}
 ::-webkit-scrollbar-track{background:transparent}
 ::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px}
-
-/* HEADER */
-header {
-  background:var(--surface);
-  border-bottom:1px solid var(--border);
-  padding:0 16px;
-  height:48px;
-  display:flex;
-  align-items:center;
-  gap:12px;
-  flex-shrink:0;
-  z-index:100;
-}
-.logo {
-  font-size:15px;
-  font-weight:700;
-  letter-spacing:2px;
-  text-transform:uppercase;
-  display:flex;
-  align-items:center;
-  gap:6px;
-}
-.logo-epg{color:var(--accent)}
-.logo-it{color:var(--text)}
-.logo-dot{width:5px;height:5px;border-radius:50%;background:var(--red);box-shadow:0 0 6px var(--red);animation:livepulse 2s ease-in-out infinite}
-@keyframes livepulse{0%,100%{opacity:1;box-shadow:0 0 6px var(--red)}50%{opacity:.4;box-shadow:0 0 2px var(--red)}}
-.hdr-clock {
-  font-family:'JetBrains Mono',monospace;
-  font-size:12px;
-  color:var(--muted3);
-  background:var(--card);
-  border:1px solid var(--border);
-  border-radius:4px;
-  padding:3px 8px;
-}
-.hdr-status {
-  margin-left:auto;
-  display:flex;
-  align-items:center;
-  gap:6px;
-  font-size:10px;
-  font-weight:500;
-  letter-spacing:.5px;
-  text-transform:uppercase;
-  color:var(--muted2);
-}
+header{background:var(--surface);border-bottom:1px solid var(--border);padding:0 14px;height:46px;display:flex;align-items:center;gap:10px;flex-shrink:0;z-index:100}
+.logo{font-size:14px;font-weight:700;letter-spacing:2px;text-transform:uppercase;display:flex;align-items:center;gap:5px}
+.logo-epg{color:var(--accent)}.logo-it{color:var(--text)}
+.logo-dot{width:5px;height:5px;border-radius:50%;background:var(--red);box-shadow:0 0 6px var(--red);animation:livepulse 2s ease-in-out infinite;flex-shrink:0}
+@keyframes livepulse{0%,100%{opacity:1;box-shadow:0 0 6px var(--red)}50%{opacity:.3;box-shadow:0 0 2px var(--red)}}
+.hdr-clock{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted3);background:var(--card);border:1px solid var(--border);border-radius:4px;padding:3px 7px;flex-shrink:0}
+.hdr-search{background:var(--card);border:1px solid var(--border2);border-radius:5px;padding:5px 10px;color:var(--text);font-family:'Space Grotesk',sans-serif;font-size:12px;outline:none;width:170px;transition:border-color .2s,width .2s}
+.hdr-search:focus{border-color:var(--accent);width:210px}
+.hdr-search::placeholder{color:var(--muted2)}
+.hdr-status{margin-left:auto;display:flex;align-items:center;gap:6px;font-size:10px;font-weight:500;letter-spacing:.5px;text-transform:uppercase;color:var(--muted2);white-space:nowrap}
 .status-dot{width:6px;height:6px;border-radius:50%;background:var(--muted);flex-shrink:0;transition:all .3s}
 .status-dot.ok{background:var(--green);box-shadow:0 0 5px var(--green)}
 .status-dot.loading{background:var(--accent);animation:blink .8s infinite}
 .status-dot.err{background:var(--red)}
 @keyframes blink{0%,100%{opacity:1}50%{opacity:.2}}
-.hdr-search {
-  background:var(--card);
-  border:1px solid var(--border2);
-  border-radius:5px;
-  padding:5px 10px;
-  color:var(--text);
-  font-family:'Space Grotesk',sans-serif;
-  font-size:12px;
-  outline:none;
-  width:180px;
-  transition:border-color .2s, width .2s;
-}
-.hdr-search:focus{border-color:var(--accent);width:220px}
-.hdr-search::placeholder{color:var(--muted2)}
-
-/* MAIN LAYOUT */
-.main {
-  display:flex;
-  flex:1;
-  overflow:hidden;
-}
-
-/* LEFT PANEL — channel list */
-.ch-panel {
-  width:340px;
-  flex-shrink:0;
-  border-right:1px solid var(--border);
-  display:flex;
-  flex-direction:column;
-  background:var(--surface);
-}
-.ch-filters {
-  display:flex;
-  gap:4px;
-  padding:8px;
-  border-bottom:1px solid var(--border);
-  flex-wrap:wrap;
-}
-.filt-btn {
-  background:transparent;
-  border:1px solid var(--border2);
-  border-radius:4px;
-  padding:3px 8px;
-  font-size:10px;
-  font-family:'Space Grotesk',sans-serif;
-  font-weight:600;
-  letter-spacing:.8px;
-  text-transform:uppercase;
-  color:var(--muted2);
-  cursor:pointer;
-  transition:all .15s;
-  white-space:nowrap;
-}
+.cache-badge{font-size:9px;background:rgba(255,209,102,.1);border:1px solid rgba(255,209,102,.25);color:var(--gold);border-radius:3px;padding:1px 5px;font-weight:600;letter-spacing:.5px;cursor:pointer;transition:background .15s;white-space:nowrap}
+.cache-badge:hover{background:rgba(255,209,102,.2)}
+.main{display:flex;flex:1;overflow:hidden}
+.ch-panel{width:310px;flex-shrink:0;border-right:1px solid var(--border);display:flex;flex-direction:column;background:var(--surface)}
+.ch-filters{display:flex;gap:3px;padding:6px 8px;border-bottom:1px solid var(--border);overflow-x:auto;flex-shrink:0}
+.ch-filters::-webkit-scrollbar{height:0}
+.filt-btn{background:transparent;border:1px solid var(--border2);border-radius:4px;padding:3px 8px;font-size:9px;font-family:'Space Grotesk',sans-serif;font-weight:700;letter-spacing:.8px;text-transform:uppercase;color:var(--muted2);cursor:pointer;transition:all .15s;white-space:nowrap;flex-shrink:0}
 .filt-btn:hover{border-color:var(--accent2);color:var(--text)}
 .filt-btn.active{background:var(--accentdim);border-color:rgba(0,212,255,.4);color:var(--accent)}
-.ch-list {
-  flex:1;
-  overflow-y:auto;
-  overflow-x:hidden;
-}
-.ch-item {
-  display:flex;
-  align-items:center;
-  gap:10px;
-  padding:10px 12px;
-  border-bottom:1px solid rgba(255,255,255,.03);
-  cursor:pointer;
-  transition:background .12s;
-  position:relative;
-}
+.ch-list{flex:1;overflow-y:auto;overflow-x:hidden}
+.ch-item{display:flex;align-items:center;gap:8px;padding:8px 10px;border-bottom:1px solid rgba(255,255,255,.025);cursor:pointer;transition:background .1s;position:relative;min-height:52px}
 .ch-item:hover{background:var(--card)}
 .ch-item.active{background:var(--card2);border-left:2px solid var(--accent)}
-.ch-num {
-  font-family:'JetBrains Mono',monospace;
-  font-size:9px;
-  font-weight:500;
-  color:var(--muted);
-  width:22px;
-  text-align:right;
-  flex-shrink:0;
-}
-.ch-logo-wrap {
-  width:40px;
-  height:28px;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  background:rgba(255,255,255,.04);
-  border-radius:4px;
-  flex-shrink:0;
-  overflow:hidden;
-}
-.ch-logo {
-  max-width:36px;
-  max-height:24px;
-  object-fit:contain;
-}
-.ch-logo-ph {
-  font-size:8px;
-  font-weight:700;
-  color:var(--muted2);
-  text-align:center;
-  line-height:1.1;
-}
-.ch-info {
-  flex:1;
-  min-width:0;
-}
-.ch-name {
-  font-size:12px;
-  font-weight:600;
-  color:var(--text);
-  white-space:nowrap;
-  overflow:hidden;
-  text-overflow:ellipsis;
-  line-height:1.3;
-}
-.ch-now {
-  font-size:10px;
-  color:var(--muted3);
-  white-space:nowrap;
-  overflow:hidden;
-  text-overflow:ellipsis;
-  margin-top:2px;
-  line-height:1.3;
-}
-.ch-now-title {
-  color:var(--text);
-  font-weight:500;
-}
-.ch-progress-bar {
-  position:absolute;
-  bottom:0;
-  left:0;
-  height:2px;
-  background:linear-gradient(90deg, var(--accent2), var(--accent));
-  opacity:.5;
-  transition:width .3s;
-}
-
-/* RIGHT PANEL — EPG schedule */
-.epg-panel {
-  flex:1;
-  display:flex;
-  flex-direction:column;
-  overflow:hidden;
-}
-.epg-header {
-  background:var(--surface);
-  border-bottom:1px solid var(--border);
-  padding:14px 20px;
-  flex-shrink:0;
-}
-.epg-channel-title {
-  display:flex;
-  align-items:center;
-  gap:12px;
-}
-.epg-logo-wrap {
-  width:56px;
-  height:40px;
-  background:rgba(255,255,255,.05);
-  border:1px solid var(--border2);
-  border-radius:6px;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  overflow:hidden;
-  flex-shrink:0;
-}
-.epg-logo {
-  max-width:50px;
-  max-height:34px;
-  object-fit:contain;
-}
-.epg-ch-name {
-  font-size:18px;
-  font-weight:700;
-  color:var(--text);
-  letter-spacing:-.3px;
-}
-.epg-ch-sub {
-  font-size:11px;
-  color:var(--muted3);
-  margin-top:2px;
-  font-weight:400;
-}
-.epg-date-tabs {
-  display:flex;
-  gap:4px;
-  margin-top:10px;
-  flex-wrap:wrap;
-}
-.date-tab {
-  background:transparent;
-  border:1px solid var(--border2);
-  border-radius:4px;
-  padding:4px 10px;
-  font-size:10px;
-  font-family:'Space Grotesk',sans-serif;
-  font-weight:600;
-  letter-spacing:.5px;
-  text-transform:uppercase;
-  color:var(--muted2);
-  cursor:pointer;
-  transition:all .15s;
-  white-space:nowrap;
-}
+.ch-num{font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:500;color:var(--muted);width:24px;text-align:right;flex-shrink:0}
+.ch-logo-wrap{width:38px;height:26px;display:flex;align-items:center;justify-content:center;background:rgba(255,255,255,.04);border-radius:4px;flex-shrink:0;overflow:hidden}
+.ch-logo{max-width:34px;max-height:22px;object-fit:contain;display:block}
+.ch-logo-ph{font-size:7px;font-weight:700;color:var(--muted2);text-align:center;padding:2px}
+.ch-info{flex:1;min-width:0}
+.ch-name{font-size:11px;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1.3}
+.ch-now{font-size:10px;color:var(--muted3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:2px;line-height:1.2}
+.ch-now-title{color:var(--accent2);font-weight:500}
+.ch-prog-bar{position:absolute;bottom:0;left:0;height:2px;background:linear-gradient(90deg,var(--accent2),var(--accent));opacity:.45}
+.epg-panel{flex:1;display:flex;flex-direction:column;overflow:hidden}
+.epg-header{background:var(--surface);border-bottom:1px solid var(--border);padding:12px 18px;flex-shrink:0}
+.epg-ch-title{display:flex;align-items:center;gap:12px}
+.epg-logo-wrap{width:54px;height:38px;background:rgba(255,255,255,.05);border:1px solid var(--border2);border-radius:6px;display:flex;align-items:center;justify-content:center;overflow:hidden;flex-shrink:0}
+.epg-logo{max-width:48px;max-height:32px;object-fit:contain}
+.epg-logo-ph{font-size:10px;font-weight:700;color:var(--muted2);padding:4px}
+.epg-ch-name{font-size:17px;font-weight:700;color:var(--text);letter-spacing:-.3px}
+.epg-ch-sub{font-size:11px;color:var(--muted3);margin-top:2px}
+.epg-date-tabs{display:flex;gap:4px;margin-top:10px;flex-wrap:wrap}
+.date-tab{background:transparent;border:1px solid var(--border2);border-radius:4px;padding:4px 10px;font-size:10px;font-family:'Space Grotesk',sans-serif;font-weight:600;letter-spacing:.5px;text-transform:uppercase;color:var(--muted2);cursor:pointer;transition:all .15s;white-space:nowrap}
 .date-tab:hover{border-color:var(--accent2);color:var(--text)}
 .date-tab.active{background:var(--accentdim);border-color:rgba(0,212,255,.4);color:var(--accent)}
-.epg-list {
-  flex:1;
-  overflow-y:auto;
-  padding:12px 16px;
-}
-.epg-empty {
-  display:flex;
-  flex-direction:column;
-  align-items:center;
-  justify-content:center;
-  height:100%;
-  gap:12px;
-  color:var(--muted2);
-}
-.epg-empty-icon {
-  font-size:48px;
-  opacity:.3;
-}
-.epg-empty-text{font-size:13px}
-.prog-item {
-  display:flex;
-  gap:12px;
-  padding:12px 14px;
-  border-radius:8px;
-  margin-bottom:6px;
-  border:1px solid transparent;
-  transition:background .15s, border-color .15s;
-  position:relative;
-  overflow:hidden;
-}
+.epg-list{flex:1;overflow-y:auto;padding:10px 14px}
+.prog-item{display:flex;gap:10px;padding:10px 12px;border-radius:7px;margin-bottom:5px;border:1px solid transparent;transition:background .12s,border-color .12s;position:relative;overflow:hidden}
 .prog-item:hover{background:var(--card);border-color:var(--border)}
-.prog-item.now {
-  background:var(--card2);
-  border-color:rgba(0,212,255,.25);
-}
-.prog-item.now::before {
-  content:'';
-  position:absolute;
-  left:0;top:0;bottom:0;width:3px;
-  background:linear-gradient(180deg,var(--accent),var(--accent2));
-  border-radius:3px 0 0 3px;
-}
-.prog-item.past {opacity:.45}
-.prog-time {
-  font-family:'JetBrains Mono',monospace;
-  font-size:11px;
-  font-weight:500;
-  color:var(--muted3);
-  width:42px;
-  flex-shrink:0;
-  padding-top:2px;
-  line-height:1.4;
-}
+.prog-item.now{background:var(--card2);border-color:rgba(0,212,255,.22)}
+.prog-item.now::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;background:linear-gradient(180deg,var(--accent),var(--accent2));border-radius:3px 0 0 3px}
+.prog-item.past{opacity:.4}
+.prog-time{font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:500;color:var(--muted3);width:38px;flex-shrink:0;padding-top:1px;line-height:1.5}
 .prog-item.now .prog-time{color:var(--accent)}
 .prog-body{flex:1;min-width:0}
-.prog-title {
-  font-size:13px;
-  font-weight:600;
-  color:var(--text);
-  line-height:1.35;
-}
+.prog-title{font-size:13px;font-weight:600;color:var(--text);line-height:1.3}
 .prog-item.now .prog-title{color:var(--accent)}
-.prog-desc {
-  font-size:11px;
-  color:var(--muted3);
-  margin-top:4px;
-  line-height:1.5;
-  display:-webkit-box;
-  -webkit-line-clamp:2;
-  -webkit-box-orient:vertical;
-  overflow:hidden;
-}
-.prog-meta {
-  display:flex;
-  gap:6px;
-  margin-top:6px;
-  flex-wrap:wrap;
-}
-.prog-tag {
-  font-size:9px;
-  font-weight:600;
-  letter-spacing:.6px;
-  text-transform:uppercase;
-  padding:2px 6px;
-  border-radius:3px;
-  background:rgba(255,255,255,.05);
-  color:var(--muted3);
-}
-.prog-tag.live{background:rgba(255,77,109,.15);color:var(--red);border:1px solid rgba(255,77,109,.3)}
-.prog-dur{font-size:9px;color:var(--muted2);font-family:'JetBrains Mono',monospace;padding-top:2px;flex-shrink:0}
-.prog-bar-wrap{margin-top:6px;height:3px;background:var(--border);border-radius:2px;overflow:hidden}
-.prog-bar-fill{height:100%;background:linear-gradient(90deg,var(--accent2),var(--accent));border-radius:2px;transition:width .3s}
-
-/* SKELETON */
-.skel-ch{height:52px;background:linear-gradient(90deg,var(--card) 25%,var(--card2) 50%,var(--card) 75%);background-size:200% 100%;animation:shimmer 1.4s infinite;border-bottom:1px solid rgba(255,255,255,.03)}
+.prog-desc{font-size:11px;color:var(--muted3);margin-top:3px;line-height:1.5;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.prog-meta{display:flex;gap:5px;margin-top:5px;flex-wrap:wrap;align-items:center}
+.prog-tag{font-size:9px;font-weight:600;letter-spacing:.6px;text-transform:uppercase;padding:2px 6px;border-radius:3px;background:rgba(255,255,255,.05);color:var(--muted3)}
+.prog-tag.live{background:rgba(255,77,109,.12);color:var(--red);border:1px solid rgba(255,77,109,.25)}
+.prog-dur{font-size:9px;color:var(--muted);font-family:'JetBrains Mono',monospace;padding-top:2px;flex-shrink:0}
+.prog-bar-wrap{width:100%;height:3px;background:var(--border);border-radius:2px;overflow:hidden;margin-top:5px}
+.prog-bar-fill{height:100%;background:linear-gradient(90deg,var(--accent2),var(--accent));border-radius:2px}
+.skel-ch{height:52px;background:linear-gradient(90deg,var(--card) 25%,var(--card2) 50%,var(--card) 75%);background-size:200% 100%;animation:shimmer 1.4s infinite;border-bottom:1px solid rgba(255,255,255,.025)}
 @keyframes shimmer{0%{background-position:200%}100%{background-position:-200%}}
-
-/* WELCOME STATE */
-.welcome {
-  display:flex;
-  flex-direction:column;
-  align-items:center;
-  justify-content:center;
-  height:100%;
-  gap:16px;
-  color:var(--muted2);
-  padding:40px;
-  text-align:center;
-}
-.welcome-icon{font-size:64px;opacity:.2}
-.welcome-title{font-size:16px;font-weight:600;color:var(--muted3)}
-.welcome-sub{font-size:12px;line-height:1.6;max-width:300px}
-
-/* ERROR RETRY */
-.retry-btn {
-  background:rgba(0,212,255,.1);
-  border:1px solid rgba(0,212,255,.3);
-  color:var(--accent);
-  padding:8px 18px;
-  border-radius:6px;
-  cursor:pointer;
-  font-family:'Space Grotesk',sans-serif;
-  font-size:12px;
-  font-weight:600;
-  transition:background .15s;
-}
+.center-msg{display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;gap:12px;color:var(--muted2);padding:40px;text-align:center}
+.center-msg .icon{font-size:52px;opacity:.18}
+.center-msg .ttl{font-size:15px;font-weight:600;color:var(--muted3)}
+.center-msg .sub{font-size:12px;line-height:1.6;max-width:280px}
+.retry-btn{background:rgba(0,212,255,.1);border:1px solid rgba(0,212,255,.3);color:var(--accent);padding:7px 16px;border-radius:5px;cursor:pointer;font-family:'Space Grotesk',sans-serif;font-size:12px;font-weight:600;transition:background .15s;margin-top:6px}
 .retry-btn:hover{background:rgba(0,212,255,.2)}
-
-@media(max-width:700px){
-  .ch-panel{width:240px}
-  .ch-logo-wrap{width:32px;height:22px}
-}
 </style>
 </head>
 <body>
 <header>
-  <div class="logo">
-    <span class="logo-epg">EPG</span><span class="logo-it">Italia</span>
-    <div class="logo-dot"></div>
-  </div>
+  <div class="logo"><span class="logo-epg">EPG</span><span class="logo-it">Italia</span><div class="logo-dot"></div></div>
   <div class="hdr-clock" id="clock">--:--:--</div>
   <input class="hdr-search" id="search" type="text" placeholder="🔍 Cerca canale..." oninput="filterChannels()">
-  <div class="hdr-status">
-    <div class="status-dot loading" id="sdot"></div>
-    <span id="stxt">Caricamento...</span>
-  </div>
+  <span class="cache-badge" id="cacheBadge" style="display:none" title="Dati da cache — clicca per aggiornare" onclick="hardRefresh()">⚡ CACHE</span>
+  <div class="hdr-status"><div class="status-dot loading" id="sdot"></div><span id="stxt">Caricamento...</span></div>
 </header>
 <div class="main">
   <div class="ch-panel">
-    <div class="ch-filters" id="filters">
-      <button class="filt-btn active" onclick="setFilter('all',this)">Tutti</button>
-    </div>
+    <div class="ch-filters" id="filters"><button class="filt-btn active" onclick="setFilter('all',this)">Tutti</button></div>
     <div class="ch-list" id="chList"></div>
   </div>
   <div class="epg-panel">
     <div class="epg-header" id="epgHeader" style="display:none">
-      <div class="epg-channel-title">
-        <div class="epg-logo-wrap"><img class="epg-logo" id="epgLogo" src="" alt="" onerror="this.style.display='none'"><span id="epgLogoPh" class="ch-logo-ph" style="display:none"></span></div>
+      <div class="epg-ch-title">
+        <div class="epg-logo-wrap">
+          <img class="epg-logo" id="epgLogo" src="" alt="" onerror="this.style.display='none';document.getElementById('epgLogoPh').style.display=''">
+          <div id="epgLogoPh" class="epg-logo-ph" style="display:none"></div>
+        </div>
         <div>
           <div class="epg-ch-name" id="epgChName">—</div>
           <div class="epg-ch-sub" id="epgChSub">Seleziona una data</div>
@@ -456,531 +123,542 @@ header {
       <div class="epg-date-tabs" id="dateTabs"></div>
     </div>
     <div class="epg-list" id="epgList">
-      <div class="welcome">
-        <div class="welcome-icon">📺</div>
-        <div class="welcome-title">Guida TV Italia</div>
-        <div class="welcome-sub">Seleziona un canale dalla lista per vedere la programmazione completa</div>
-      </div>
+      <div class="center-msg"><div class="icon">📺</div><div class="ttl">Guida TV Italia</div><div class="sub">Seleziona un canale dalla lista per vedere la programmazione completa</div></div>
     </div>
   </div>
 </div>
-
 <script>
-// ── State ──────────────────────────────────────────────────────────────────
-let channels = [];          // [{id,name,logo,displayName,num}]
-let programmes = {};        // {channelId: [{start,stop,title,desc,category}]}
-let activeChannel = null;
-let activeDate = null;
-let allDates = [];
-let filterGroup = 'all';
-
-// ── Clock ──────────────────────────────────────────────────────────────────
-function updateClock(){
-  const now = new Date();
-  document.getElementById('clock').textContent = now.toLocaleTimeString('it-IT');
-}
-setInterval(updateClock, 1000);
-updateClock();
-
-// ── Status helpers ─────────────────────────────────────────────────────────
-function setStatus(state, txt){
-  const d = document.getElementById('sdot');
-  d.className = 'status-dot ' + state;
-  document.getElementById('stxt').textContent = txt;
-}
-
-// ── Fetch helpers ──────────────────────────────────────────────────────────
-
-// Decompress gzip ArrayBuffer → string
-async function decompressGzip(buffer){
-  try{
-    const ds = new DecompressionStream('gzip');
-    const writer = ds.writable.getWriter();
-    const reader = ds.readable.getReader();
-    writer.write(new Uint8Array(buffer));
-    writer.close();
-    const chunks = [];
-    while(true){
-      const {done, value} = await reader.read();
-      if(done) break;
-      chunks.push(value);
-    }
-    const total = chunks.reduce((n,c)=>n+c.length,0);
-    const merged = new Uint8Array(total);
-    let off=0; for(const c of chunks){merged.set(c,off);off+=c.length;}
-    return new TextDecoder().decode(merged);
-  }catch(e){ return null; }
-}
-
-// Try to extract XML from whatever we got
-async function extractXml(response){
-  // Try as binary (gzip) first
-  try{
-    const buf = await response.clone().arrayBuffer();
-    // Check gzip magic bytes
-    const header = new Uint8Array(buf.slice(0,2));
-    if(header[0]===0x1f && header[1]===0x8b){
-      const text = await decompressGzip(buf);
-      if(text && text.includes('<tv')) return text;
-    }
-    // Try as plain text
-    const text = new TextDecoder().decode(buf);
-    if(text.includes('<tv')) return text;
-    // Try JSON wrapper (allorigins)
-    try{
-      const j = JSON.parse(text);
-      if(j && j.contents){
-        // contents might be gzip base64 or plain xml
-        if(j.contents.includes('<tv')) return j.contents;
-        // try base64 decode + decompress
-        try{
-          const bin = atob(j.contents);
-          const bytes = new Uint8Array(bin.length);
-          for(let i=0;i<bin.length;i++) bytes[i]=bin.charCodeAt(i);
-          if(bytes[0]===0x1f && bytes[1]===0x8b){
-            const xml = await decompressGzip(bytes.buffer);
-            if(xml && xml.includes('<tv')) return xml;
-          }
-        }catch(e){}
-      }
-    }catch(e){}
-  }catch(e){}
-  return null;
-}
-
-async function fetchViaProxy(url){
-  // Strategy 1: Direct fetch (browser handles gzip decompression automatically)
-  try{
-    const r = await fetch(url, {signal: AbortSignal.timeout(10000)});
-    if(r.ok){
-      const text = await r.text();
-      if(text && text.includes('<tv')) return text;
-    }
-  }catch(e){}
-
-  // Strategy 2: corsproxy.io — returns raw binary, browser decompresses
-  try{
-    const r = await fetch(`https://corsproxy.io/?${encodeURIComponent(url)}`, {signal: AbortSignal.timeout(14000)});
-    if(r.ok){
-      const xml = await extractXml(r);
-      if(xml) return xml;
-    }
-  }catch(e){}
-
-  // Strategy 3: allorigins — wraps in JSON {contents}
-  try{
-    const r = await fetch(`https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`, {signal: AbortSignal.timeout(14000)});
-    if(r.ok){
-      const xml = await extractXml(r);
-      if(xml) return xml;
-    }
-  }catch(e){}
-
-  // Strategy 4: allorigins get (JSON wrapper)
-  try{
-    const r = await fetch(`https://api.allorigins.win/get?url=${encodeURIComponent(url)}`, {signal: AbortSignal.timeout(14000)});
-    if(r.ok){
-      const j = await r.json();
-      if(j && j.contents && j.contents.includes('<tv')) return j.contents;
-    }
-  }catch(e){}
-
-  // Strategy 5: codetabs
-  try{
-    const r = await fetch(`https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(url)}`, {signal: AbortSignal.timeout(14000)});
-    if(r.ok){
-      const xml = await extractXml(r);
-      if(xml) return xml;
-    }
-  }catch(e){}
-
-  return null;
-}
-
-// ── Parse XMLTV ───────────────────────────────────────────────────────────
-function parseXMLTV(xmlText){
-  const parser = new DOMParser();
-  const doc = parser.parseFromString(xmlText, 'text/xml');
-
-  // Channels
-  const chs = [];
-  doc.querySelectorAll('channel').forEach(el => {
-    const id = el.getAttribute('id');
-    const displayEl = el.querySelector('display-name');
-    const iconEl = el.querySelector('icon');
-    if(!id || !displayEl) return;
-    const name = displayEl.textContent.trim();
-    const logo = iconEl ? iconEl.getAttribute('src') : '';
-    // extract num from name or id if possible
-    const numM = name.match(/^(\d+)\s/);
-    const num = numM ? parseInt(numM[1]) : null;
-    const displayName = numM ? name.slice(numM[0].length) : name;
-    chs.push({id, name, displayName, logo, num});
-  });
-
-  // Programmes
-  const progs = {};
-  doc.querySelectorAll('programme').forEach(el => {
-    const chId = el.getAttribute('channel');
-    const startRaw = el.getAttribute('start');
-    const stopRaw = el.getAttribute('stop');
-    if(!chId || !startRaw) return;
-    const start = parseXMLTVDate(startRaw);
-    const stop = stopRaw ? parseXMLTVDate(stopRaw) : null;
-    const titleEl = el.querySelector('title');
-    const descEl = el.querySelector('desc');
-    const catEl = el.querySelector('category');
-    const title = titleEl ? titleEl.textContent.trim() : '—';
-    const desc = descEl ? descEl.textContent.trim() : '';
-    const category = catEl ? catEl.textContent.trim() : '';
-    if(!progs[chId]) progs[chId] = [];
-    progs[chId].push({start, stop, title, desc, category});
-  });
-
-  // Sort progs
-  for(const id of Object.keys(progs)){
-    progs[id].sort((a,b) => a.start - b.start);
-  }
-
-  return {channels: chs, programmes: progs};
-}
-
-function parseXMLTVDate(s){
-  // Format: 20240325183000 +0200
-  const m = s.replace(/\s.*/,'');
-  const yr=m.slice(0,4),mo=m.slice(4,6),dy=m.slice(6,8);
-  const hr=m.slice(8,10)||'00',mi=m.slice(10,12)||'00',sc=m.slice(12,14)||'00';
-  const tz = s.includes('+') ? s.split('+')[1] : (s.includes('-',10) ? '-'+s.split('-').pop() : '');
-  // build ISO string
-  let iso = `${yr}-${mo}-${dy}T${hr}:${mi}:${sc}`;
-  if(tz){
-    const tzH = tz.slice(0,2), tzM = tz.slice(2,4)||'00';
-    iso += `+${tzH}:${tzM}`;
-  } else {
-    iso += 'Z';
-  }
-  return new Date(iso);
-}
-
-// ── Build date list from programmes ───────────────────────────────────────
-function buildDates(progList){
-  const days = new Set();
-  for(const p of progList){
-    const d = toLocalDateKey(p.start);
-    days.add(d);
-  }
-  return [...days].sort();
-}
-
-function toLocalDateKey(date){
-  return date.toLocaleDateString('sv-SE'); // yyyy-mm-dd
-}
-
-function todayKey(){
-  return new Date().toLocaleDateString('sv-SE');
-}
-
-function formatDateTab(key){
-  const [y,m,d] = key.split('-').map(Number);
-  const date = new Date(y,m-1,d);
-  const today = new Date(); today.setHours(0,0,0,0);
-  const diff = Math.round((date-today)/86400000);
-  const names = {'-1':'Ieri','0':'Oggi','1':'Domani'};
-  if(names[diff] !== undefined) return names[diff];
-  return date.toLocaleDateString('it-IT',{weekday:'short',day:'numeric',month:'short'});
-}
-
-// ── Render channel list ───────────────────────────────────────────────────
-function renderChannels(){
-  const q = document.getElementById('search').value.toLowerCase().trim();
-  const list = document.getElementById('chList');
-  list.innerHTML = '';
-  const now = new Date();
-  let shown = 0;
-
-  for(const ch of channels){
-    if(filterGroup !== 'all' && getChannelGroup(ch) !== filterGroup) continue;
-    if(q && !ch.displayName.toLowerCase().includes(q) && !ch.name.toLowerCase().includes(q)) continue;
-    shown++;
-
-    const progs = programmes[ch.id] || [];
-    const nowProg = progs.find(p => p.start <= now && p.stop && p.stop > now) || progs.find(p => p.start > now);
-
-    const item = document.createElement('div');
-    item.className = 'ch-item' + (activeChannel && activeChannel.id === ch.id ? ' active' : '');
-    item.onclick = () => selectChannel(ch);
-
-    // progress bar
-    let pct = 0;
-    if(nowProg && nowProg.stop && nowProg.start <= now && nowProg.stop > now){
-      const total = nowProg.stop - nowProg.start;
-      const elapsed = now - nowProg.start;
-      pct = Math.min(100, (elapsed/total)*100);
-    }
-
-    const logoHtml = ch.logo
-      ? `<img class="ch-logo" src="${ch.logo}" alt="" loading="lazy" onerror="this.style.display='none';this.nextSibling.style.display='block'">`
-      : '';
-    const phTxt = ch.displayName.split(' ').slice(0,2).map(w=>w[0]||'').join('').toUpperCase() || 'TV';
-
-    item.innerHTML = `
-      <div class="ch-num">${ch.num !== null ? String(ch.num).padStart(3,'0') : ''}</div>
-      <div class="ch-logo-wrap">
-        ${logoHtml}
-        <div class="ch-logo-ph" style="${ch.logo?'display:none':''}">${phTxt}</div>
-      </div>
-      <div class="ch-info">
-        <div class="ch-name">${escHtml(ch.displayName)}</div>
-        <div class="ch-now">${nowProg ? `<span class="ch-now-title">${escHtml(nowProg.title)}</span>` : '<span>Nessun dato</span>'}</div>
-      </div>
-      ${pct > 0 ? `<div class="ch-progress-bar" style="width:${pct}%"></div>` : ''}
-    `;
-    list.appendChild(item);
-  }
-
-  if(shown === 0){
-    list.innerHTML = `<div style="padding:40px;text-align:center;color:var(--muted2);font-size:12px">Nessun canale trovato</div>`;
-  }
-}
-
-function filterChannels(){ renderChannels(); }
-
-// ── Channel groups ─────────────────────────────────────────────────────────
-const GROUP_KEYWORDS = {
-  'RAI': ['rai'],
-  'Mediaset': ['canale 5','italia 1','rete 4','cine 34','iris','la 5','top crime','boing','cartoonito','focus','dmax','real time','tgcom'],
-  'Sky': ['sky','cielo'],
-  'Sport': ['sport','calcio','tennis','motor','gol','toro','juventus','inter','milan','basket'],
-  'News': ['news','tg ','tg24','notizie','giornale','euronews'],
-  'Kids': ['yoyo','gulp','cartoon','junior','kids','boing','baby','manga','super!','k2','frisbee'],
-  'Musica': ['music','radio','deejay','rtl','m2o','vevo','rock tv','mtv'],
+// ═══════════════════════════════════════════════════
+// LOGO DATABASE
+// ═══════════════════════════════════════════════════
+const LOGO_DB={
+'rai 1':'https://i.ibb.co/qMcsYXFB/101-rai-1-it.png','rai1':'https://i.ibb.co/qMcsYXFB/101-rai-1-it.png',
+'rai 2':'https://i.ibb.co/zHZXx5Hw/102-rai-2-it.png','rai2':'https://i.ibb.co/zHZXx5Hw/102-rai-2-it.png',
+'rai 3':'https://i.ibb.co/cqKGmMb/103-rai-3-it.png','rai3':'https://i.ibb.co/cqKGmMb/103-rai-3-it.png',
+'rete 4':'https://i.ibb.co/jk3Fb0W0/104-rete4-it.png','rete4':'https://i.ibb.co/jk3Fb0W0/104-rete4-it.png',
+'canale 5':'https://i.ibb.co/XfCQpn47/105-canale5-it.png','canale5':'https://i.ibb.co/XfCQpn47/105-canale5-it.png',
+'italia 1':'https://i.ibb.co/Jj0PL8dX/106-italia1-it.png','italia1':'https://i.ibb.co/Jj0PL8dX/106-italia1-it.png',
+'la7':'https://i.ibb.co/zy1ywT5/107-la7-it.png','la 7':'https://i.ibb.co/zy1ywT5/107-la7-it.png',
+'tv8':'https://i.ibb.co/Mx9S1k1H/125-tv8-it.png',
+'nove':'https://i.ibb.co/jPZ8bzRP/009-nove-it.png',
+'rai 4':'https://i.ibb.co/gFLmgvx3/010-rai-4-it.png','rai4':'https://i.ibb.co/gFLmgvx3/010-rai-4-it.png',
+'iris':'https://i.ibb.co/21d8kNv4/011-iris-it.png',
+'la 5':'https://i.ibb.co/zhCBwNnx/012-la5-it.png','la5':'https://i.ibb.co/zhCBwNnx/012-la5-it.png',
+'rai 5':'https://i.ibb.co/Lh9fVBsy/013-rai-5-it.png','rai5':'https://i.ibb.co/Lh9fVBsy/013-rai-5-it.png',
+'rai movie':'https://i.ibb.co/CsTvnR4J/014-rai-movie-it.png','raimovie':'https://i.ibb.co/CsTvnR4J/014-rai-movie-it.png',
+'rai premium':'https://i.ibb.co/VWthYJvQ/015-rai-premium-it.png',
+'italia 2':'https://i.ibb.co/4Z0L375W/175-italia2-it.png','italia2':'https://i.ibb.co/4Z0L375W/175-italia2-it.png',
+'mediaset extra':'https://i.ibb.co/FLbMGYzT/163-mediaset-extra-it.png',
+'tv 2000':'https://i.ibb.co/rGT01MYQ/tv2000.webp','tv2000':'https://i.ibb.co/rGT01MYQ/tv2000.webp',
+'cielo':'https://i.ibb.co/Pvhzbh95/126-cielo-it.png',
+'twentyseven':'https://i.ibb.co/hJXr29MC/158-twenty-seven-it.png','20 mediaset':'https://i.imgur.com/It13jwX.png',
+'rai sport':'https://i.ibb.co/23VcZNvF/021-rai-sport-it.png',
+'focus':'https://i.ibb.co/chy2kgvM/033-focus-it.png',
+'rai storia':'https://i.ibb.co/24WHm4Y/023-rai-storia-it.png',
+'rai news 24':'https://i.ibb.co/nM1MwpzQ/024-rai-news-24-it.png','rainews24':'https://i.ibb.co/nM1MwpzQ/024-rai-news-24-it.png',
+'tgcom 24':'https://i.ibb.co/4wsbVkC2/025-tgcom24-it.png','tgcom24':'https://i.ibb.co/4wsbVkC2/025-tgcom24-it.png',
+'rai scuola':'https://i.ibb.co/zTz3R1qL/026-rai-scuola-it.png',
+'dmax':'https://i.ibb.co/XrHwmCcM/dmax.webp',
+'la7d':'https://i.ibb.co/0R997DLv/161-la7-cinema-it.png','la7 cinema':'https://i.ibb.co/0R997DLv/161-la7-cinema-it.png',
+'sky tg24':'https://i.ibb.co/GGkB6Q0/100-sky-tg24-it.png','skytg24':'https://i.ibb.co/GGkB6Q0/100-sky-tg24-it.png',
+'real time':'https://i.ibb.co/3mJW8zXZ/031-real-time-it.png',
+'food network':'https://i.ibb.co/tMnYd6sM/food-network.webp',
+'cine 34':'https://i.ibb.co/C3D9hnf5/034-cine34-it.png','cine34':'https://i.ibb.co/C3D9hnf5/034-cine34-it.png',
+'discovery channel':'https://i.ibb.co/twW2yzWj/discovery.webp','discovery':'https://i.ibb.co/twW2yzWj/discovery.webp',
+'hgtv':'https://i.ibb.co/SHtZkcW/homeandgarden.webp',
+'motor trend':'https://i.ibb.co/PzP2JNHF/discoveryturbo.webp','motortrend':'https://i.ibb.co/PzP2JNHF/discoveryturbo.webp',
+'giallo':'https://i.ibb.co/spWmJ86z/038-giallo-it.png',
+'top crime':'https://i.ibb.co/RkFtcYCr/168-top-crime-it.png','topcrime':'https://i.ibb.co/RkFtcYCr/168-top-crime-it.png',
+'boing':'https://i.ibb.co/KpNs2DtL/040-boing-it.png',
+'cartoonito':'https://i.ibb.co/WN3kfPZH/041-cartoonito-it.png',
+'rai gulp':'https://i.ibb.co/k2jVpQj7/042-rai-gulp-it.png',
+'rai yoyo':'https://i.ibb.co/bctKkZ8/043-rai-yoyo-it.png',
+'frisbee':'https://i.ibb.co/TqkNKv3z/044-frisbee-it.png',
+'k2':'https://i.ibb.co/5xXFtzPV/046-k2-it.png',
+'super!':'https://i.ibb.co/TDgnwjQP/047-super-it.png',
+'supertennis':'https://i.ibb.co/GfjYBG2s/224-super-tennis-it.png',
+'deejay tv':'https://i.ibb.co/Qj3Nd2fP/714-deejay-tv-it.png',
+'radio italia':'https://i.ibb.co/0jVtmkvB/726-radio-italia-it.png',
+'rtl 102.5':'https://i.ibb.co/0Vs5Dpmv/736-rtl-1025-it.png',
+'gambero rosso':'https://i.ibb.co/BV0Xvcg6/133-gambero-rosso-it.png',
+'sky uno':'https://i.ibb.co/HfGrqCwX/108-sky-uno-it.png',
+'sky serie':'https://i.ibb.co/bM00GndD/112-sky-serie-it.png',
+'sky sport 24':'https://i.ibb.co/KjsLXQpw/200-sky-sport-24-it.png',
+'sky sport uno':'https://i.ibb.co/TdjtqJx/201-sky-sport-uno-it.png',
+'sky sport calcio':'https://i.ibb.co/xSzDbc4t/202-sky-sport-calcio-it.png',
+'sky sport tennis':'https://i.ibb.co/p6zyRkvR/203-sky-sport-tennis-it.png',
+'sky sport arena':'https://i.ibb.co/whBhzVtn/204-sky-sport-arena-it.png',
+'sky sport max':'https://i.ibb.co/nqjx0yw5/206-sky-sport-max-it.png',
+'sky sport f1':'https://i.ibb.co/20tDZcbD/207-sky-sport-f1-it.png',
+'sky sport motogp':'https://i.ibb.co/LXTpB4ms/208-sky-sport-motogp-it.png',
+'sky sport golf':'https://i.ibb.co/HvC5fbK/209-sky-sport-golf-it.png',
+'sky cinema uno':'https://i.ibb.co/233vBPNW/301-sky-cinema-uno-it.png',
+'sky cinema collection':'https://i.ibb.co/Pvn17BDm/303-sky-cinema-collection-it.png',
+'sky cinema action':'https://i.ibb.co/ds59MFd4/305-sky-cinema-action-it.png',
+'sky cinema suspense':'https://i.ibb.co/svrH453R/306-sky-cinema-suspense-it.png',
+'sky cinema drama':'https://i.ibb.co/pv7y2gY0/308-sky-cinema-drama-it.png',
+'sky cinema comedy':'https://i.ibb.co/9H7Zsrhf/309-sky-cinema-comedy-it.png',
+'sky cinema romance':'https://i.ibb.co/sp7tCTJ4/307-sky-cinema-romance-it.png',
+'sky cinema family':'https://i.ibb.co/YBW1KNGP/304-sky-cinema-family-it.png',
+'eurosport 1':'https://i.ibb.co/994HHVQS/eurosport1.png','eurosport1':'https://i.ibb.co/994HHVQS/eurosport1.png',
+'eurosport 2':'https://i.ibb.co/PswYht9n/eurosport-2.png','eurosport2':'https://i.ibb.co/PswYht9n/eurosport-2.png',
+'dazn 1':'https://i.ibb.co/hSnQ5q2/dazn1.png',
+'milan tv':'https://i.ibb.co/7JjWdcgr/470-milan-tv-it.png',
+'inter tv':'https://i.ibb.co/qYkxLj4b/471-inter-tv-it.png',
+'sportitalia':'https://i.imgur.com/hu56Ya5.png',
+'euronews':'https://upload.wikimedia.org/wikipedia/commons/thumb/9/9d/Euronews_logo.svg/240px-Euronews_logo.svg.png',
+'rsi la1':'http://odmsto.com/uploads/tv_image/sm/rsi-la1.png',
+'rsi la2':'http://odmsto.com/uploads/tv_image/sm/rsi-la2-i2lwhb01iqwr.png',
+'france 24':'https://upload.wikimedia.org/wikipedia/commons/thumb/a/a1/France_24_logo.svg/240px-France_24_logo.svg.png',
+'sky news':'https://upload.wikimedia.org/wikipedia/commons/thumb/1/18/Sky_News_logo.svg/240px-Sky_News_logo.svg.png',
+'bloomberg':'https://upload.wikimedia.org/wikipedia/commons/thumb/5/5d/Bloomberg_logo.svg/240px-Bloomberg_logo.svg.png',
+'mtv':'https://upload.wikimedia.org/wikipedia/commons/thumb/d/de/MTV_2021.svg/180px-MTV_2021.svg.png',
+'vevo':'https://upload.wikimedia.org/wikipedia/commons/thumb/6/6e/Vevo_logo.svg/240px-Vevo_logo.svg.png',
 };
 
-function getChannelGroup(ch){
-  const n = ch.displayName.toLowerCase();
-  for(const [g,kws] of Object.entries(GROUP_KEYWORDS)){
-    if(kws.some(k => n.includes(k))) return g;
+function lookupLogo(name){
+  if(!name) return null;
+  let k=name.toLowerCase().replace(/\s+/g,' ').trim();
+  if(LOGO_DB[k]) return LOGO_DB[k];
+  // strip quality suffixes
+  const stripped=k.replace(/\s+(hd\+1|\+1\s*hd|full\s*hd|fhd|h\.?265|uhd|4k|\+1|\+2|hd|sd|ita|italy|italia|it)\s*$/i,'').trim();
+  if(stripped!==k&&LOGO_DB[stripped]) return LOGO_DB[stripped];
+  // prefix match
+  for(const [key,url] of Object.entries(LOGO_DB)){
+    if(k===key||k.startsWith(key+' ')||stripped===key||stripped.startsWith(key+' ')) return url;
   }
+  return null;
+}
+
+// ═══════════════════════════════════════════════════
+// SKY LCN ORDER
+// ═══════════════════════════════════════════════════
+const SKY_LCN={
+'rai 1':1,'rai 2':2,'rai 3':3,'rete 4':4,'canale 5':5,'italia 1':6,'la7':7,'la 7':7,
+'tv8':8,'nove':9,'rai 4':10,'iris':11,'la 5':12,'rai 5':13,'rai movie':14,'rai premium':15,
+'italia 2':16,'mediaset extra':17,'tv 2000':18,'tv2000':18,'cielo':19,'twentyseven':20,
+'20 mediaset':20,'rai sport':21,'focus':35,'dmax':28,'la7d':29,'la7 cinema':29,
+'sky tg24':30,'real time':31,'food network':33,'cine 34':34,'discovery channel':35,
+'hgtv':36,'motor trend':37,'giallo':38,'top crime':39,'boing':40,'cartoonito':41,
+'rai gulp':42,'rai yoyo':43,'frisbee':44,'k2':46,'super!':47,'rai news 24':48,
+'rai scuola':57,'tgcom 24':55,'supertennis':51,'sportitalia':60,
+'sky uno':108,'sky serie':112,
+'sky sport 24':200,'sky sport uno':201,'sky sport calcio':202,'sky sport tennis':203,
+'sky sport arena':204,'sky sport max':206,'sky sport f1':207,'sky sport motogp':208,
+'sky sport golf':209,'eurosport 1':210,'eurosport 2':211,'dazn 1':214,
+'sky cinema uno':301,'sky cinema collection':303,'sky cinema action':304,
+'sky cinema suspense':305,'sky cinema drama':306,'sky cinema comedy':307,
+'sky cinema romance':308,'sky cinema family':309,
+'rsi la1':500,'rsi la2':501,'france 24':560,'euronews':561,'sky news':562,
+};
+function getLCN(name){
+  if(!name) return 9999;
+  const k=name.toLowerCase().replace(/\s+/g,' ').trim();
+  if(SKY_LCN[k]!==undefined) return SKY_LCN[k];
+  const s=k.replace(/\s+(hd\+1|\+1\s*hd|full\s*hd|fhd|h\.?265|uhd|4k|\+1|\+2|hd|sd)\s*$/i,'').trim();
+  if(SKY_LCN[s]!==undefined) return SKY_LCN[s];
+  return 9999;
+}
+
+// ═══════════════════════════════════════════════════
+// DEDUPLICATION — strip quality/variant suffixes
+// ═══════════════════════════════════════════════════
+function canonName(raw){
+  return (raw||'')
+    .replace(/\s+(HD\+1|\+1\s*HD|FULL\s*HD|FHD|H\.?265|UHD|4K|HD\+|SD|HD|\+1|\+2)\s*$/i,'')
+    .replace(/\s+(ITA|ITALY|ITALIA|IT)\s*$/i,'')
+    .replace(/\s+FAST\+?\s*$/i,'')
+    .replace(/\s*\([^)]*\)\s*$/,'')
+    .replace(/\s+/g,' ').trim();
+}
+// Prefer: HD > plain > FHD > SD > +1
+function variantScore(raw){
+  const r=(raw||'').toUpperCase();
+  if(/HD\+1|\+1\s*HD/.test(r)) return 10;
+  if(/\+1|\+2/.test(r)) return 9;
+  if(/\bSD\b/.test(r)) return 8;
+  if(/H\.?265/.test(r)) return 7;
+  if(/\bFULL\s*HD\b|\bFHD\b/.test(r)) return 3;
+  if(/\bUHD\b|\b4K\b/.test(r)) return 4;
+  if(/\bHD\b/.test(r)) return 1;
+  return 5;
+}
+
+// ═══════════════════════════════════════════════════
+// STATE
+// ═══════════════════════════════════════════════════
+let channels=[], programmes={}, activeChannel=null, activeDate=null, allDates=[], filterGroup='all';
+const CACHE_KEY='epgit_v4', CACHE_TTL=4*60*60*1000;
+
+// ═══════════════════════════════════════════════════
+// CLOCK
+// ═══════════════════════════════════════════════════
+function tick(){ document.getElementById('clock').textContent=new Date().toLocaleTimeString('it-IT'); }
+setInterval(tick,1000); tick();
+function setStatus(s,t){ document.getElementById('sdot').className='status-dot '+s; document.getElementById('stxt').textContent=t; }
+
+// ═══════════════════════════════════════════════════
+// CACHE
+// ═══════════════════════════════════════════════════
+function saveCache(xml){ try{ localStorage.setItem(CACHE_KEY,JSON.stringify({ts:Date.now(),xml})); }catch(e){} }
+function loadCache(){ try{ const c=JSON.parse(localStorage.getItem(CACHE_KEY)||'null'); if(c&&Date.now()-c.ts<CACHE_TTL) return c; }catch(e){} return null; }
+function hardRefresh(){ try{localStorage.removeItem(CACHE_KEY);}catch(e){} document.getElementById('cacheBadge').style.display='none'; init(true); }
+
+// ═══════════════════════════════════════════════════
+// GZIP DECOMPRESSION
+// ═══════════════════════════════════════════════════
+async function ungzip(buf){
+  try{
+    const ds=new DecompressionStream('gzip');
+    const w=ds.writable.getWriter(), r=ds.readable.getReader();
+    w.write(new Uint8Array(buf)); w.close();
+    const chunks=[]; while(true){const{done,value}=await r.read();if(done)break;chunks.push(value);}
+    const total=chunks.reduce((n,c)=>n+c.length,0);
+    const out=new Uint8Array(total); let off=0;
+    for(const c of chunks){out.set(c,off);off+=c.length;}
+    return new TextDecoder().decode(out);
+  }catch(e){return null;}
+}
+async function extractXml(resp){
+  try{
+    const buf=await resp.arrayBuffer();
+    const h=new Uint8Array(buf.slice(0,2));
+    if(h[0]===0x1f&&h[1]===0x8b){const t=await ungzip(buf);if(t&&t.includes('<tv'))return t;}
+    const t=new TextDecoder().decode(buf);
+    if(t.includes('<tv'))return t;
+    try{const j=JSON.parse(t);if(j&&j.contents&&j.contents.includes('<tv'))return j.contents;}catch(e){}
+  }catch(e){}
+  return null;
+}
+async function fetchEPG(url){
+  const opts={signal:AbortSignal.timeout(12000)};
+  // 1. Direct
+  try{const r=await fetch(url,opts);if(r.ok){const t=await r.text();if(t&&t.includes('<tv'))return t;}}catch(e){}
+  // 2. corsproxy
+  try{const r=await fetch('https://corsproxy.io/?'+encodeURIComponent(url),{signal:AbortSignal.timeout(16000)});if(r.ok){const x=await extractXml(r);if(x)return x;}}catch(e){}
+  // 3. allorigins raw
+  try{const r=await fetch('https://api.allorigins.win/raw?url='+encodeURIComponent(url),{signal:AbortSignal.timeout(16000)});if(r.ok){const x=await extractXml(r);if(x)return x;}}catch(e){}
+  // 4. allorigins get
+  try{const r=await fetch('https://api.allorigins.win/get?url='+encodeURIComponent(url),{signal:AbortSignal.timeout(16000)});if(r.ok){const j=await r.json();if(j&&j.contents&&j.contents.includes('<tv'))return j.contents;}}catch(e){}
+  // 5. codetabs
+  try{const r=await fetch('https://api.codetabs.com/v1/proxy?quest='+encodeURIComponent(url),{signal:AbortSignal.timeout(16000)});if(r.ok){const x=await extractXml(r);if(x)return x;}}catch(e){}
+  return null;
+}
+
+// ═══════════════════════════════════════════════════
+// XMLTV PARSER WITH DEDUPLICATION
+// ═══════════════════════════════════════════════════
+function parseDate(s){
+  const m=s.replace(/\s.*/,'');
+  const iso=`${m.slice(0,4)}-${m.slice(4,6)}-${m.slice(6,8)}T${m.slice(8,10)||'00'}:${m.slice(10,12)||'00'}:${m.slice(12,14)||'00'}`;
+  const tz=s.slice(m.length).trim();
+  if(tz) return new Date(iso+(tz[0]==='+'||tz[0]==='-'?tz[0]+tz.slice(1,3)+':'+tz.slice(3,5)||'00':'+00:00'));
+  return new Date(iso+'Z');
+}
+
+function parseXMLTV(xml){
+  const doc=new DOMParser().parseFromString(xml,'text/xml');
+  if(doc.querySelector('parsererror')) throw new Error('XML parse error');
+
+  // Pass 1: collect raw channels
+  const raw=[];
+  doc.querySelectorAll('channel').forEach(el=>{
+    const id=el.getAttribute('id');
+    const d=el.querySelector('display-name');
+    const ic=el.querySelector('icon');
+    if(!id||!d) return;
+    raw.push({id,rawName:d.textContent.trim(),logo:(ic?ic.getAttribute('src'):'')||''});
+  });
+
+  // Pass 2: deduplicate — group by canonical name, keep best variant
+  const canonMap={};   // canon → {id, rawName, logo, score, allIds[]}
+  const idToCanon={};  // any id → canon key
+
+  for(const ch of raw){
+    const canon=canonName(ch.rawName);
+    const score=variantScore(ch.rawName);
+    if(!canonMap[canon]){
+      canonMap[canon]={id:ch.id,rawName:ch.rawName,logo:ch.logo,score,allIds:[ch.id]};
+    } else {
+      canonMap[canon].allIds.push(ch.id);
+      if(score<canonMap[canon].score){
+        canonMap[canon].id=ch.id;
+        canonMap[canon].rawName=ch.rawName;
+        canonMap[canon].logo=ch.logo;
+        canonMap[canon].score=score;
+      }
+    }
+  }
+  for(const [canon,entry] of Object.entries(canonMap)){
+    for(const id of entry.allIds) idToCanon[id]=canon;
+  }
+
+  // Pass 3: programmes — merge all variants
+  const progMap={};  // canon → Map<timeKey, prog>
+  doc.querySelectorAll('programme').forEach(el=>{
+    const chId=el.getAttribute('channel');
+    const startRaw=el.getAttribute('start');
+    if(!chId||!startRaw) return;
+    const canon=idToCanon[chId];
+    if(!canon) return;
+    let start,stop;
+    try{start=parseDate(startRaw);}catch(e){return;}
+    try{stop=el.getAttribute('stop')?parseDate(el.getAttribute('stop')):null;}catch(e){stop=null;}
+    const title=(el.querySelector('title')||{}).textContent?.trim()||'—';
+    const desc=(el.querySelector('desc')||{}).textContent?.trim()||'';
+    const cat=(el.querySelector('category')||{}).textContent?.trim()||'';
+    const tk=start.getTime().toString();
+    if(!progMap[canon]) progMap[canon]=new Map();
+    if(!progMap[canon].has(tk)) progMap[canon].set(tk,{start,stop,title,desc,category:cat});
+  });
+
+  const programmes={};
+  for(const [canon,map] of Object.entries(progMap)){
+    programmes[canon]=[...map.values()].sort((a,b)=>a.start-b.start);
+  }
+
+  const chList=Object.entries(canonMap).map(([canon,entry])=>({
+    id:canon,
+    name:canon,
+    logo:lookupLogo(canon)||(entry.logo||''),
+    lcn:getLCN(canon),
+  }));
+
+  return{channels:chList,programmes};
+}
+
+// ═══════════════════════════════════════════════════
+// GROUPS
+// ═══════════════════════════════════════════════════
+const GROUP_RULES=[
+  {g:'RAI',kw:['rai ','rai1','rai2','rai3','rai4','rai5']},
+  {g:'Mediaset',kw:['canale 5','italia 1','rete 4','cine 34','iris','la 5','mediaset','top crime','boing','cartoonito','focus','twentyseven']},
+  {g:'Sky',kw:['sky ','cielo','eurosport','dazn']},
+  {g:'Sport',kw:['sport','calcio','tennis','motor','gol','juventus','inter tv','milan tv','basket','supertennis','sportitalia']},
+  {g:'News',kw:['news','tg ','tg24','notizie','euronews','france 24','bloomberg','sky news']},
+  {g:'Kids',kw:['yoyo','gulp','cartoon','junior','kids','boing','baby','manga','super!','k2','frisbee']},
+  {g:'Musica',kw:['music','radio ','deejay','rtl','m2o','vevo','rock tv','mtv','trace']},
+  {g:'Discovery',kw:['discovery','dmax','real time','food network','hgtv','giallo','motor trend','motortrend']},
+];
+function getGroup(name){
+  const n=name.toLowerCase();
+  for(const{g,kw}of GROUP_RULES){if(kw.some(k=>n.includes(k)))return g;}
   return 'Altro';
 }
 
-function buildFilters(){
-  const groups = new Set();
-  for(const ch of channels) groups.add(getChannelGroup(ch));
-  const el = document.getElementById('filters');
-  el.innerHTML = '<button class="filt-btn active" onclick="setFilter(\'all\',this)">Tutti</button>';
-  for(const g of [...groups].sort()){
-    el.innerHTML += `<button class="filt-btn" onclick="setFilter('${g}',this)">${g}</button>`;
+// ═══════════════════════════════════════════════════
+// RENDER CHANNELS
+// ═══════════════════════════════════════════════════
+function renderChannels(){
+  const q=document.getElementById('search').value.toLowerCase().trim();
+  const list=document.getElementById('chList');
+  list.innerHTML='';
+  const now=new Date();
+  let shown=0;
+  for(const ch of channels){
+    if(filterGroup!=='all'&&getGroup(ch.name)!==filterGroup) continue;
+    if(q&&!ch.name.toLowerCase().includes(q)) continue;
+    shown++;
+    const progs=programmes[ch.id]||[];
+    const nowP=progs.find(p=>p.start<=now&&p.stop&&p.stop>now)||progs.find(p=>p.start>now);
+    let pct=0;
+    if(nowP&&nowP.stop&&nowP.start<=now&&nowP.stop>now)
+      pct=Math.min(100,((now-nowP.start)/(nowP.stop-nowP.start))*100);
+    const ini=ch.name.split(' ').slice(0,2).map(w=>w[0]||'').join('').toUpperCase()||'TV';
+    const item=document.createElement('div');
+    item.className='ch-item'+(activeChannel&&activeChannel.id===ch.id?' active':'');
+    item.innerHTML=`
+      <div class="ch-num">${ch.lcn<9999?ch.lcn:''}</div>
+      <div class="ch-logo-wrap">
+        ${ch.logo
+          ?`<img class="ch-logo" src="${esc(ch.logo)}" alt="" loading="lazy" onerror="this.style.display='none';this.nextSibling.style.display='block'"><div class="ch-logo-ph" style="display:none">${ini}</div>`
+          :`<div class="ch-logo-ph">${ini}</div>`}
+      </div>
+      <div class="ch-info">
+        <div class="ch-name">${esc(ch.name)}</div>
+        <div class="ch-now">${nowP?`<span class="ch-now-title">${esc(nowP.title)}</span>`:'<span>—</span>'}</div>
+      </div>
+      ${pct>0?`<div class="ch-prog-bar" style="width:${pct.toFixed(1)}%"></div>`:''}`;
+    item.addEventListener('click',()=>selectChannel(ch,item));
+    list.appendChild(item);
   }
+  if(!shown) list.innerHTML=`<div style="padding:40px;text-align:center;color:var(--muted2);font-size:12px">Nessun canale trovato</div>`;
 }
+function filterChannels(){renderChannels();}
 
-function setFilter(g, btn){
-  filterGroup = g;
-  document.querySelectorAll('.filt-btn').forEach(b => b.classList.remove('active'));
+function buildFilters(){
+  const gs=new Set(); for(const ch of channels) gs.add(getGroup(ch.name));
+  const el=document.getElementById('filters');
+  el.innerHTML='<button class="filt-btn active" onclick="setFilter(\'all\',this)">Tutti</button>';
+  ['RAI','Mediaset','Sky','Discovery','Sport','News','Kids','Musica','Altro'].forEach(g=>{
+    if(gs.has(g)) el.innerHTML+=`<button class="filt-btn" onclick="setFilter('${g}',this)">${g}</button>`;
+  });
+}
+function setFilter(g,btn){
+  filterGroup=g;
+  document.querySelectorAll('.filt-btn').forEach(b=>b.classList.remove('active'));
   btn.classList.add('active');
   renderChannels();
 }
 
-// ── Select channel ─────────────────────────────────────────────────────────
-function selectChannel(ch){
-  activeChannel = ch;
-
-  // Highlight in list
-  document.querySelectorAll('.ch-item').forEach(el => el.classList.remove('active'));
-  event.currentTarget.classList.add('active');
-
-  // Show header
-  const hdr = document.getElementById('epgHeader');
-  hdr.style.display = 'block';
-
-  const logo = document.getElementById('epgLogo');
-  const ph = document.getElementById('epgLogoPh');
-  if(ch.logo){
-    logo.src = ch.logo;
-    logo.style.display = '';
-    ph.style.display = 'none';
-  } else {
-    logo.style.display = 'none';
-    ph.style.display = '';
-    ph.textContent = ch.displayName.split(' ').slice(0,2).map(w=>w[0]||'').join('').toUpperCase()||'TV';
-  }
-  document.getElementById('epgChName').textContent = ch.displayName;
-
-  const progs = programmes[ch.id] || [];
-  allDates = buildDates(progs);
-
-  // pick today or nearest
-  const today = todayKey();
-  activeDate = allDates.includes(today) ? today : (allDates[0] || today);
-
-  renderDateTabs();
-  renderSchedule();
+// ═══════════════════════════════════════════════════
+// SELECT CHANNEL
+// ═══════════════════════════════════════════════════
+function selectChannel(ch,itemEl){
+  activeChannel=ch;
+  document.querySelectorAll('.ch-item').forEach(e=>e.classList.remove('active'));
+  if(itemEl) itemEl.classList.add('active');
+  document.getElementById('epgHeader').style.display='block';
+  const logo=document.getElementById('epgLogo');
+  const ph=document.getElementById('epgLogoPh');
+  const ini=ch.name.split(' ').slice(0,2).map(w=>w[0]||'').join('').toUpperCase()||'TV';
+  ph.textContent=ini;
+  if(ch.logo){logo.src=ch.logo;logo.style.display='';ph.style.display='none';}
+  else{logo.style.display='none';ph.style.display='';}
+  document.getElementById('epgChName').textContent=ch.name;
+  const progs=programmes[ch.id]||[];
+  allDates=buildDates(progs);
+  const today=todayKey();
+  activeDate=allDates.includes(today)?today:(allDates[0]||today);
+  renderDateTabs(); renderSchedule();
 }
 
-// ── Date tabs ──────────────────────────────────────────────────────────────
+// ═══════════════════════════════════════════════════
+// DATES
+// ═══════════════════════════════════════════════════
+function buildDates(progs){const s=new Set();for(const p of progs)s.add(ldk(p.start));return[...s].sort();}
+function ldk(d){return d.toLocaleDateString('sv-SE');}
+function todayKey(){return new Date().toLocaleDateString('sv-SE');}
+function fmtDate(key){
+  const[y,m,d]=key.split('-').map(Number);
+  const dt=new Date(y,m-1,d);
+  const td=new Date();td.setHours(0,0,0,0);
+  const diff=Math.round((dt-td)/86400000);
+  const nm={'-1':'Ieri','0':'Oggi','1':'Domani'};
+  if(nm[diff]!==undefined)return nm[diff];
+  return dt.toLocaleDateString('it-IT',{weekday:'short',day:'numeric',month:'short'});
+}
 function renderDateTabs(){
-  const el = document.getElementById('dateTabs');
-  el.innerHTML = '';
+  const el=document.getElementById('dateTabs');el.innerHTML='';
+  if(!allDates.length){el.innerHTML='<span style="font-size:10px;color:var(--muted2)">Nessuna data</span>';return;}
   for(const d of allDates){
-    const btn = document.createElement('button');
-    btn.className = 'date-tab' + (d === activeDate ? ' active' : '');
-    btn.textContent = formatDateTab(d);
-    btn.onclick = () => { activeDate = d; renderDateTabs(); renderSchedule(); };
+    const btn=document.createElement('button');
+    btn.className='date-tab'+(d===activeDate?' active':'');
+    btn.textContent=fmtDate(d);
+    btn.onclick=()=>{activeDate=d;renderDateTabs();renderSchedule();};
     el.appendChild(btn);
   }
-  if(allDates.length === 0){
-    el.innerHTML = '<span style="font-size:10px;color:var(--muted2)">Nessuna data disponibile</span>';
-  }
 }
 
-// ── Render schedule ────────────────────────────────────────────────────────
+// ═══════════════════════════════════════════════════
+// RENDER SCHEDULE
+// ═══════════════════════════════════════════════════
 function renderSchedule(){
-  const el = document.getElementById('epgList');
-  const now = new Date();
-
-  if(!activeChannel){ el.innerHTML = ''; return; }
-
-  const progs = (programmes[activeChannel.id] || []).filter(p => {
-    const dk = toLocalDateKey(p.start);
-    return dk === activeDate;
-  });
-
-  document.getElementById('epgChSub').textContent = `${progs.length} programmi • ${formatDateTab(activeDate)}`;
-
-  if(progs.length === 0){
-    el.innerHTML = `<div class="epg-empty"><div class="epg-empty-icon">📋</div><div class="epg-empty-text">Nessun programma disponibile per questa data</div></div>`;
+  const el=document.getElementById('epgList');
+  if(!activeChannel){el.innerHTML='';return;}
+  const now=new Date();
+  const progs=(programmes[activeChannel.id]||[]).filter(p=>ldk(p.start)===activeDate);
+  document.getElementById('epgChSub').textContent=`${progs.length} programmi · ${fmtDate(activeDate)}`;
+  if(!progs.length){
+    el.innerHTML=`<div class="center-msg"><div class="icon">📋</div><div class="sub">Nessun programma per questa data</div></div>`;
     return;
   }
-
-  el.innerHTML = '';
-  let scrollToEl = null;
-
+  el.innerHTML='';let scrollTo=null;
   for(const p of progs){
-    const isNow = p.start <= now && p.stop && p.stop > now;
-    const isPast = p.stop && p.stop <= now;
-
-    const item = document.createElement('div');
-    item.className = 'prog-item' + (isNow ? ' now' : '') + (isPast ? ' past' : '');
-
-    const startStr = p.start.toLocaleTimeString('it-IT', {hour:'2-digit',minute:'2-digit'});
-    const stopStr = p.stop ? p.stop.toLocaleTimeString('it-IT', {hour:'2-digit',minute:'2-digit'}) : '';
-    const durMin = p.stop ? Math.round((p.stop - p.start)/60000) : 0;
-
-    let pct = 0;
-    if(isNow && p.stop){
-      const total = p.stop - p.start;
-      pct = Math.min(100, ((now - p.start)/total)*100);
-    }
-
-    item.innerHTML = `
-      <div class="prog-time">${startStr}${stopStr ? '<br><span style="font-size:9px;opacity:.5">'+stopStr+'</span>' : ''}</div>
+    const isNow=p.start<=now&&p.stop&&p.stop>now;
+    const isPast=p.stop&&p.stop<=now;
+    const item=document.createElement('div');
+    item.className='prog-item'+(isNow?' now':'')+(isPast?' past':'');
+    const ss=p.start.toLocaleTimeString('it-IT',{hour:'2-digit',minute:'2-digit'});
+    const es=p.stop?p.stop.toLocaleTimeString('it-IT',{hour:'2-digit',minute:'2-digit'}):'';
+    const dur=p.stop?Math.round((p.stop-p.start)/60000):0;
+    let pct=0;if(isNow&&p.stop)pct=Math.min(100,((now-p.start)/(p.stop-p.start))*100);
+    item.innerHTML=`
+      <div class="prog-time">${ss}${es?`<br><span style="font-size:9px;opacity:.4">${es}</span>`:''}</div>
       <div class="prog-body">
-        <div class="prog-title">${escHtml(p.title)}</div>
-        ${p.desc ? `<div class="prog-desc">${escHtml(p.desc)}</div>` : ''}
+        <div class="prog-title">${esc(p.title)}</div>
+        ${p.desc?`<div class="prog-desc">${esc(p.desc)}</div>`:''}
         <div class="prog-meta">
-          ${isNow ? '<span class="prog-tag live">● IN ONDA</span>' : ''}
-          ${p.category ? `<span class="prog-tag">${escHtml(p.category)}</span>` : ''}
-          ${isNow && pct > 0 ? `<div class="prog-bar-wrap" style="width:100%;margin-top:4px"><div class="prog-bar-fill" style="width:${pct.toFixed(1)}%"></div></div>` : ''}
+          ${isNow?'<span class="prog-tag live">● IN ONDA</span>':''}
+          ${p.category?`<span class="prog-tag">${esc(p.category)}</span>`:''}
         </div>
+        ${isNow&&pct>0?`<div class="prog-bar-wrap"><div class="prog-bar-fill" style="width:${pct.toFixed(1)}%"></div></div>`:''}
       </div>
-      ${durMin > 0 ? `<div class="prog-dur">${durMin}m</div>` : ''}
-    `;
-
+      ${dur>0?`<div class="prog-dur">${dur}m</div>`:''}`;
     el.appendChild(item);
-    if(isNow) scrollToEl = item;
+    if(isNow)scrollTo=item;
   }
-
-  // scroll to now
-  if(scrollToEl){
-    setTimeout(() => scrollToEl.scrollIntoView({behavior:'smooth', block:'center'}), 100);
-  }
+  if(scrollTo)setTimeout(()=>scrollTo.scrollIntoView({behavior:'smooth',block:'center'}),80);
 }
 
-// ── Utils ──────────────────────────────────────────────────────────────────
-function escHtml(s){
-  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
-}
+// ═══════════════════════════════════════════════════
+// UTILS
+// ═══════════════════════════════════════════════════
+function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+function showSkeleton(){const el=document.getElementById('chList');el.innerHTML='';for(let i=0;i<22;i++){const d=document.createElement('div');d.className='skel-ch';el.appendChild(d);}}
 
-// ── Show skeletons ─────────────────────────────────────────────────────────
-function showSkeleton(){
-  const el = document.getElementById('chList');
-  el.innerHTML = '';
-  for(let i=0;i<20;i++){
-    const d = document.createElement('div');
-    d.className = 'skel-ch';
-    d.style.height = '52px';
-    el.appendChild(d);
-  }
-}
-
-// ── INIT ───────────────────────────────────────────────────────────────────
-async function init(){
-  setStatus('loading', 'Connessione...');
+// ═══════════════════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════════════════
+async function init(forceRefresh=false){
+  setStatus('loading','Caricamento...');
   showSkeleton();
-
-  const EPG_URL = 'https://www.epgitalia.tv/gzip';
-  let xmlText = null;
-
-  setStatus('loading', 'Download EPG...');
-  try{
-    xmlText = await fetchViaProxy(EPG_URL);
-  }catch(e){}
-
-  if(!xmlText || !xmlText.includes('<tv')){
-    setStatus('err', 'Errore download');
-    document.getElementById('chList').innerHTML = `
-      <div style="padding:30px 16px;text-align:center;color:var(--muted2);font-size:12px;line-height:1.9">
-        ❌ Impossibile caricare l'EPG.<br>
-        I proxy CORS potrebbero essere temporaneamente non disponibili.<br><br>
-        <button class="retry-btn" onclick="init()">↺ Riprova</button>
-      </div>`;
+  const EPG_URL='https://www.epgitalia.tv/gzip';
+  let xmlText=null,fromCache=false;
+  if(!forceRefresh){
+    const cached=loadCache();
+    if(cached&&cached.xml){xmlText=cached.xml;fromCache=true;setStatus('loading','Da cache...');}
+  }
+  if(!xmlText){
+    setStatus('loading','Download EPG...');
+    xmlText=await fetchEPG(EPG_URL);
+    if(xmlText)saveCache(xmlText);
+  }
+  if(!xmlText||!xmlText.includes('<tv')){
+    setStatus('err','Errore connessione');
+    document.getElementById('chList').innerHTML=`<div style="padding:28px 14px;text-align:center;color:var(--muted2);font-size:12px;line-height:1.9">❌ Impossibile caricare l'EPG.<br>I proxy CORS potrebbero non essere disponibili.<br><button class="retry-btn" onclick="init(true)">↺ Riprova</button></div>`;
     return;
   }
-
-  setStatus('loading', 'Parsing...');
-  // small delay so UI updates
-  await new Promise(r => setTimeout(r, 10));
-
-  let parsed = null;
-  try{
-    parsed = parseXMLTV(xmlText);
-  }catch(e){
-    setStatus('err', 'Parsing fallito');
-    document.getElementById('chList').innerHTML = `<div style="padding:30px;text-align:center;color:var(--muted2);font-size:12px">❌ Errore nel parsing dell'EPG.<br><br><button class="retry-btn" onclick="init()">↺ Riprova</button></div>`;
+  setStatus('loading','Elaborazione...');
+  await new Promise(r=>setTimeout(r,10));
+  let parsed;
+  try{parsed=parseXMLTV(xmlText);}
+  catch(e){
+    setStatus('err','Parsing fallito');
+    document.getElementById('chList').innerHTML=`<div style="padding:28px;text-align:center;color:var(--muted2);font-size:12px">❌ Errore XML.<br><button class="retry-btn" onclick="init(true)">↺ Riprova</button></div>`;
     return;
   }
-
-  channels = parsed.channels;
-  programmes = parsed.programmes;
-
-  if(channels.length === 0){
-    setStatus('err', 'Nessun canale');
-    document.getElementById('chList').innerHTML = `<div style="padding:30px;text-align:center;color:var(--muted2);font-size:12px">Nessun canale trovato nell'EPG.</div>`;
-    return;
-  }
-
-  // Sort channels
-  channels.sort((a,b) => {
-    if(a.num !== null && b.num !== null) return a.num - b.num;
-    if(a.num !== null) return -1;
-    if(b.num !== null) return 1;
-    return a.displayName.localeCompare(b.displayName, 'it');
+  channels=parsed.channels;
+  programmes=parsed.programmes;
+  if(!channels.length){setStatus('err','Nessun canale');return;}
+  channels.sort((a,b)=>{
+    if(a.lcn<9999&&b.lcn<9999)return a.lcn-b.lcn;
+    if(a.lcn<9999)return-1;if(b.lcn<9999)return 1;
+    return a.name.localeCompare(b.name,'it');
   });
-
-  setStatus('ok', `${channels.length} canali`);
+  const badge=document.getElementById('cacheBadge');
+  if(fromCache){
+    badge.style.display='';
+    const c=loadCache();
+    badge.title=c?`Cache: ${new Date(c.ts).toLocaleTimeString('it-IT')} — clicca per aggiornare`:'';
+  } else badge.style.display='none';
+  setStatus('ok',`${channels.length} canali`);
   buildFilters();
   renderChannels();
-
-  // Auto-refresh every 5 minutes
-  setTimeout(init, 5 * 60 * 1000);
+  // Background refresh from network if served from cache
+  if(fromCache){
+    setTimeout(async()=>{
+      const fresh=await fetchEPG(EPG_URL);
+      if(fresh&&fresh.includes('<tv'))saveCache(fresh);
+    },3000);
+  }
+  // Refresh "in onda" every minute
+  setTimeout(function refresh(){
+    if(channels.length){renderChannels();}
+    if(activeChannel)renderSchedule();
+    setTimeout(refresh,60000);
+  },60000);
 }
-
-// Update now-playing every minute
-setInterval(() => {
-  if(channels.length > 0) renderChannels();
-  if(activeChannel) renderSchedule();
-}, 60000);
-
 init();
 </script>
 </body>
