@@ -821,54 +821,57 @@ async function init(forceRefresh=false){
     if(xmlPrimary) await saveCache(xmlPrimary,CACHE_KEY_PRI);
   }
 
-  // ── 2. Fetch SECONDARY EPG (epgitalia.tv) ────────────
-  let xmlSecondary=null;
-  if(!forceRefresh){const cached=await loadCache(CACHE_KEY_SEC);if(cached&&cached.xml){xmlSecondary=cached.xml;}}
-  if(!xmlSecondary){
-    setStatus('loading','Download EPG secondario...');
-    xmlSecondary=await fetchEPG(EPG_SECONDARY);
-    if(xmlSecondary) await saveCache(xmlSecondary,CACHE_KEY_SEC);
-  }
-
-  if(!xmlPrimary&&!xmlSecondary){
-    setStatus('err','Errore connessione — solo canali locali');
-    return;
-  }
-
-  setStatus('loading','Elaborazione...');
-  await new Promise(r=>setTimeout(r,10));
-
-  // ── 3. Parse both sources ────────────────────────────
-  let parsedPri=null, parsedSec=null;
+  // ── 2. Parse & show primary immediately ──────────────
+  let parsedPri=null;
   if(xmlPrimary&&xmlPrimary.includes('<tv')){
+    setStatus('loading','Elaborazione primario...');
+    await new Promise(r=>setTimeout(r,10));
     try{parsedPri=parseXMLTV(xmlPrimary);}catch(e){parsedPri=null;}
   }
-  if(xmlSecondary&&xmlSecondary.includes('<tv')){
-    try{parsedSec=parseXMLTV(xmlSecondary);}catch(e){parsedSec=null;}
+  if(parsedPri){
+    mergeEPGIntoChannels(parsedPri);
+    setStatus('ok',`${channels.length} canali · completamento in corso...`);
+    buildFilters();
+    renderChannels();
+  } else if(!xmlPrimary){
+    setStatus('loading','EPG primario non disponibile, provo secondario...');
   }
 
-  // ── 4. Merge: primary wins; secondary fills gaps ─────
-  let merged;
-  if(parsedPri&&parsedSec){
-    merged=mergeEPGSources(parsedPri,parsedSec);
-  } else if(parsedPri){
-    merged=parsedPri;
-  } else if(parsedSec){
-    merged=parsedSec;
-  } else {
-    setStatus('err','Errore parsing XML');
-    return;
-  }
+  // ── 3. Fetch SECONDARY in background (non blocca UI) ─
+  loadSecondaryEPG(forceRefresh, parsedPri);
 
-  mergeEPGIntoChannels(merged);
-  setStatus('ok',`${channels.length} canali`);
-  buildFilters();
-  renderChannels();
+  // ── 4. Refresh ogni minuto ───────────────────────────
   setTimeout(function refresh(){
     if(channels.length){renderChannels();}
     if(activeChannel)renderSchedule();
     setTimeout(refresh,60000);
   },60000);
+}
+
+async function loadSecondaryEPG(forceRefresh, parsedPri){
+  let xmlSecondary=null;
+  if(!forceRefresh){const cached=await loadCache(CACHE_KEY_SEC);if(cached&&cached.xml){xmlSecondary=cached.xml;}}
+  if(!xmlSecondary){
+    xmlSecondary=await fetchEPG(EPG_SECONDARY);
+    if(xmlSecondary) await saveCache(xmlSecondary,CACHE_KEY_SEC);
+  }
+  if(!xmlSecondary||!xmlSecondary.includes('<tv')){
+    // Secondario non disponibile — se anche primario era vuoto segnala errore
+    if(!parsedPri) setStatus('err','Errore connessione — solo canali locali');
+    else setStatus('ok',`${channels.length} canali`);
+    return;
+  }
+  let parsedSec=null;
+  try{parsedSec=parseXMLTV(xmlSecondary);}catch(e){}
+  if(!parsedSec){setStatus('ok',`${channels.length} canali`);return;}
+
+  // Merge: primario vince, secondario riempie i gap
+  const merged = parsedPri ? mergeEPGSources(parsedPri,parsedSec) : parsedSec;
+  mergeEPGIntoChannels(merged);
+  setStatus('ok',`${channels.length} canali`);
+  buildFilters();
+  renderChannels();
+  if(activeChannel) renderSchedule();
 }
 
 // Merge two parsed EPG results: primary takes precedence,
