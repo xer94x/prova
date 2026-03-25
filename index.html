@@ -3,270 +3,904 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>EPG Italia — Guida Programmi TV</title>
+<title>EPG Italia — Guida TV</title>
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;900&family=Barlow:wght@300;400;500;600&display=swap');
-:root{
-  --bg:#08080e;--surface:#0f0f1a;--card:#141420;--border:#1e1e30;--border2:#2a2a40;
-  --accent:#2979ff;--accent2:#82b1ff;--text:#e2e2ee;--muted:#44445a;--muted2:#6a6a85;
-  --gold:#ffd740;
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+:root {
+  --bg: #080c10;
+  --surface: #0d1117;
+  --card: #111720;
+  --card2: #161e2a;
+  --border: #1c2535;
+  --border2: #253040;
+  --accent: #00d4ff;
+  --accent2: #0099cc;
+  --accentdim: rgba(0,212,255,.1);
+  --red: #ff4d6d;
+  --gold: #ffd166;
+  --green: #06d6a0;
+  --text: #dde4f0;
+  --muted: #3a4a5a;
+  --muted2: #5a7080;
+  --muted3: #8090a0;
 }
-*{margin:0;padding:0;box-sizing:border-box}
-body{background:var(--bg);color:var(--text);font-family:'Barlow',sans-serif;padding:0 0 40px}
-header{background:var(--surface);border-bottom:1px solid var(--border);padding:12px 20px;display:flex;align-items:center;gap:12px;position:sticky;top:0;z-index:100}
-.logo{font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:24px;letter-spacing:2px}
-.logo span{color:var(--accent)}
-.status{padding:4px 12px;background:var(--card);border-radius:30px;font-size:12px;color:var(--muted2);margin-left:auto}
-.search-bar{background:var(--surface);border-bottom:1px solid var(--border);padding:8px 20px}
-#search{width:100%;max-width:400px;background:var(--card);border:1px solid var(--border2);border-radius:30px;padding:8px 16px;color:var(--text);font-size:14px;outline:none}
-#search:focus{border-color:var(--accent)}
-#search::placeholder{color:var(--muted2)}
-.container{padding:20px;max-width:1400px;margin:0 auto}
-.channel-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:16px}
-.channel-card{background:var(--card);border:1px solid var(--border);border-radius:12px;overflow:hidden;transition:all .2s}
-.channel-card:hover{background:var(--surface);border-color:var(--accent2)}
-.card-header{display:flex;flex-direction:column;gap:6px;padding:12px;background:var(--surface);border-bottom:1px solid var(--border);cursor:pointer}
-.channel-name{font-weight:700;font-size:16px;display:flex;justify-content:space-between;align-items:center}
-.current-program{font-size:12px;color:var(--accent2);margin-top:4px;word-break:break-word}
-.program-details{padding:12px;border-top:1px solid var(--border);display:none}
-.program-details.open{display:block}
-.program-list{max-height:450px;overflow-y:auto}
-.program-item{padding:8px 0;border-bottom:1px solid var(--border2);font-size:13px}
-.program-time{font-weight:600;color:var(--gold);margin-right:12px;font-family:monospace}
-.program-title{font-weight:500}
-.program-desc{font-size:12px;color:var(--muted2);margin-top:4px;line-height:1.4}
-.loading,.error{text-align:center;padding:60px;color:var(--muted2)}
-.error button{background:var(--card);border:1px solid var(--border);padding:8px 20px;border-radius:30px;color:var(--text);margin-top:20px;cursor:pointer}
-.loader{border:2px solid var(--border);border-top:2px solid var(--accent);border-radius:50%;width:30px;height:30px;animation:spin 1s linear infinite;margin:20px auto}
-@keyframes spin{0%{transform:rotate(0)}100%{transform:rotate(360deg)}}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--text);font-family:'Space Grotesk',sans-serif;height:100vh;display:flex;flex-direction:column;overflow:hidden}
+::-webkit-scrollbar{width:4px;height:4px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px}
+
+/* HEADER */
+header {
+  background:var(--surface);
+  border-bottom:1px solid var(--border);
+  padding:0 16px;
+  height:48px;
+  display:flex;
+  align-items:center;
+  gap:12px;
+  flex-shrink:0;
+  z-index:100;
+}
+.logo {
+  font-size:15px;
+  font-weight:700;
+  letter-spacing:2px;
+  text-transform:uppercase;
+  display:flex;
+  align-items:center;
+  gap:6px;
+}
+.logo-epg{color:var(--accent)}
+.logo-it{color:var(--text)}
+.logo-dot{width:5px;height:5px;border-radius:50%;background:var(--red);box-shadow:0 0 6px var(--red);animation:livepulse 2s ease-in-out infinite}
+@keyframes livepulse{0%,100%{opacity:1;box-shadow:0 0 6px var(--red)}50%{opacity:.4;box-shadow:0 0 2px var(--red)}}
+.hdr-clock {
+  font-family:'JetBrains Mono',monospace;
+  font-size:12px;
+  color:var(--muted3);
+  background:var(--card);
+  border:1px solid var(--border);
+  border-radius:4px;
+  padding:3px 8px;
+}
+.hdr-status {
+  margin-left:auto;
+  display:flex;
+  align-items:center;
+  gap:6px;
+  font-size:10px;
+  font-weight:500;
+  letter-spacing:.5px;
+  text-transform:uppercase;
+  color:var(--muted2);
+}
+.status-dot{width:6px;height:6px;border-radius:50%;background:var(--muted);flex-shrink:0;transition:all .3s}
+.status-dot.ok{background:var(--green);box-shadow:0 0 5px var(--green)}
+.status-dot.loading{background:var(--accent);animation:blink .8s infinite}
+.status-dot.err{background:var(--red)}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.2}}
+.hdr-search {
+  background:var(--card);
+  border:1px solid var(--border2);
+  border-radius:5px;
+  padding:5px 10px;
+  color:var(--text);
+  font-family:'Space Grotesk',sans-serif;
+  font-size:12px;
+  outline:none;
+  width:180px;
+  transition:border-color .2s, width .2s;
+}
+.hdr-search:focus{border-color:var(--accent);width:220px}
+.hdr-search::placeholder{color:var(--muted2)}
+
+/* MAIN LAYOUT */
+.main {
+  display:flex;
+  flex:1;
+  overflow:hidden;
+}
+
+/* LEFT PANEL — channel list */
+.ch-panel {
+  width:340px;
+  flex-shrink:0;
+  border-right:1px solid var(--border);
+  display:flex;
+  flex-direction:column;
+  background:var(--surface);
+}
+.ch-filters {
+  display:flex;
+  gap:4px;
+  padding:8px;
+  border-bottom:1px solid var(--border);
+  flex-wrap:wrap;
+}
+.filt-btn {
+  background:transparent;
+  border:1px solid var(--border2);
+  border-radius:4px;
+  padding:3px 8px;
+  font-size:10px;
+  font-family:'Space Grotesk',sans-serif;
+  font-weight:600;
+  letter-spacing:.8px;
+  text-transform:uppercase;
+  color:var(--muted2);
+  cursor:pointer;
+  transition:all .15s;
+  white-space:nowrap;
+}
+.filt-btn:hover{border-color:var(--accent2);color:var(--text)}
+.filt-btn.active{background:var(--accentdim);border-color:rgba(0,212,255,.4);color:var(--accent)}
+.ch-list {
+  flex:1;
+  overflow-y:auto;
+  overflow-x:hidden;
+}
+.ch-item {
+  display:flex;
+  align-items:center;
+  gap:10px;
+  padding:10px 12px;
+  border-bottom:1px solid rgba(255,255,255,.03);
+  cursor:pointer;
+  transition:background .12s;
+  position:relative;
+}
+.ch-item:hover{background:var(--card)}
+.ch-item.active{background:var(--card2);border-left:2px solid var(--accent)}
+.ch-num {
+  font-family:'JetBrains Mono',monospace;
+  font-size:9px;
+  font-weight:500;
+  color:var(--muted);
+  width:22px;
+  text-align:right;
+  flex-shrink:0;
+}
+.ch-logo-wrap {
+  width:40px;
+  height:28px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  background:rgba(255,255,255,.04);
+  border-radius:4px;
+  flex-shrink:0;
+  overflow:hidden;
+}
+.ch-logo {
+  max-width:36px;
+  max-height:24px;
+  object-fit:contain;
+}
+.ch-logo-ph {
+  font-size:8px;
+  font-weight:700;
+  color:var(--muted2);
+  text-align:center;
+  line-height:1.1;
+}
+.ch-info {
+  flex:1;
+  min-width:0;
+}
+.ch-name {
+  font-size:12px;
+  font-weight:600;
+  color:var(--text);
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  line-height:1.3;
+}
+.ch-now {
+  font-size:10px;
+  color:var(--muted3);
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  margin-top:2px;
+  line-height:1.3;
+}
+.ch-now-title {
+  color:var(--text);
+  font-weight:500;
+}
+.ch-progress-bar {
+  position:absolute;
+  bottom:0;
+  left:0;
+  height:2px;
+  background:linear-gradient(90deg, var(--accent2), var(--accent));
+  opacity:.5;
+  transition:width .3s;
+}
+
+/* RIGHT PANEL — EPG schedule */
+.epg-panel {
+  flex:1;
+  display:flex;
+  flex-direction:column;
+  overflow:hidden;
+}
+.epg-header {
+  background:var(--surface);
+  border-bottom:1px solid var(--border);
+  padding:14px 20px;
+  flex-shrink:0;
+}
+.epg-channel-title {
+  display:flex;
+  align-items:center;
+  gap:12px;
+}
+.epg-logo-wrap {
+  width:56px;
+  height:40px;
+  background:rgba(255,255,255,.05);
+  border:1px solid var(--border2);
+  border-radius:6px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  overflow:hidden;
+  flex-shrink:0;
+}
+.epg-logo {
+  max-width:50px;
+  max-height:34px;
+  object-fit:contain;
+}
+.epg-ch-name {
+  font-size:18px;
+  font-weight:700;
+  color:var(--text);
+  letter-spacing:-.3px;
+}
+.epg-ch-sub {
+  font-size:11px;
+  color:var(--muted3);
+  margin-top:2px;
+  font-weight:400;
+}
+.epg-date-tabs {
+  display:flex;
+  gap:4px;
+  margin-top:10px;
+  flex-wrap:wrap;
+}
+.date-tab {
+  background:transparent;
+  border:1px solid var(--border2);
+  border-radius:4px;
+  padding:4px 10px;
+  font-size:10px;
+  font-family:'Space Grotesk',sans-serif;
+  font-weight:600;
+  letter-spacing:.5px;
+  text-transform:uppercase;
+  color:var(--muted2);
+  cursor:pointer;
+  transition:all .15s;
+  white-space:nowrap;
+}
+.date-tab:hover{border-color:var(--accent2);color:var(--text)}
+.date-tab.active{background:var(--accentdim);border-color:rgba(0,212,255,.4);color:var(--accent)}
+.epg-list {
+  flex:1;
+  overflow-y:auto;
+  padding:12px 16px;
+}
+.epg-empty {
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  height:100%;
+  gap:12px;
+  color:var(--muted2);
+}
+.epg-empty-icon {
+  font-size:48px;
+  opacity:.3;
+}
+.epg-empty-text{font-size:13px}
+.prog-item {
+  display:flex;
+  gap:12px;
+  padding:12px 14px;
+  border-radius:8px;
+  margin-bottom:6px;
+  border:1px solid transparent;
+  transition:background .15s, border-color .15s;
+  position:relative;
+  overflow:hidden;
+}
+.prog-item:hover{background:var(--card);border-color:var(--border)}
+.prog-item.now {
+  background:var(--card2);
+  border-color:rgba(0,212,255,.25);
+}
+.prog-item.now::before {
+  content:'';
+  position:absolute;
+  left:0;top:0;bottom:0;width:3px;
+  background:linear-gradient(180deg,var(--accent),var(--accent2));
+  border-radius:3px 0 0 3px;
+}
+.prog-item.past {opacity:.45}
+.prog-time {
+  font-family:'JetBrains Mono',monospace;
+  font-size:11px;
+  font-weight:500;
+  color:var(--muted3);
+  width:42px;
+  flex-shrink:0;
+  padding-top:2px;
+  line-height:1.4;
+}
+.prog-item.now .prog-time{color:var(--accent)}
+.prog-body{flex:1;min-width:0}
+.prog-title {
+  font-size:13px;
+  font-weight:600;
+  color:var(--text);
+  line-height:1.35;
+}
+.prog-item.now .prog-title{color:var(--accent)}
+.prog-desc {
+  font-size:11px;
+  color:var(--muted3);
+  margin-top:4px;
+  line-height:1.5;
+  display:-webkit-box;
+  -webkit-line-clamp:2;
+  -webkit-box-orient:vertical;
+  overflow:hidden;
+}
+.prog-meta {
+  display:flex;
+  gap:6px;
+  margin-top:6px;
+  flex-wrap:wrap;
+}
+.prog-tag {
+  font-size:9px;
+  font-weight:600;
+  letter-spacing:.6px;
+  text-transform:uppercase;
+  padding:2px 6px;
+  border-radius:3px;
+  background:rgba(255,255,255,.05);
+  color:var(--muted3);
+}
+.prog-tag.live{background:rgba(255,77,109,.15);color:var(--red);border:1px solid rgba(255,77,109,.3)}
+.prog-dur{font-size:9px;color:var(--muted2);font-family:'JetBrains Mono',monospace;padding-top:2px;flex-shrink:0}
+.prog-bar-wrap{margin-top:6px;height:3px;background:var(--border);border-radius:2px;overflow:hidden}
+.prog-bar-fill{height:100%;background:linear-gradient(90deg,var(--accent2),var(--accent));border-radius:2px;transition:width .3s}
+
+/* SKELETON */
+.skel-ch{height:52px;background:linear-gradient(90deg,var(--card) 25%,var(--card2) 50%,var(--card) 75%);background-size:200% 100%;animation:shimmer 1.4s infinite;border-bottom:1px solid rgba(255,255,255,.03)}
+@keyframes shimmer{0%{background-position:200%}100%{background-position:-200%}}
+
+/* WELCOME STATE */
+.welcome {
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  height:100%;
+  gap:16px;
+  color:var(--muted2);
+  padding:40px;
+  text-align:center;
+}
+.welcome-icon{font-size:64px;opacity:.2}
+.welcome-title{font-size:16px;font-weight:600;color:var(--muted3)}
+.welcome-sub{font-size:12px;line-height:1.6;max-width:300px}
+
+/* ERROR RETRY */
+.retry-btn {
+  background:rgba(0,212,255,.1);
+  border:1px solid rgba(0,212,255,.3);
+  color:var(--accent);
+  padding:8px 18px;
+  border-radius:6px;
+  cursor:pointer;
+  font-family:'Space Grotesk',sans-serif;
+  font-size:12px;
+  font-weight:600;
+  transition:background .15s;
+}
+.retry-btn:hover{background:rgba(0,212,255,.2)}
+
+@media(max-width:700px){
+  .ch-panel{width:240px}
+  .ch-logo-wrap{width:32px;height:22px}
+}
 </style>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/pako/2.1.0/pako.min.js"></script>
 </head>
 <body>
 <header>
-  <div class="logo"><span>EPG</span> Italia</div>
-  <div class="status" id="status">Caricamento...</div>
+  <div class="logo">
+    <span class="logo-epg">EPG</span><span class="logo-it">Italia</span>
+    <div class="logo-dot"></div>
+  </div>
+  <div class="hdr-clock" id="clock">--:--:--</div>
+  <input class="hdr-search" id="search" type="text" placeholder="🔍 Cerca canale..." oninput="filterChannels()">
+  <div class="hdr-status">
+    <div class="status-dot loading" id="sdot"></div>
+    <span id="stxt">Caricamento...</span>
+  </div>
 </header>
-<div class="search-bar">
-  <input type="text" id="search" placeholder="🔍 Cerca canale..." oninput="filterChannels()">
-</div>
-<div class="container" id="container">
-  <div class="loading"><div class="loader"></div><p>Caricamento guida programmi...</p></div>
+<div class="main">
+  <div class="ch-panel">
+    <div class="ch-filters" id="filters">
+      <button class="filt-btn active" onclick="setFilter('all',this)">Tutti</button>
+    </div>
+    <div class="ch-list" id="chList"></div>
+  </div>
+  <div class="epg-panel">
+    <div class="epg-header" id="epgHeader" style="display:none">
+      <div class="epg-channel-title">
+        <div class="epg-logo-wrap"><img class="epg-logo" id="epgLogo" src="" alt="" onerror="this.style.display='none'"><span id="epgLogoPh" class="ch-logo-ph" style="display:none"></span></div>
+        <div>
+          <div class="epg-ch-name" id="epgChName">—</div>
+          <div class="epg-ch-sub" id="epgChSub">Seleziona una data</div>
+        </div>
+      </div>
+      <div class="epg-date-tabs" id="dateTabs"></div>
+    </div>
+    <div class="epg-list" id="epgList">
+      <div class="welcome">
+        <div class="welcome-icon">📺</div>
+        <div class="welcome-title">Guida TV Italia</div>
+        <div class="welcome-sub">Seleziona un canale dalla lista per vedere la programmazione completa</div>
+      </div>
+    </div>
+  </div>
 </div>
 
 <script>
-let epgData = null;        // { channelMap: Map(normalizedKey -> { name, programs[] }) }
-let channelsList = [];
-let filteredChannels = [];
+// ── State ──────────────────────────────────────────────────────────────────
+let channels = [];          // [{id,name,logo,displayName,num}]
+let programmes = {};        // {channelId: [{start,stop,title,desc,category}]}
+let activeChannel = null;
+let activeDate = null;
+let allDates = [];
+let filterGroup = 'all';
+const PROXIES = [
+  u => `https://api.allorigins.win/get?url=${encodeURIComponent(u)}`,
+  u => `https://corsproxy.io/?${encodeURIComponent(u)}`,
+  u => `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(u)}`,
+];
 
-// ---------- FUNZIONI PROXY MULTIPLI (come nella tua pagina) ----------
-async function fetchRace(url) {
-  const wrap = fn => new Promise((res, rej) => {
-    fn().then(t => (t && t.includes("<?xml") ? res(t) : rej())).catch(rej);
-  });
-  return Promise.any([
-    wrap(() => fetch(url).then(r => { if (!r.ok) throw 0; return r.text(); })),
-    wrap(() => fetch("https://api.allorigins.win/get?url=" + encodeURIComponent(url)).then(r => r.json()).then(j => j.contents || "")),
-    wrap(() => fetch("https://corsproxy.io/?" + encodeURIComponent(url)).then(r => { if (!r.ok) throw 0; return r.text(); })),
-    wrap(() => fetch("https://api.codetabs.com/v1/proxy?quest=" + encodeURIComponent(url)).then(r => { if (!r.ok) throw 0; return r.text(); }))
-  ]).catch(() => null);
-}
-
-// ---------- PARSING EPG ----------
-function normalizeKey(str) {
-  return str.toLowerCase().replace(/[^\w\s]/g, '').replace(/\s+/g, ' ').trim();
-}
-
-function formatTime(startStr) {
-  if (!startStr) return "";
-  const year = startStr.slice(0,4);
-  const month = startStr.slice(4,6);
-  const day = startStr.slice(6,8);
-  const hour = startStr.slice(8,10);
-  const minute = startStr.slice(10,12);
-  return `${day}/${month} ${hour}:${minute}`;
-}
-
-function getCurrentProgram(programs) {
+// ── Clock ──────────────────────────────────────────────────────────────────
+function updateClock(){
   const now = new Date();
-  const nowStr = now.toISOString().replace(/[-:]/g, "").slice(0,14);
-  for (let i = 0; i < programs.length; i++) {
-    const p = programs[i];
-    if (p.start <= nowStr && nowStr < p.stop) return p;
+  document.getElementById('clock').textContent = now.toLocaleTimeString('it-IT');
+}
+setInterval(updateClock, 1000);
+updateClock();
+
+// ── Status helpers ─────────────────────────────────────────────────────────
+function setStatus(state, txt){
+  const d = document.getElementById('sdot');
+  d.className = 'status-dot ' + state;
+  document.getElementById('stxt').textContent = txt;
+}
+
+// ── Fetch helpers ──────────────────────────────────────────────────────────
+async function fetchViaProxy(url){
+  for(const makeUrl of PROXIES){
+    try{
+      const r = await fetch(makeUrl(url), {signal: AbortSignal.timeout(12000)});
+      if(!r.ok) continue;
+      const ct = r.headers.get('content-type')||'';
+      if(ct.includes('json')){
+        const j = await r.json();
+        // allorigins wraps in {contents}
+        if(j && j.contents) return j.contents;
+        return JSON.stringify(j);
+      }
+      const text = await r.text();
+      if(text && (text.includes('<tv') || text.includes('<?xml'))) return text;
+      if(text && text.includes('<tv')) return text;
+      // allorigins sometimes returns json with contents
+      try{
+        const j = JSON.parse(text);
+        if(j && j.contents) return j.contents;
+      }catch(e){}
+      if(text && text.length > 100) return text;
+    }catch(e){ /* try next */ }
   }
   return null;
 }
 
-function getNextProgram(programs, current) {
-  if (!current) return programs[0] || null;
-  const idx = programs.indexOf(current);
-  return programs[idx+1] || null;
-}
+// ── Parse XMLTV ───────────────────────────────────────────────────────────
+function parseXMLTV(xmlText){
+  const parser = new DOMParser();
+  const doc = parser.parseFromString(xmlText, 'text/xml');
 
-function escapeHtml(str) {
-  if (!str) return "";
-  return str.replace(/[&<>]/g, function(m) {
-    if (m === '&') return '&amp;';
-    if (m === '<') return '&lt;';
-    if (m === '>') return '&gt;';
-    return m;
+  // Channels
+  const chs = [];
+  doc.querySelectorAll('channel').forEach(el => {
+    const id = el.getAttribute('id');
+    const displayEl = el.querySelector('display-name');
+    const iconEl = el.querySelector('icon');
+    if(!id || !displayEl) return;
+    const name = displayEl.textContent.trim();
+    const logo = iconEl ? iconEl.getAttribute('src') : '';
+    // extract num from name or id if possible
+    const numM = name.match(/^(\d+)\s/);
+    const num = numM ? parseInt(numM[1]) : null;
+    const displayName = numM ? name.slice(numM[0].length) : name;
+    chs.push({id, name, displayName, logo, num});
   });
+
+  // Programmes
+  const progs = {};
+  doc.querySelectorAll('programme').forEach(el => {
+    const chId = el.getAttribute('channel');
+    const startRaw = el.getAttribute('start');
+    const stopRaw = el.getAttribute('stop');
+    if(!chId || !startRaw) return;
+    const start = parseXMLTVDate(startRaw);
+    const stop = stopRaw ? parseXMLTVDate(stopRaw) : null;
+    const titleEl = el.querySelector('title');
+    const descEl = el.querySelector('desc');
+    const catEl = el.querySelector('category');
+    const title = titleEl ? titleEl.textContent.trim() : '—';
+    const desc = descEl ? descEl.textContent.trim() : '';
+    const category = catEl ? catEl.textContent.trim() : '';
+    if(!progs[chId]) progs[chId] = [];
+    progs[chId].push({start, stop, title, desc, category});
+  });
+
+  // Sort progs
+  for(const id of Object.keys(progs)){
+    progs[id].sort((a,b) => a.start - b.start);
+  }
+
+  return {channels: chs, programmes: progs};
 }
 
-// Carica e processa EPG usando fetchRace
-async function fetchAndParseEPG() {
-  const statusDiv = document.getElementById("status");
-  statusDiv.textContent = "Scarico EPG...";
-  try {
-    const url = "https://www.epgitalia.tv/gzip";
-    const responseText = await fetchRace(url);
-    if (!responseText) throw new Error("Nessun proxy ha restituito dati");
-    
-    // Il proxy potrebbe restituire il file già decompresso? No, è gzip. Dobbiamo decodificare.
-    // Il contenuto può essere base64? In realtà i proxy restituiscono il file binario codificato in base64? No, restituiscono testo binario.
-    // Dobbiamo verificare se è gzip: proviamo a decomprimere con pako, se fallisce usiamo come testo.
-    let decompressed = "";
-    try {
-      // Potrebbe essere binario, lo convertiamo in Uint8Array
-      const binaryString = responseText;
-      const bytes = new Uint8Array(binaryString.length);
-      for (let i = 0; i < binaryString.length; i++) bytes[i] = binaryString.charCodeAt(i);
-      decompressed = pako.inflate(bytes, { to: "string" });
-    } catch (e) {
-      // Se fallisce, forse è già testo (XML)
-      decompressed = responseText;
+function parseXMLTVDate(s){
+  // Format: 20240325183000 +0200
+  const m = s.replace(/\s.*/,'');
+  const yr=m.slice(0,4),mo=m.slice(4,6),dy=m.slice(6,8);
+  const hr=m.slice(8,10)||'00',mi=m.slice(10,12)||'00',sc=m.slice(12,14)||'00';
+  const tz = s.includes('+') ? s.split('+')[1] : (s.includes('-',10) ? '-'+s.split('-').pop() : '');
+  // build ISO string
+  let iso = `${yr}-${mo}-${dy}T${hr}:${mi}:${sc}`;
+  if(tz){
+    const tzH = tz.slice(0,2), tzM = tz.slice(2,4)||'00';
+    iso += `+${tzH}:${tzM}`;
+  } else {
+    iso += 'Z';
+  }
+  return new Date(iso);
+}
+
+// ── Build date list from programmes ───────────────────────────────────────
+function buildDates(progList){
+  const days = new Set();
+  for(const p of progList){
+    const d = toLocalDateKey(p.start);
+    days.add(d);
+  }
+  return [...days].sort();
+}
+
+function toLocalDateKey(date){
+  return date.toLocaleDateString('sv-SE'); // yyyy-mm-dd
+}
+
+function todayKey(){
+  return new Date().toLocaleDateString('sv-SE');
+}
+
+function formatDateTab(key){
+  const [y,m,d] = key.split('-').map(Number);
+  const date = new Date(y,m-1,d);
+  const today = new Date(); today.setHours(0,0,0,0);
+  const diff = Math.round((date-today)/86400000);
+  const names = {'-1':'Ieri','0':'Oggi','1':'Domani'};
+  if(names[diff] !== undefined) return names[diff];
+  return date.toLocaleDateString('it-IT',{weekday:'short',day:'numeric',month:'short'});
+}
+
+// ── Render channel list ───────────────────────────────────────────────────
+function renderChannels(){
+  const q = document.getElementById('search').value.toLowerCase().trim();
+  const list = document.getElementById('chList');
+  list.innerHTML = '';
+  const now = new Date();
+  let shown = 0;
+
+  for(const ch of channels){
+    if(filterGroup !== 'all' && getChannelGroup(ch) !== filterGroup) continue;
+    if(q && !ch.displayName.toLowerCase().includes(q) && !ch.name.toLowerCase().includes(q)) continue;
+    shown++;
+
+    const progs = programmes[ch.id] || [];
+    const nowProg = progs.find(p => p.start <= now && p.stop && p.stop > now) || progs.find(p => p.start > now);
+
+    const item = document.createElement('div');
+    item.className = 'ch-item' + (activeChannel && activeChannel.id === ch.id ? ' active' : '');
+    item.onclick = () => selectChannel(ch);
+
+    // progress bar
+    let pct = 0;
+    if(nowProg && nowProg.stop && nowProg.start <= now && nowProg.stop > now){
+      const total = nowProg.stop - nowProg.start;
+      const elapsed = now - nowProg.start;
+      pct = Math.min(100, (elapsed/total)*100);
     }
-    
-    // Verifica che sia XML valido
-    if (!decompressed.includes("<?xml") && !decompressed.includes("<tv>")) {
-      throw new Error("Il contenuto non sembra essere XML valido");
-    }
-    
-    const parser = new DOMParser();
-    const xmlDoc = parser.parseFromString(decompressed, "text/xml");
-    const programmes = xmlDoc.querySelectorAll("programme");
-    const channelMap = new Map(); // key normalized -> { name, programs: [] }
-    
-    for (let prog of programmes) {
-      let channelId = prog.getAttribute("channel");
-      if (!channelId) continue;
-      let displayName = channelId;
-      const displayNameElem = prog.querySelector("display-name");
-      if (displayNameElem && displayNameElem.textContent.trim()) displayName = displayNameElem.textContent.trim();
-      const start = prog.getAttribute("start");
-      const stop = prog.getAttribute("stop");
-      const titleElem = prog.querySelector("title");
-      const descElem = prog.querySelector("desc");
-      const title = titleElem ? titleElem.textContent.trim() : "";
-      const desc = descElem ? descElem.textContent.trim() : "";
-      if (!title) continue;
-      const key = normalizeKey(channelId);
-      if (!channelMap.has(key)) {
-        channelMap.set(key, { name: displayName, programs: [] });
-      }
-      channelMap.get(key).programs.push({ start, stop, title, desc });
-    }
-    
-    // Ordina programmi per ogni canale
-    for (let [_, channel] of channelMap.entries()) {
-      channel.programs.sort((a,b) => (a.start || "").localeCompare(b.start || ""));
-    }
-    
-    statusDiv.textContent = `Pronto (${channelMap.size} canali)`;
-    return { channelMap };
-  } catch (err) {
-    console.error("EPG fetch error:", err);
-    statusDiv.textContent = "Errore caricamento";
-    throw err;
+
+    const logoHtml = ch.logo
+      ? `<img class="ch-logo" src="${ch.logo}" alt="" loading="lazy" onerror="this.style.display='none';this.nextSibling.style.display='block'">`
+      : '';
+    const phTxt = ch.displayName.split(' ').slice(0,2).map(w=>w[0]||'').join('').toUpperCase() || 'TV';
+
+    item.innerHTML = `
+      <div class="ch-num">${ch.num !== null ? String(ch.num).padStart(3,'0') : ''}</div>
+      <div class="ch-logo-wrap">
+        ${logoHtml}
+        <div class="ch-logo-ph" style="${ch.logo?'display:none':''}">${phTxt}</div>
+      </div>
+      <div class="ch-info">
+        <div class="ch-name">${escHtml(ch.displayName)}</div>
+        <div class="ch-now">${nowProg ? `<span class="ch-now-title">${escHtml(nowProg.title)}</span>` : '<span>Nessun dato</span>'}</div>
+      </div>
+      ${pct > 0 ? `<div class="ch-progress-bar" style="width:${pct}%"></div>` : ''}
+    `;
+    list.appendChild(item);
+  }
+
+  if(shown === 0){
+    list.innerHTML = `<div style="padding:40px;text-align:center;color:var(--muted2);font-size:12px">Nessun canale trovato</div>`;
   }
 }
 
-function renderChannels(channels) {
-  const container = document.getElementById("container");
-  if (!channels.length) {
-    container.innerHTML = '<div class="error">Nessun canale trovato</div>';
+function filterChannels(){ renderChannels(); }
+
+// ── Channel groups ─────────────────────────────────────────────────────────
+const GROUP_KEYWORDS = {
+  'RAI': ['rai'],
+  'Mediaset': ['canale 5','italia 1','rete 4','cine 34','iris','la 5','top crime','boing','cartoonito','focus','dmax','real time','tgcom'],
+  'Sky': ['sky','cielo'],
+  'Sport': ['sport','calcio','tennis','motor','gol','toro','juventus','inter','milan','basket'],
+  'News': ['news','tg ','tg24','notizie','giornale','euronews'],
+  'Kids': ['yoyo','gulp','cartoon','junior','kids','boing','baby','manga','super!','k2','frisbee'],
+  'Musica': ['music','radio','deejay','rtl','m2o','vevo','rock tv','mtv'],
+};
+
+function getChannelGroup(ch){
+  const n = ch.displayName.toLowerCase();
+  for(const [g,kws] of Object.entries(GROUP_KEYWORDS)){
+    if(kws.some(k => n.includes(k))) return g;
+  }
+  return 'Altro';
+}
+
+function buildFilters(){
+  const groups = new Set();
+  for(const ch of channels) groups.add(getChannelGroup(ch));
+  const el = document.getElementById('filters');
+  el.innerHTML = '<button class="filt-btn active" onclick="setFilter(\'all\',this)">Tutti</button>';
+  for(const g of [...groups].sort()){
+    el.innerHTML += `<button class="filt-btn" onclick="setFilter('${g}',this)">${g}</button>`;
+  }
+}
+
+function setFilter(g, btn){
+  filterGroup = g;
+  document.querySelectorAll('.filt-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  renderChannels();
+}
+
+// ── Select channel ─────────────────────────────────────────────────────────
+function selectChannel(ch){
+  activeChannel = ch;
+
+  // Highlight in list
+  document.querySelectorAll('.ch-item').forEach(el => el.classList.remove('active'));
+  event.currentTarget.classList.add('active');
+
+  // Show header
+  const hdr = document.getElementById('epgHeader');
+  hdr.style.display = 'block';
+
+  const logo = document.getElementById('epgLogo');
+  const ph = document.getElementById('epgLogoPh');
+  if(ch.logo){
+    logo.src = ch.logo;
+    logo.style.display = '';
+    ph.style.display = 'none';
+  } else {
+    logo.style.display = 'none';
+    ph.style.display = '';
+    ph.textContent = ch.displayName.split(' ').slice(0,2).map(w=>w[0]||'').join('').toUpperCase()||'TV';
+  }
+  document.getElementById('epgChName').textContent = ch.displayName;
+
+  const progs = programmes[ch.id] || [];
+  allDates = buildDates(progs);
+
+  // pick today or nearest
+  const today = todayKey();
+  activeDate = allDates.includes(today) ? today : (allDates[0] || today);
+
+  renderDateTabs();
+  renderSchedule();
+}
+
+// ── Date tabs ──────────────────────────────────────────────────────────────
+function renderDateTabs(){
+  const el = document.getElementById('dateTabs');
+  el.innerHTML = '';
+  for(const d of allDates){
+    const btn = document.createElement('button');
+    btn.className = 'date-tab' + (d === activeDate ? ' active' : '');
+    btn.textContent = formatDateTab(d);
+    btn.onclick = () => { activeDate = d; renderDateTabs(); renderSchedule(); };
+    el.appendChild(btn);
+  }
+  if(allDates.length === 0){
+    el.innerHTML = '<span style="font-size:10px;color:var(--muted2)">Nessuna data disponibile</span>';
+  }
+}
+
+// ── Render schedule ────────────────────────────────────────────────────────
+function renderSchedule(){
+  const el = document.getElementById('epgList');
+  const now = new Date();
+
+  if(!activeChannel){ el.innerHTML = ''; return; }
+
+  const progs = (programmes[activeChannel.id] || []).filter(p => {
+    const dk = toLocalDateKey(p.start);
+    return dk === activeDate;
+  });
+
+  document.getElementById('epgChSub').textContent = `${progs.length} programmi • ${formatDateTab(activeDate)}`;
+
+  if(progs.length === 0){
+    el.innerHTML = `<div class="epg-empty"><div class="epg-empty-icon">📋</div><div class="epg-empty-text">Nessun programma disponibile per questa data</div></div>`;
     return;
   }
-  const grid = document.createElement("div");
-  grid.className = "channel-grid";
-  for (let ch of channels) {
-    const current = getCurrentProgram(ch.programs);
-    const next = getNextProgram(ch.programs, current);
-    const card = document.createElement("div");
-    card.className = "channel-card";
-    const header = document.createElement("div");
-    header.className = "card-header";
-    const nameDiv = document.createElement("div");
-    nameDiv.className = "channel-name";
-    nameDiv.innerHTML = `${escapeHtml(ch.name)} <span style="font-size:12px;">📅</span>`;
-    const currentDiv = document.createElement("div");
-    currentDiv.className = "current-program";
-    if (current) {
-      currentDiv.innerHTML = `<span style="color:var(--gold)">▶ in onda:</span> ${escapeHtml(current.title)} (${formatTime(current.start)})`;
-    } else if (ch.programs.length) {
-      currentDiv.innerHTML = `<span style="color:var(--muted2)">Prossimo:</span> ${escapeHtml(ch.programs[0].title)} (${formatTime(ch.programs[0].start)})`;
-    } else {
-      currentDiv.innerHTML = "Nessun programma disponibile";
+
+  el.innerHTML = '';
+  let scrollToEl = null;
+
+  for(const p of progs){
+    const isNow = p.start <= now && p.stop && p.stop > now;
+    const isPast = p.stop && p.stop <= now;
+
+    const item = document.createElement('div');
+    item.className = 'prog-item' + (isNow ? ' now' : '') + (isPast ? ' past' : '');
+
+    const startStr = p.start.toLocaleTimeString('it-IT', {hour:'2-digit',minute:'2-digit'});
+    const stopStr = p.stop ? p.stop.toLocaleTimeString('it-IT', {hour:'2-digit',minute:'2-digit'}) : '';
+    const durMin = p.stop ? Math.round((p.stop - p.start)/60000) : 0;
+
+    let pct = 0;
+    if(isNow && p.stop){
+      const total = p.stop - p.start;
+      pct = Math.min(100, ((now - p.start)/total)*100);
     }
-    header.appendChild(nameDiv);
-    header.appendChild(currentDiv);
-    const details = document.createElement("div");
-    details.className = "program-details";
-    const listDiv = document.createElement("div");
-    listDiv.className = "program-list";
-    for (let prog of ch.programs) {
-      const item = document.createElement("div");
-      item.className = "program-item";
-      item.innerHTML = `
-        <div><span class="program-time">${formatTime(prog.start)}</span> <span class="program-title">${escapeHtml(prog.title)}</span></div>
-        ${prog.desc ? `<div class="program-desc">${escapeHtml(prog.desc)}</div>` : ''}
-      `;
-      listDiv.appendChild(item);
-    }
-    details.appendChild(listDiv);
-    card.appendChild(header);
-    card.appendChild(details);
-    header.addEventListener("click", () => {
-      details.classList.toggle("open");
-    });
-    grid.appendChild(card);
+
+    item.innerHTML = `
+      <div class="prog-time">${startStr}${stopStr ? '<br><span style="font-size:9px;opacity:.5">'+stopStr+'</span>' : ''}</div>
+      <div class="prog-body">
+        <div class="prog-title">${escHtml(p.title)}</div>
+        ${p.desc ? `<div class="prog-desc">${escHtml(p.desc)}</div>` : ''}
+        <div class="prog-meta">
+          ${isNow ? '<span class="prog-tag live">● IN ONDA</span>' : ''}
+          ${p.category ? `<span class="prog-tag">${escHtml(p.category)}</span>` : ''}
+          ${isNow && pct > 0 ? `<div class="prog-bar-wrap" style="width:100%;margin-top:4px"><div class="prog-bar-fill" style="width:${pct.toFixed(1)}%"></div></div>` : ''}
+        </div>
+      </div>
+      ${durMin > 0 ? `<div class="prog-dur">${durMin}m</div>` : ''}
+    `;
+
+    el.appendChild(item);
+    if(isNow) scrollToEl = item;
   }
-  container.innerHTML = "";
-  container.appendChild(grid);
+
+  // scroll to now
+  if(scrollToEl){
+    setTimeout(() => scrollToEl.scrollIntoView({behavior:'smooth', block:'center'}), 100);
+  }
 }
 
-function filterChannels() {
-  const query = document.getElementById("search").value.toLowerCase().trim();
-  if (!query) {
-    filteredChannels = [...channelsList];
-  } else {
-    filteredChannels = channelsList.filter(ch => ch.name.toLowerCase().includes(query));
-  }
-  renderChannels(filteredChannels);
+// ── Utils ──────────────────────────────────────────────────────────────────
+function escHtml(s){
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
 
-async function init() {
-  const container = document.getElementById("container");
-  container.innerHTML = '<div class="loading"><div class="loader"></div><p>Caricamento guida programmi...</p></div>';
-  try {
-    const epg = await fetchAndParseEPG();
-    const list = [];
-    for (let [key, ch] of epg.channelMap.entries()) {
-      if (ch.programs.length === 0) continue;
-      list.push({ key, name: ch.name, programs: ch.programs });
-    }
-    list.sort((a,b) => a.name.localeCompare(b.name, 'it'));
-    channelsList = list;
-    filteredChannels = [...channelsList];
-    renderChannels(filteredChannels);
-  } catch (err) {
-    console.error(err);
-    container.innerHTML = `<div class="error">
-      <p>❌ Impossibile caricare la guida programmi.</p>
-      <button onclick="init()">⟳ Riprova</button>
-    </div>`;
+// ── Show skeletons ─────────────────────────────────────────────────────────
+function showSkeleton(){
+  const el = document.getElementById('chList');
+  el.innerHTML = '';
+  for(let i=0;i<20;i++){
+    const d = document.createElement('div');
+    d.className = 'skel-ch';
+    d.style.height = '52px';
+    el.appendChild(d);
   }
 }
+
+// ── INIT ───────────────────────────────────────────────────────────────────
+async function init(){
+  setStatus('loading', 'Caricamento...');
+  showSkeleton();
+
+  const EPG_URL = 'https://www.epgitalia.tv/gzip';
+  let xmlText = null;
+
+  try{
+    xmlText = await fetchViaProxy(EPG_URL);
+  }catch(e){}
+
+  if(!xmlText){
+    setStatus('err', 'Errore');
+    document.getElementById('chList').innerHTML = `
+      <div style="padding:30px 16px;text-align:center;color:var(--muted2);font-size:12px;line-height:1.7">
+        ❌ Impossibile caricare l'EPG.<br>
+        Controlla la connessione o prova di nuovo.<br><br>
+        <button class="retry-btn" onclick="init()">↺ Riprova</button>
+      </div>`;
+    return;
+  }
+
+  // The URL returns gzipped XMLTV — browser fetch decompresses gzip automatically
+  // but allorigins may base64-encode binary. Try parsing as XML.
+  let parsed = null;
+  try{
+    parsed = parseXMLTV(xmlText);
+  }catch(e){
+    setStatus('err', 'Parsing fallito');
+    document.getElementById('chList').innerHTML = `<div style="padding:30px;text-align:center;color:var(--muted2);font-size:12px">❌ Errore nel parsing dell'EPG.<br><br><button class="retry-btn" onclick="init()">↺ Riprova</button></div>`;
+    return;
+  }
+
+  channels = parsed.channels;
+  programmes = parsed.programmes;
+
+  if(channels.length === 0){
+    setStatus('err', 'Nessun canale');
+    document.getElementById('chList').innerHTML = `<div style="padding:30px;text-align:center;color:var(--muted2);font-size:12px">Nessun canale trovato nell'EPG.</div>`;
+    return;
+  }
+
+  // Sort channels
+  channels.sort((a,b) => {
+    if(a.num !== null && b.num !== null) return a.num - b.num;
+    if(a.num !== null) return -1;
+    if(b.num !== null) return 1;
+    return a.displayName.localeCompare(b.displayName, 'it');
+  });
+
+  setStatus('ok', `${channels.length} canali`);
+  buildFilters();
+  renderChannels();
+
+  // Auto-refresh every 5 minutes
+  setTimeout(init, 5 * 60 * 1000);
+}
+
+// Update now-playing every minute
+setInterval(() => {
+  if(channels.length > 0) renderChannels();
+  if(activeChannel) renderSchedule();
+}, 60000);
 
 init();
 </script>
