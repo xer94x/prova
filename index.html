@@ -27,6 +27,8 @@ header{background:var(--surface);border-bottom:1px solid var(--border);padding:0
 .hdr-search{background:var(--card);border:1px solid var(--border2);border-radius:5px;padding:5px 10px;color:var(--text);font-family:'Space Grotesk',sans-serif;font-size:12px;outline:none;width:170px;transition:border-color .2s,width .2s}
 .hdr-search:focus{border-color:var(--accent);width:210px}
 .hdr-search::placeholder{color:var(--muted2)}
+.hdr-refresh-btn{background:rgba(0,212,255,.08);border:1px solid rgba(0,212,255,.25);color:var(--accent);padding:5px 11px;border-radius:5px;cursor:pointer;font-family:'Space Grotesk',sans-serif;font-size:11px;font-weight:600;letter-spacing:.3px;white-space:nowrap;transition:background .15s,border-color .15s;flex-shrink:0}
+.hdr-refresh-btn:hover{background:rgba(0,212,255,.18);border-color:rgba(0,212,255,.5)}
 .hdr-status{margin-left:auto;display:flex;align-items:center;gap:6px;font-size:10px;font-weight:500;letter-spacing:.5px;text-transform:uppercase;color:var(--muted2);white-space:nowrap}
 .status-dot{width:6px;height:6px;border-radius:50%;background:var(--muted);flex-shrink:0;transition:all .3s}
 .status-dot.ok{background:var(--green);box-shadow:0 0 5px var(--green)}
@@ -93,6 +95,7 @@ header{background:var(--surface);border-bottom:1px solid var(--border);padding:0
   <div class="logo"><span class="logo-epg">EPG</span><span class="logo-it">Italia</span><div class="logo-dot"></div></div>
   <div class="hdr-clock" id="clock">--:--:--</div>
   <input class="hdr-search" id="search" type="text" placeholder="🔍 Cerca canale..." oninput="filterChannels()">
+  <button class="hdr-refresh-btn" onclick="hardRefresh()" title="Cancella cache e ricarica EPG">↺ Ricarica EPG</button>
   <div class="hdr-status"><div class="status-dot loading" id="sdot"></div><span id="stxt">Caricamento...</span></div>
 </header>
 <div class="main">
