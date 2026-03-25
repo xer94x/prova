@@ -409,11 +409,11 @@ function variantScore(raw){
 // STATE
 // ═══════════════════════════════════════════════════
 let channels=[], programmes={}, activeChannel=null, activeDate=null, allDates=[], filterGroup='all';
-const CACHE_KEY='epgit_v8', CACHE_TTL=24*60*60*1000;
+const CACHE_KEY='epgit_v9', CACHE_TTL=24*60*60*1000;
+// Cache scade sempre a mezzanotte, non 24h dal salvataggio
 function isCacheValid(ts){
-  const saved=new Date(ts);
-  const midnight=new Date();midnight.setHours(0,0,0,0);
-  return saved>=midnight; // valida solo se salvata oggi dopo mezzanotte
+  const midnight=new Date(); midnight.setHours(0,0,0,0);
+  return new Date(ts)>=midnight;
 }
 
 // ═══════════════════════════════════════════════════
@@ -475,33 +475,18 @@ async function extractXml(resp){
   }catch(e){}
   return null;
 }
-async function fetchEPG(){
-  // Sorgenti EPG senza CORS (raw.githubusercontent.com, epg-guide.com)
-  // aggiornate ogni giorno automaticamente
-  const SOURCES = [
-    // globetvapp/epg su GitHub — nessun CORS, aggiornato ogni giorno alle 3:00 UTC
-    'https://raw.githubusercontent.com/globetvapp/epg/main/Italy/italy1.xml',
-    'https://raw.githubusercontent.com/globetvapp/epg/main/Italy/italy2.xml',
-    'https://raw.githubusercontent.com/globetvapp/epg/main/Italy/italy3.xml',
-    // epg-guide.com — nessun CORS, formato gz
-    'https://www.epg-guide.com/it.gz',
-    'http://www.epg-guide.com/it.gz',
-    // tvit (fallback, può avere CORS)
-    'https://tvit.leicaflorianrobert.dev/epg/list.xml',
-    // epgitalia via corsproxy come ultimo tentativo
-    'https://corsproxy.io/?'+encodeURIComponent('https://www.epgitalia.tv/gzip'),
-    'https://api.allorigins.win/raw?url='+encodeURIComponent('https://www.epgitalia.tv/gzip'),
-  ];
-
-  for(const url of SOURCES){
-    try{
-      setStatus('loading', 'Download EPG...');
-      const r = await fetch(url, {signal: AbortSignal.timeout(20000)});
-      if(!r.ok) continue;
-      const x = await extractXml(r);
-      if(x && x.includes('<programme')) return x;
-    }catch(e){}
-  }
+async function fetchEPG(url){
+  const opts={signal:AbortSignal.timeout(12000)};
+  // 1. Direct
+  try{const r=await fetch(url,opts);if(r.ok){const t=await r.text();if(t&&t.includes('<tv'))return t;}}catch(e){}
+  // 2. corsproxy
+  try{const r=await fetch('https://corsproxy.io/?'+encodeURIComponent(url),{signal:AbortSignal.timeout(16000)});if(r.ok){const x=await extractXml(r);if(x)return x;}}catch(e){}
+  // 3. allorigins raw
+  try{const r=await fetch('https://api.allorigins.win/raw?url='+encodeURIComponent(url),{signal:AbortSignal.timeout(16000)});if(r.ok){const x=await extractXml(r);if(x)return x;}}catch(e){}
+  // 4. allorigins get
+  try{const r=await fetch('https://api.allorigins.win/get?url='+encodeURIComponent(url),{signal:AbortSignal.timeout(16000)});if(r.ok){const j=await r.json();if(j&&j.contents&&j.contents.includes('<tv'))return j.contents;}}catch(e){}
+  // 5. codetabs
+  try{const r=await fetch('https://api.codetabs.com/v1/proxy?quest='+encodeURIComponent(url),{signal:AbortSignal.timeout(16000)});if(r.ok){const x=await extractXml(r);if(x)return x;}}catch(e){}
   return null;
 }
 
@@ -739,7 +724,8 @@ function selectChannel(ch,itemEl){
   const progs=programmes[ch.id]||[];
   allDates=buildDates(progs);
   const today=todayKey();
-  activeDate=allDates.includes(today)?today:(allDates[0]||today);
+  if(allDates.includes(today)){activeDate=today;}
+  else{activeDate=allDates.reduce((best,d)=>Math.abs(new Date(d)-new Date(today))<Math.abs(new Date(best)-new Date(today))?d:best,allDates[0]||today);}
   renderDateTabs(); renderSchedule();
 }
 
@@ -859,7 +845,7 @@ async function init(forceRefresh=false){
   }
   if(!xmlText){
     setStatus('loading','Download EPG...');
-    xmlText=await fetchEPG();
+    xmlText=await fetchEPG(EPG_URL);
     if(xmlText)await saveCache(xmlText);
   }
   if(!xmlText||!xmlText.includes('<tv')){
