@@ -644,12 +644,9 @@ function renderChannels(){
 function filterChannels(){renderChannels();}
 
 function buildFilters(){
-  const gs=new Set(); for(const ch of channels) gs.add(getGroup(ch.name));
-  const el=document.getElementById('filters');
-  el.innerHTML='<button class="filt-btn active" onclick="setFilter(\'all\',this)">Tutti</button>';
-  ['RAI','Mediaset','Sky','Discovery','Sport','News','Kids','Musica','Altro'].forEach(g=>{
-    if(gs.has(g)) el.innerHTML+=`<button class="filt-btn" onclick="setFilter('${g}',this)">${g}</button>`;
-  });
+  // filtri rimossi dall'interfaccia, funzione mantenuta per compatibilità
+  filterGroup='all';
+  renderChannels();
 }
 function setFilter(g,btn){
   filterGroup=g;
