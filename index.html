@@ -36,23 +36,18 @@ header{background:var(--surface);border-bottom:1px solid var(--border);padding:0
 .cache-badge{font-size:9px;background:rgba(255,209,102,.1);border:1px solid rgba(255,209,102,.25);color:var(--gold);border-radius:3px;padding:1px 5px;font-weight:600;letter-spacing:.5px;cursor:pointer;transition:background .15s;white-space:nowrap}
 .cache-badge:hover{background:rgba(255,209,102,.2)}
 .main{display:flex;flex:1;overflow:hidden}
-.ch-panel{width:310px;flex-shrink:0;border-right:1px solid var(--border);display:flex;flex-direction:column;background:var(--surface)}
-.ch-filters{display:flex;gap:3px;padding:6px 8px;border-bottom:1px solid var(--border);overflow-x:auto;flex-shrink:0}
-.ch-filters::-webkit-scrollbar{height:0}
-.filt-btn{background:transparent;border:1px solid var(--border2);border-radius:4px;padding:3px 8px;font-size:9px;font-family:'Space Grotesk',sans-serif;font-weight:700;letter-spacing:.8px;text-transform:uppercase;color:var(--muted2);cursor:pointer;transition:all .15s;white-space:nowrap;flex-shrink:0}
-.filt-btn:hover{border-color:var(--accent2);color:var(--text)}
-.filt-btn.active{background:var(--accentdim);border-color:rgba(0,212,255,.4);color:var(--accent)}
+.ch-panel{width:380px;flex-shrink:0;border-right:1px solid var(--border);display:flex;flex-direction:column;background:var(--surface)}
 .ch-list{flex:1;overflow-y:auto;overflow-x:hidden}
-.ch-item{display:flex;align-items:center;gap:8px;padding:8px 10px;border-bottom:1px solid rgba(255,255,255,.025);cursor:pointer;transition:background .1s;position:relative;min-height:52px}
+.ch-item{display:flex;align-items:center;gap:10px;padding:12px 12px;border-bottom:1px solid rgba(255,255,255,.025);cursor:pointer;transition:background .1s;position:relative;min-height:72px}
 .ch-item:hover{background:var(--card)}
 .ch-item.active{background:var(--card2);border-left:2px solid var(--accent)}
-.ch-num{font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:500;color:var(--muted);width:24px;text-align:right;flex-shrink:0}
-.ch-logo-wrap{width:38px;height:26px;display:flex;align-items:center;justify-content:center;background:rgba(255,255,255,.04);border-radius:4px;flex-shrink:0;overflow:hidden}
-.ch-logo{max-width:34px;max-height:22px;object-fit:contain;display:block}
-.ch-logo-ph{font-size:7px;font-weight:700;color:var(--muted2);text-align:center;padding:2px}
+.ch-num{font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:500;color:var(--muted);width:28px;text-align:right;flex-shrink:0}
+.ch-logo-wrap{width:46px;height:32px;display:flex;align-items:center;justify-content:center;background:rgba(255,255,255,.04);border-radius:4px;flex-shrink:0;overflow:hidden}
+.ch-logo{max-width:42px;max-height:28px;object-fit:contain;display:block}
+.ch-logo-ph{font-size:9px;font-weight:700;color:var(--muted2);text-align:center;padding:2px}
 .ch-info{flex:1;min-width:0}
-.ch-name{font-size:11px;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1.3}
-.ch-now{font-size:10px;color:var(--muted3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:2px;line-height:1.2}
+.ch-name{font-size:14px;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1.3}
+.ch-now{font-size:13px;color:var(--muted3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:3px;line-height:1.2}
 .ch-now-title{color:var(--accent2);font-weight:500}
 .ch-prog-bar{position:absolute;bottom:0;left:0;height:2px;background:linear-gradient(90deg,var(--accent2),var(--accent));opacity:.45}
 .epg-panel{flex:1;display:flex;flex-direction:column;overflow:hidden}
@@ -73,10 +68,10 @@ header{background:var(--surface);border-bottom:1px solid var(--border);padding:0
 .prog-item.now{background:var(--card2);border-color:rgba(0,212,255,.22)}
 .prog-item.now::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;background:linear-gradient(180deg,var(--accent),var(--accent2));border-radius:3px 0 0 3px}
 .prog-item.past{opacity:.4}
-.prog-time{font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:500;color:var(--muted3);width:38px;flex-shrink:0;padding-top:1px;line-height:1.5}
+.prog-time{font-family:'JetBrains Mono',monospace;font-size:14px;font-weight:500;color:var(--muted3);width:44px;flex-shrink:0;padding-top:1px;line-height:1.5}
 .prog-item.now .prog-time{color:var(--accent)}
 .prog-body{flex:1;min-width:0}
-.prog-title{font-size:13px;font-weight:600;color:var(--text);line-height:1.3}
+.prog-title{font-size:15px;font-weight:600;color:var(--text);line-height:1.3}
 .prog-item.now .prog-title{color:var(--accent)}
 .prog-desc{font-size:11px;color:var(--muted3);margin-top:3px;line-height:1.5;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
 .prog-meta{display:flex;gap:5px;margin-top:5px;flex-wrap:wrap;align-items:center}
@@ -105,7 +100,6 @@ header{background:var(--surface);border-bottom:1px solid var(--border);padding:0
 </header>
 <div class="main">
   <div class="ch-panel">
-    <div class="ch-filters" id="filters"><button class="filt-btn active" onclick="setFilter('all',this)">Tutti</button></div>
     <div class="ch-list" id="chList"></div>
   </div>
   <div class="epg-panel">
@@ -263,11 +257,96 @@ const LOCAL_CHANNELS=[
   {lcn:604,name:'Disney Jr.',       logo:'https://upload.wikimedia.org/wikipedia/commons/thumb/e/e4/Disney_Junior_Logo.svg/200px-Disney_Junior_Logo.svg.png',         aliases:['disney jr','disney jr.','disney junior']},
   {lcn:606,name:'Cartoon Network',  logo:'https://upload.wikimedia.org/wikipedia/commons/thumb/8/80/Cartoon_Network_2010_logo.svg/200px-Cartoon_Network_2010_logo.svg.png',   aliases:['cartoon network','cartoonnetwork']},
   {lcn:607,name:'Boomerang',        logo:'https://upload.wikimedia.org/wikipedia/commons/thumb/8/8b/Boomerang_%28TV_channel%29_logo.svg/200px-Boomerang_%28TV_channel%29_logo.svg.png',        aliases:['boomerang']},
-  // ── MUSICA ─────────────────────────────────────
+  {lcn:30, name:'wedotv Movies',    logo:'https://upload.wikimedia.org/wikipedia/commons/thumb/a/a1/France_24_logo.svg/200px-France_24_logo.svg.png', aliases:['wedotv movies','wedotv']},
+  {lcn:49, name:'Mezzo',            logo:'https://upload.wikimedia.org/wikipedia/commons/thumb/e/e2/Logo_of_Mezzo.svg/200px-Logo_of_Mezzo.svg.png', aliases:['mezzo']},
+  {lcn:51, name:'EQUtv',            logo:'https://upload.wikimedia.org/wikipedia/commons/thumb/4/4e/RTL_102.5.svg/200px-RTL_102.5.svg.png', aliases:['equtv','equ tv']},
+  {lcn:52, name:'ACI Sport TV',     logo:'https://upload.wikimedia.org/wikipedia/commons/thumb/4/4e/RTL_102.5.svg/200px-RTL_102.5.svg.png', aliases:['aci sport tv','aci sport']},
+  {lcn:54, name:'Solo Calcio',      logo:'https://upload.wikimedia.org/wikipedia/commons/thumb/4/4e/RTL_102.5.svg/200px-RTL_102.5.svg.png', aliases:['solo calcio']},
+  {lcn:55, name:'Marcopolo Travel TV',logo:'https://upload.wikimedia.org/wikipedia/commons/thumb/4/4e/RTL_102.5.svg/200px-RTL_102.5.svg.png', aliases:['marcopolo travel tv','marcopolo']},
+  {lcn:60, name:'wedotv Big Stories',logo:'https://upload.wikimedia.org/wikipedia/commons/thumb/4/4e/RTL_102.5.svg/200px-RTL_102.5.svg.png', aliases:['wedotv big stories']},
+  {lcn:61, name:'Juwelo',           logo:'https://upload.wikimedia.org/wikipedia/commons/thumb/4/4e/RTL_102.5.svg/200px-RTL_102.5.svg.png', aliases:['juwelo']},
+  {lcn:63, name:'Radio Italia Live TV',logo:'https://upload.wikimedia.org/wikipedia/commons/thumb/6/65/Radio_Italia_TV_logo.svg/200px-Radio_Italia_TV_logo.svg.png', aliases:['radio italia live tv','radio italia live']},
+  {lcn:64, name:'Radio Kiss Kiss TV',logo:'https://upload.wikimedia.org/wikipedia/commons/thumb/9/9a/Radio_Kiss_Kiss_logo.svg/200px-Radio_Kiss_Kiss_logo.svg.png', aliases:['radio kiss kiss tv','kiss kiss tv']},
+  {lcn:65, name:'Radio Zeta TV',    logo:'https://upload.wikimedia.org/wikipedia/commons/thumb/a/a8/Radio_Zeta_logo.svg/200px-Radio_Zeta_logo.svg.png', aliases:['radio zeta tv','radio zeta']},
+  {lcn:66, name:'Radio Freccia TV', logo:'https://upload.wikimedia.org/wikipedia/commons/thumb/4/4e/RTL_102.5.svg/200px-RTL_102.5.svg.png', aliases:['radio freccia tv','radio freccia']},
+  {lcn:67, name:'Radio Monte Carlo TV',logo:'https://upload.wikimedia.org/wikipedia/commons/thumb/4/4e/RTL_102.5.svg/200px-RTL_102.5.svg.png', aliases:['radio monte carlo tv','radio monte carlo']},
+  {lcn:74, name:'FREEДОМ',          logo:'https://upload.wikimedia.org/wikipedia/commons/thumb/4/4e/RTL_102.5.svg/200px-RTL_102.5.svg.png', aliases:['freeдом','freedom']},
+  {lcn:76, name:'DIM',              logo:'https://upload.wikimedia.org/wikipedia/commons/thumb/4/4e/RTL_102.5.svg/200px-RTL_102.5.svg.png', aliases:['dim']},
+  {lcn:77, name:'Al Jazeera',       logo:'https://upload.wikimedia.org/wikipedia/commons/thumb/8/8d/Al_Jazeera_Media_Network_Logo.svg/200px-Al_Jazeera_Media_Network_Logo.svg.png', aliases:['al jazeera']},
+  {lcn:79, name:'Sonlife Broadcasting',logo:'https://upload.wikimedia.org/wikipedia/commons/thumb/4/4e/RTL_102.5.svg/200px-RTL_102.5.svg.png', aliases:['sonlife broadcasting network','sonlife']},
+  {lcn:83, name:'Daystar',          logo:'https://upload.wikimedia.org/wikipedia/commons/thumb/4/4e/RTL_102.5.svg/200px-RTL_102.5.svg.png', aliases:['daystar']},
+  {lcn:86, name:'Euronews English', logo:'https://upload.wikimedia.org/wikipedia/commons/thumb/9/9d/Euronews_logo.svg/200px-Euronews_logo.svg.png', aliases:['euronews english']},
+  {lcn:88, name:'CGTN Documentary', logo:'https://upload.wikimedia.org/wikipedia/commons/thumb/4/47/CGTN_logo.svg/200px-CGTN_logo.svg.png', aliases:['cgtn documentary']},
+  {lcn:92, name:'CCTV-4 Europe',    logo:'https://upload.wikimedia.org/wikipedia/commons/thumb/4/4e/RTL_102.5.svg/200px-RTL_102.5.svg.png', aliases:['cctv-4 europe','cctv 4']},
+  {lcn:93, name:'Rai Radio 2 Visual',logo:'https://upload.wikimedia.org/wikipedia/commons/thumb/4/4e/RTL_102.5.svg/200px-RTL_102.5.svg.png', aliases:['rai radio 2 visual','rai radio 2']},
+  {lcn:94, name:'Rai 4K',           logo:'https://upload.wikimedia.org/wikipedia/commons/thumb/4/4e/RTL_102.5.svg/200px-RTL_102.5.svg.png', aliases:['rai 4k']},
+  {lcn:109,name:'Sky Uno +1',       logo:'https://upload.wikimedia.org/wikipedia/commons/thumb/6/6c/Sky_Uno_logo.svg/200px-Sky_Uno_logo.svg.png', aliases:['sky uno +1','sky uno+1']},
+  {lcn:114,name:'Sky Collection',   logo:'https://upload.wikimedia.org/wikipedia/commons/thumb/4/4e/RTL_102.5.svg/200px-RTL_102.5.svg.png', aliases:['sky collection']},
+  {lcn:118,name:'Sky Adventure',    logo:'https://upload.wikimedia.org/wikipedia/commons/thumb/4/4e/RTL_102.5.svg/200px-RTL_102.5.svg.png', aliases:['sky adventure']},
+  {lcn:121,name:'Sky Classica',     logo:'https://upload.wikimedia.org/wikipedia/commons/thumb/4/4e/RTL_102.5.svg/200px-RTL_102.5.svg.png', aliases:['sky classica']},
+  {lcn:210,name:'Sky Sport Legend', logo:'https://upload.wikimedia.org/wikipedia/commons/thumb/4/4e/RTL_102.5.svg/200px-RTL_102.5.svg.png', aliases:['sky sport legend']},
+  {lcn:211,name:'Sky Sport Mix',    logo:'https://upload.wikimedia.org/wikipedia/commons/thumb/4/4e/RTL_102.5.svg/200px-RTL_102.5.svg.png', aliases:['sky sport mix']},
+  {lcn:213,name:'Sky Sport 4K',     logo:'https://upload.wikimedia.org/wikipedia/commons/thumb/4/4e/RTL_102.5.svg/200px-RTL_102.5.svg.png', aliases:['sky sport 4k']},
+  {lcn:220,name:'EQUtv (Sport)',    logo:'https://upload.wikimedia.org/wikipedia/commons/thumb/4/4e/RTL_102.5.svg/200px-RTL_102.5.svg.png', aliases:[]},
+  {lcn:221,name:'Horse TV',         logo:'https://upload.wikimedia.org/wikipedia/commons/thumb/4/4e/RTL_102.5.svg/200px-RTL_102.5.svg.png', aliases:['horse tv']},
+  {lcn:222,name:'Bike Channel',     logo:'https://upload.wikimedia.org/wikipedia/commons/thumb/4/4e/RTL_102.5.svg/200px-RTL_102.5.svg.png', aliases:['bike channel']},
+  {lcn:235,name:'Caccia',           logo:'https://upload.wikimedia.org/wikipedia/commons/thumb/4/4e/RTL_102.5.svg/200px-RTL_102.5.svg.png', aliases:['caccia']},
+  {lcn:236,name:'Pesca',            logo:'https://upload.wikimedia.org/wikipedia/commons/thumb/4/4e/RTL_102.5.svg/200px-RTL_102.5.svg.png', aliases:['pesca']},
+  {lcn:400,name:'Sky Arte (400)',   logo:'https://upload.wikimedia.org/wikipedia/commons/thumb/a/ad/Sky_Arte.svg/200px-Sky_Arte.svg.png', aliases:[]},
+  {lcn:402,name:'Sky Documentaries (402)',logo:'https://upload.wikimedia.org/wikipedia/commons/thumb/8/81/Sky_Documentaries.svg/200px-Sky_Documentaries.svg.png', aliases:[]},
+  {lcn:404,name:'Sky Nature (404)', logo:'https://upload.wikimedia.org/wikipedia/commons/thumb/a/a9/Sky_Nature.svg/200px-Sky_Nature.svg.png', aliases:[]},
+  {lcn:405,name:'Sky Crime (405)',  logo:'https://upload.wikimedia.org/wikipedia/commons/thumb/8/8a/Sky_Crime.svg/200px-Sky_Crime.svg.png', aliases:[]},
+  {lcn:407,name:'Sky Adventure (407)',logo:'https://upload.wikimedia.org/wikipedia/commons/thumb/4/4e/RTL_102.5.svg/200px-RTL_102.5.svg.png', aliases:[]},
+  {lcn:409,name:'History (409)',    logo:'https://upload.wikimedia.org/wikipedia/commons/thumb/0/0b/History_Channel_logo.svg/200px-History_Channel_logo.svg.png', aliases:[]},
+  {lcn:415,name:'Gambero Rosso (415)',logo:'https://upload.wikimedia.org/wikipedia/commons/thumb/2/21/Gambero_Rosso_logo.png/200px-Gambero_Rosso_logo.png', aliases:[]},
+  {lcn:475,name:'QVC (475)',        logo:'https://upload.wikimedia.org/wikipedia/commons/thumb/a/a6/QVC_Logo.svg/200px-QVC_Logo.svg.png', aliases:[]},
+  {lcn:489,name:'Fashion TV',       logo:'https://upload.wikimedia.org/wikipedia/commons/thumb/4/4e/RTL_102.5.svg/200px-RTL_102.5.svg.png', aliases:['fashion tv']},
+  {lcn:490,name:'Value 24 TV',      logo:'https://upload.wikimedia.org/wikipedia/commons/thumb/4/4e/RTL_102.5.svg/200px-RTL_102.5.svg.png', aliases:['value 24 tv']},
+  {lcn:500,name:'Sky TG24 (500)',   logo:'https://upload.wikimedia.org/wikipedia/commons/thumb/4/48/Sky_TG24_logo.svg/200px-Sky_TG24_logo.svg.png', aliases:[]},
+  {lcn:501,name:'Sky TG24 Primo Piano',logo:'https://upload.wikimedia.org/wikipedia/commons/thumb/4/48/Sky_TG24_logo.svg/200px-Sky_TG24_logo.svg.png', aliases:['sky tg24 primo piano']},
+  {lcn:502,name:'Sky Meteo 24',     logo:'https://upload.wikimedia.org/wikipedia/commons/thumb/4/48/Sky_TG24_logo.svg/200px-Sky_TG24_logo.svg.png', aliases:['sky meteo 24','sky meteo']},
+  {lcn:503,name:'Sky Sport 24 (503)',logo:'https://upload.wikimedia.org/wikipedia/commons/thumb/5/59/Sky_Sport_24.svg/200px-Sky_Sport_24.svg.png', aliases:[]},
+  {lcn:515,name:'Vatican Media Europe',logo:'https://upload.wikimedia.org/wikipedia/commons/thumb/4/4e/RTL_102.5.svg/200px-RTL_102.5.svg.png', aliases:['vatican media europe','vatican media']},
+  {lcn:519,name:'TRM',              logo:'https://upload.wikimedia.org/wikipedia/commons/thumb/4/4e/RTL_102.5.svg/200px-RTL_102.5.svg.png', aliases:['trm']},
+  {lcn:521,name:'Euronews (521)',   logo:'https://upload.wikimedia.org/wikipedia/commons/thumb/9/9d/Euronews_logo.svg/200px-Euronews_logo.svg.png', aliases:[]},
+  {lcn:522,name:'Sky News',         logo:'https://upload.wikimedia.org/wikipedia/commons/thumb/1/18/Sky_News_logo.svg/200px-Sky_News_logo.svg.png', aliases:['sky news']},
+  {lcn:526,name:'CNN International',logo:'https://upload.wikimedia.org/wikipedia/commons/thumb/b/b1/CNN.svg/200px-CNN.svg.png', aliases:['cnn international','cnn']},
+  {lcn:530,name:'BBC World News',   logo:'https://upload.wikimedia.org/wikipedia/commons/thumb/c/c4/BBC_World_News_2022.svg/200px-BBC_World_News_2022.svg.png', aliases:['bbc world news','bbc world']},
+  {lcn:532,name:'Al Jazeera International',logo:'https://upload.wikimedia.org/wikipedia/commons/thumb/f/f5/Logo_of_Al_Jazeera_English.svg/200px-Logo_of_Al_Jazeera_English.svg.png', aliases:['al jazeera international']},
+  {lcn:534,name:'Arirang TV',       logo:'https://upload.wikimedia.org/wikipedia/commons/thumb/5/5f/Arirang_TV.svg/200px-Arirang_TV.svg.png', aliases:['arirang tv','arirang']},
+  {lcn:538,name:'Euronews English (538)',logo:'https://upload.wikimedia.org/wikipedia/commons/thumb/9/9d/Euronews_logo.svg/200px-Euronews_logo.svg.png', aliases:[]},
+  {lcn:541,name:'France 24 Français',logo:'https://upload.wikimedia.org/wikipedia/commons/thumb/a/a1/France_24_logo.svg/200px-France_24_logo.svg.png', aliases:['france 24 français','france 24 francais']},
+  {lcn:543,name:'Deutsche Welle',   logo:'https://upload.wikimedia.org/wikipedia/commons/thumb/7/75/Deutsche_Welle_symbol_2012.svg/200px-Deutsche_Welle_symbol_2012.svg.png', aliases:['deutsche welle','dw']},
+  {lcn:550,name:'San Marino RTV',   logo:'https://upload.wikimedia.org/wikipedia/commons/thumb/2/22/San_Marino_RTV.svg/200px-San_Marino_RTV.svg.png', aliases:['san marino rtv']},
+  {lcn:552,name:'TVP Polonia',      logo:'https://upload.wikimedia.org/wikipedia/commons/thumb/4/4e/RTL_102.5.svg/200px-RTL_102.5.svg.png', aliases:['tvp polonia']},
+  {lcn:558,name:'TVR International',logo:'https://upload.wikimedia.org/wikipedia/commons/thumb/4/4e/RTL_102.5.svg/200px-RTL_102.5.svg.png', aliases:['tvr international']},
+  {lcn:560,name:'Al Jazeera Arabic',logo:'https://upload.wikimedia.org/wikipedia/commons/thumb/8/8d/Al_Jazeera_Media_Network_Logo.svg/200px-Al_Jazeera_Media_Network_Logo.svg.png', aliases:['al jazeera arabic']},
+  {lcn:561,name:'Al Arabiya',       logo:'https://upload.wikimedia.org/wikipedia/commons/thumb/c/c8/Al_Arabiya.png/200px-Al_Arabiya.png', aliases:['al arabiya']},
+  {lcn:562,name:'BBC Arabic',       logo:'https://upload.wikimedia.org/wikipedia/commons/thumb/6/62/BBC_News_2019.svg/200px-BBC_News_2019.svg.png', aliases:['bbc arabic']},
+  {lcn:563,name:'Sky News Arabia',  logo:'https://upload.wikimedia.org/wikipedia/commons/thumb/1/18/Sky_News_logo.svg/200px-Sky_News_logo.svg.png', aliases:['sky news arabia']},
+  {lcn:564,name:'TRT World (564)',  logo:'https://upload.wikimedia.org/wikipedia/commons/thumb/2/24/TRT_World_logo.svg/200px-TRT_World_logo.svg.png', aliases:[]},
+  {lcn:567,name:'TRT Arabi',        logo:'https://upload.wikimedia.org/wikipedia/commons/thumb/2/24/TRT_World_logo.svg/200px-TRT_World_logo.svg.png', aliases:['trt arabi']},
+  {lcn:568,name:'Al Masriyah',      logo:'https://upload.wikimedia.org/wikipedia/commons/thumb/4/4e/RTL_102.5.svg/200px-RTL_102.5.svg.png', aliases:['al masriyah']},
+  {lcn:569,name:'Tunis 7',          logo:'https://upload.wikimedia.org/wikipedia/commons/thumb/4/4e/RTL_102.5.svg/200px-RTL_102.5.svg.png', aliases:['tunis 7']},
+  {lcn:601,name:'DeA Kids',         logo:'https://upload.wikimedia.org/wikipedia/commons/thumb/8/8f/De_Agostini_logo.svg/200px-De_Agostini_logo.svg.png', aliases:['dea kids']},
+  {lcn:602,name:'Nick Jr.',         logo:'https://upload.wikimedia.org/wikipedia/commons/thumb/8/8a/Nick_Jr._logo_2009.svg/200px-Nick_Jr._logo_2009.svg.png', aliases:['nick jr','nick jr.','nickjr']},
+  {lcn:603,name:'Nickelodeon',      logo:'https://upload.wikimedia.org/wikipedia/commons/thumb/a/a8/Nickelodeon_2023_logo.svg/200px-Nickelodeon_2023_logo.svg.png', aliases:['nickelodeon']},
+  {lcn:604,name:'Disney Jr.',       logo:'https://upload.wikimedia.org/wikipedia/commons/thumb/e/e4/Disney_Junior_Logo.svg/200px-Disney_Junior_Logo.svg.png', aliases:['disney jr','disney jr.','disney junior']},
+  {lcn:605,name:'DeA Junior',       logo:'https://upload.wikimedia.org/wikipedia/commons/thumb/8/8f/De_Agostini_logo.svg/200px-De_Agostini_logo.svg.png', aliases:['dea junior']},
+  {lcn:606,name:'Cartoon Network',  logo:'https://upload.wikimedia.org/wikipedia/commons/thumb/8/80/Cartoon_Network_2010_logo.svg/200px-Cartoon_Network_2010_logo.svg.png', aliases:['cartoon network','cartoonnetwork']},
+  {lcn:607,name:'Boomerang',        logo:'https://upload.wikimedia.org/wikipedia/commons/thumb/8/8b/Boomerang_%28TV_channel%29_logo.svg/200px-Boomerang_%28TV_channel%29_logo.svg.png', aliases:['boomerang']},
   {lcn:714,name:'Deejay TV',        logo:'https://upload.wikimedia.org/wikipedia/commons/thumb/b/b5/Logo_DeeJay.png/200px-Logo_DeeJay.png', aliases:['deejay tv','dj tv']},
-  {lcn:725,name:'Radio Italia TV',  logo:'https://upload.wikimedia.org/wikipedia/commons/thumb/6/65/Radio_Italia_TV_logo.svg/200px-Radio_Italia_TV_logo.svg.png',   aliases:[]},
-  {lcn:727,name:'Radio Kiss Kiss TV',logo:'https://upload.wikimedia.org/wikipedia/commons/thumb/9/9a/Radio_Kiss_Kiss_logo.svg/200px-Radio_Kiss_Kiss_logo.svg.png', aliases:[]},
-  {lcn:736,name:'RTL 102.5 TV',     logo:'https://upload.wikimedia.org/wikipedia/commons/thumb/4/4e/RTL_102.5.svg/200px-RTL_102.5.svg.png',     aliases:[]},
+  {lcn:716,name:'Radio Monte Carlo TV',logo:'https://upload.wikimedia.org/wikipedia/commons/thumb/4/4e/RTL_102.5.svg/200px-RTL_102.5.svg.png', aliases:[]},
+  {lcn:717,name:'Virgin Radio TV (717)',logo:'https://upload.wikimedia.org/wikipedia/commons/thumb/9/94/Virgin_Radio_logo.svg/200px-Virgin_Radio_logo.svg.png', aliases:[]},
+  {lcn:724,name:'RDS Social TV (724)',logo:'https://upload.wikimedia.org/wikipedia/commons/thumb/3/3d/RDS_logo.svg/200px-RDS_logo.svg.png', aliases:[]},
+  {lcn:725,name:'Radio Italia TV (725)',logo:'https://upload.wikimedia.org/wikipedia/commons/thumb/6/65/Radio_Italia_TV_logo.svg/200px-Radio_Italia_TV_logo.svg.png', aliases:[]},
+  {lcn:726,name:'Radio Italia Live TV',logo:'https://upload.wikimedia.org/wikipedia/commons/thumb/6/65/Radio_Italia_TV_logo.svg/200px-Radio_Italia_TV_logo.svg.png', aliases:[]},
+  {lcn:727,name:'Radio Kiss Kiss TV (727)',logo:'https://upload.wikimedia.org/wikipedia/commons/thumb/9/9a/Radio_Kiss_Kiss_logo.svg/200px-Radio_Kiss_Kiss_logo.svg.png', aliases:[]},
+  {lcn:730,name:'Radionorba TV',    logo:'https://upload.wikimedia.org/wikipedia/commons/thumb/4/4e/RTL_102.5.svg/200px-RTL_102.5.svg.png', aliases:['radionorba tv','radionorba']},
+  {lcn:735,name:'Radio Zeta TV (735)',logo:'https://upload.wikimedia.org/wikipedia/commons/thumb/a/a8/Radio_Zeta_logo.svg/200px-Radio_Zeta_logo.svg.png', aliases:[]},
+  {lcn:736,name:'RTL 102.5 TV (736)',logo:'https://upload.wikimedia.org/wikipedia/commons/thumb/4/4e/RTL_102.5.svg/200px-RTL_102.5.svg.png', aliases:[]},
+  {lcn:737,name:'RTL 102.5 Caliente',logo:'https://upload.wikimedia.org/wikipedia/commons/thumb/4/4e/RTL_102.5.svg/200px-RTL_102.5.svg.png', aliases:[]},
+  {lcn:738,name:'Radio Freccia TV (738)',logo:'https://upload.wikimedia.org/wikipedia/commons/thumb/4/4e/RTL_102.5.svg/200px-RTL_102.5.svg.png', aliases:[]},
 ];
 
 // Build lookup maps from LOCAL_CHANNELS
@@ -533,6 +612,7 @@ function renderChannels(){
   const now=new Date();
   let shown=0;
   for(const ch of channels){
+    if(ch.lcn>=9999) continue; // nasconde canali senza numero
     if(filterGroup!=='all'&&getGroup(ch.name)!==filterGroup) continue;
     if(q&&!ch.name.toLowerCase().includes(q)) continue;
     shown++;
