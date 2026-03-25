@@ -346,96 +346,442 @@ const LOCAL_CHANNELS=[
   {lcn:737,name:'RTL 102.5 Caliente',logo:'https://raw.githubusercontent.com/xer94x/tv/main/loghi/RTL_102.5.svg', aliases:[]},
   {lcn:738,name:'Radio Freccia TV',logo:'https://raw.githubusercontent.com/xer94x/tv/main/loghi/160px-Radio_Freccia.png', aliases:[]},
 ];
+
 // Build lookup maps from LOCAL_CHANNELS
 const LOCAL_BY_LCN={};
 const LOCAL_BY_ALIAS={};
-const LOCAL_BY_TVGID={};
 for(const ch of LOCAL_CHANNELS){
   LOCAL_BY_LCN[ch.lcn]=ch;
   LOCAL_BY_ALIAS[ch.name.toLowerCase()]=ch;
   for(const a of ch.aliases) LOCAL_BY_ALIAS[a.toLowerCase()]=ch;
-  if(ch.tvgId) LOCAL_BY_TVGID[ch.tvgId.toLowerCase()]=ch;
 }
 
 function lookupLocal(name){
   if(!name) return null;
   const k=name.toLowerCase().replace(/\s+/g,' ').trim();
-  // Prova prima per tvg-id esatto (es. "Rai1.it", "SkyUno.it")
-  if(LOCAL_BY_TVGID[k]) return LOCAL_BY_TVGID[k];
   if(LOCAL_BY_ALIAS[k]) return LOCAL_BY_ALIAS[k];
   const stripped=k.replace(/\s+(hd\+1|\+1\s*hd|full\s*hd|fhd|h\.?265|uhd|4k|\+1|\+2|hd|sd|ita|italy|italia|it)\s*$/i,'').trim();
   if(stripped!==k&&LOCAL_BY_ALIAS[stripped]) return LOCAL_BY_ALIAS[stripped];
-@@ -389,8 +385,6 @@
+  // prefix match
+  for(const [key,ch] of Object.entries(LOCAL_BY_ALIAS)){
+    if(k.startsWith(key+' ')||stripped.startsWith(key+' ')) return ch;
+  }
+  return null;
+}
+
+function lookupLogo(name){
+  const ch=lookupLocal(name);
+  return ch?ch.logo:null;
+}
+
+function getLCN(name){
+  if(!name) return 9999;
+  const ch=lookupLocal(name);
+  if(ch) return ch.lcn;
+  return 9999;
+}
+
+// ═══════════════════════════════════════════════════
+// DEDUPLICATION — strip quality/variant suffixes
 // ═══════════════════════════════════════════════════
 function canonName(raw){
   return (raw||'')
-    .replace(/^IT\s*-\s*/i,'')          // strip "IT - " prefix (iptv-epg.org feed)
-    .replace(/^IT:\s*/i,'')             // strip "IT: " prefix variant
     .replace(/\s+(HD\+1|\+1\s*HD|FULL\s*HD|FHD|H\.?265|UHD|4K|HD\+|SD|HD|\+1|\+2)\s*$/i,'')
     .replace(/\s+(ITA|ITALY|ITALIA|IT)\s*$/i,'')
     .replace(/\s+FAST\+?\s*$/i,'')
-@@ -414,7 +408,7 @@
+    .replace(/\s*\([^)]*\)\s*$/,'')
+    .replace(/\s+/g,' ').trim();
+}
+// Prefer: HD > plain > FHD > SD > +1
+function variantScore(raw){
+  const r=(raw||'').toUpperCase();
+  if(/HD\+1|\+1\s*HD/.test(r)) return 10;
+  if(/\+1|\+2/.test(r)) return 9;
+  if(/\bSD\b/.test(r)) return 8;
+  if(/H\.?265/.test(r)) return 7;
+  if(/\bFULL\s*HD\b|\bFHD\b/.test(r)) return 3;
+  if(/\bUHD\b|\b4K\b/.test(r)) return 4;
+  if(/\bHD\b/.test(r)) return 1;
+  return 5;
+}
+
+// ═══════════════════════════════════════════════════
 // STATE
 // ═══════════════════════════════════════════════════
 let channels=[], programmes={}, activeChannel=null, activeDate=null, allDates=[], filterGroup='all';
-const CACHE_KEY='epgit_v7', CACHE_KEY2='epgit2_v7', CACHE_TTL=24*60*60*1000;
-const CACHE_KEY='epgit_v6', CACHE_TTL=24*60*60*1000;
+const CACHE_KEY='epgit_v9', CACHE_TTL=24*60*60*1000;
+// Cache scade sempre a mezzanotte, non 24h dal salvataggio
+function isCacheValid(ts){
+  const midnight=new Date(); midnight.setHours(0,0,0,0);
+  return new Date(ts)>=midnight;
+}
 
 // ═══════════════════════════════════════════════════
 // CLOCK
-@@ -429,22 +423,24 @@
+// ═══════════════════════════════════════════════════
+function tick(){ document.getElementById('clock').textContent=new Date().toLocaleTimeString('it-IT'); }
+setInterval(tick,1000); tick();
+function setStatus(s,t){ document.getElementById('sdot').className='status-dot '+s; document.getElementById('stxt').textContent=t; }
+
+// ═══════════════════════════════════════════════════
+// CACHE
+// ═══════════════════════════════════════════════════
 // Cache con IndexedDB (primario) + localStorage (fallback) per persistenza anche su file://
 const _IDB_NAME='epgcache',_IDB_STORE='data',_IDB_VER=1;
 function openIDB(){return new Promise((res,rej)=>{const r=indexedDB.open(_IDB_NAME,_IDB_VER);r.onupgradeneeded=e=>e.target.result.createObjectStore(_IDB_STORE);r.onsuccess=e=>res(e.target.result);r.onerror=rej;});}
-async function saveCache(xml,key=CACHE_KEY){
 async function saveCache(xml){
   const payload=JSON.stringify({ts:Date.now(),xml});
-  try{const db=await openIDB();await new Promise((res,rej)=>{const tx=db.transaction(_IDB_STORE,'readwrite');tx.objectStore(_IDB_STORE).put(payload,key);tx.oncomplete=res;tx.onerror=rej;});return;}catch(e){}
-  for(const s of [localStorage,sessionStorage]){try{s.setItem(key,payload);return;}catch(e){}}
   // prova IndexedDB
   try{const db=await openIDB();await new Promise((res,rej)=>{const tx=db.transaction(_IDB_STORE,'readwrite');tx.objectStore(_IDB_STORE).put(payload,CACHE_KEY);tx.oncomplete=res;tx.onerror=rej;});return;}catch(e){}
   // fallback localStorage/sessionStorage
   for(const s of [localStorage,sessionStorage]){try{s.setItem(CACHE_KEY,payload);return;}catch(e){}}
 }
-async function loadCache(key=CACHE_KEY){
-  try{const db=await openIDB();const val=await new Promise((res,rej)=>{const tx=db.transaction(_IDB_STORE,'readonly');const req=tx.objectStore(_IDB_STORE).get(key);req.onsuccess=e=>res(e.target.result);req.onerror=rej;});if(val){const c=JSON.parse(val);if(Date.now()-c.ts<CACHE_TTL)return c;}}catch(e){}
-  for(const s of [localStorage,sessionStorage]){try{const c=JSON.parse(s.getItem(key)||'null');if(c&&Date.now()-c.ts<CACHE_TTL)return c;}catch(e){}}
 async function loadCache(){
-  // prova IndexedDB
-  try{const db=await openIDB();const val=await new Promise((res,rej)=>{const tx=db.transaction(_IDB_STORE,'readonly');const req=tx.objectStore(_IDB_STORE).get(CACHE_KEY);req.onsuccess=e=>res(e.target.result);req.onerror=rej;});if(val){const c=JSON.parse(val);if(Date.now()-c.ts<CACHE_TTL)return c;}}catch(e){}
-  // fallback localStorage/sessionStorage
-  for(const s of [localStorage,sessionStorage]){try{const c=JSON.parse(s.getItem(CACHE_KEY)||'null');if(c&&Date.now()-c.ts<CACHE_TTL)return c;}catch(e){}}
+  try{const db=await openIDB();const val=await new Promise((res,rej)=>{const tx=db.transaction(_IDB_STORE,'readonly');const req=tx.objectStore(_IDB_STORE).get(CACHE_KEY);req.onsuccess=e=>res(e.target.result);req.onerror=rej;});if(val){const c=JSON.parse(val);if(isCacheValid(c.ts))return c;}}catch(e){}
+  for(const s of [localStorage,sessionStorage]){try{const c=JSON.parse(s.getItem(CACHE_KEY)||'null');if(c&&isCacheValid(c.ts))return c;}catch(e){}}
   return null;
 }
 async function hardRefresh(){
-  for(const key of [CACHE_KEY,CACHE_KEY2]){
-    try{const db=await openIDB();db.transaction(_IDB_STORE,'readwrite').objectStore(_IDB_STORE).delete(key);}catch(e){}
-    try{localStorage.removeItem(key);}catch(e){}
-    try{sessionStorage.removeItem(key);}catch(e){}
-  }
   try{const db=await openIDB();db.transaction(_IDB_STORE,'readwrite').objectStore(_IDB_STORE).delete(CACHE_KEY);}catch(e){}
   try{localStorage.removeItem(CACHE_KEY);}catch(e){}
   try{sessionStorage.removeItem(CACHE_KEY);}catch(e){}
   document.getElementById('cacheBadge').style.display='none';
   init(true);
 }
-@@ -497,13 +493,8 @@
-  const m=s.replace(/\s.*/,'');
-  const iso=`${m.slice(0,4)}-${m.slice(4,6)}-${m.slice(6,8)}T${m.slice(8,10)||'00'}:${m.slice(10,12)||'00'}:${m.slice(12,14)||'00'}`;
-  const tz=s.slice(m.length).trim();
-  if(tz&&(tz[0]==='+'||tz[0]==='-')){
-    // Timezone esplicita nel feed (es. +0100) → usala direttamente
-    return new Date(iso+tz[0]+tz.slice(1,3)+':'+tz.slice(3,5));
+
+// ═══════════════════════════════════════════════════
+// GZIP DECOMPRESSION
+// ═══════════════════════════════════════════════════
+async function ungzip(buf){
+  try{
+    const ds=new DecompressionStream('gzip');
+    const w=ds.writable.getWriter(), r=ds.readable.getReader();
+    w.write(new Uint8Array(buf)); w.close();
+    const chunks=[]; while(true){const{done,value}=await r.read();if(done)break;chunks.push(value);}
+    const total=chunks.reduce((n,c)=>n+c.length,0);
+    const out=new Uint8Array(total); let off=0;
+    for(const c of chunks){out.set(c,off);off+=c.length;}
+    return new TextDecoder().decode(out);
+  }catch(e){return null;}
+}
+async function extractXml(resp){
+  try{
+    const buf=await resp.arrayBuffer();
+    const h=new Uint8Array(buf.slice(0,2));
+    if(h[0]===0x1f&&h[1]===0x8b){const t=await ungzip(buf);if(t&&t.includes('<tv'))return t;}
+    const t=new TextDecoder().decode(buf);
+    if(t.includes('<tv'))return t;
+    try{const j=JSON.parse(t);if(j&&j.contents&&j.contents.includes('<tv'))return j.contents;}catch(e){}
+  }catch(e){}
+  return null;
+}
+async function fetchEPG(url){
+  const t16={signal:AbortSignal.timeout(20000)};
+  const t12={signal:AbortSignal.timeout(14000)};
+  const enc=encodeURIComponent(url);
+
+  // 1. Direct (con extractXml per gestire gzip)
+  try{const r=await fetch(url,t16);if(r.ok){const x=await extractXml(r);if(x)return x;}}catch(e){}
+
+  // 2. corsproxy.io
+  try{const r=await fetch('https://corsproxy.io/?url='+enc,t16);if(r.ok){const x=await extractXml(r);if(x)return x;}}catch(e){}
+
+  // 3. allorigins raw
+  try{const r=await fetch('https://api.allorigins.win/raw?url='+enc,t16);if(r.ok){const x=await extractXml(r);if(x)return x;}}catch(e){}
+
+  // 4. allorigins get (JSON wrapper)
+  try{const r=await fetch('https://api.allorigins.win/get?url='+enc,t16);if(r.ok){const j=await r.json();if(j&&j.contents&&j.contents.includes('<tv'))return j.contents;}}catch(e){}
+
+  // 5. thingproxy
+  try{const r=await fetch('https://thingproxy.freeboard.io/fetch/'+url,t16);if(r.ok){const x=await extractXml(r);if(x)return x;}}catch(e){}
+
+  // 6. codetabs
+  try{const r=await fetch('https://api.codetabs.com/v1/proxy?quest='+enc,t16);if(r.ok){const x=await extractXml(r);if(x)return x;}}catch(e){}
+
+  // 7. crossorigin.me
+  try{const r=await fetch('https://crossorigin.me/'+url,t12);if(r.ok){const x=await extractXml(r);if(x)return x;}}catch(e){}
+
+  // 8. Prova URL alternativo senza gzip
+  const urlPlain=url.replace('/gzip','');
+  if(urlPlain!==url){
+    try{const r=await fetch('https://corsproxy.io/?url='+encodeURIComponent(urlPlain),t16);if(r.ok){const x=await extractXml(r);if(x)return x;}}catch(e){}
+    try{const r=await fetch('https://api.allorigins.win/raw?url='+encodeURIComponent(urlPlain),t16);if(r.ok){const x=await extractXml(r);if(x)return x;}}catch(e){}
   }
-  // Nessun timezone: il feed EPGItalia usa ora locale italiana → interpretare come locale
-  // Usiamo Date.parse con stringa senza Z (viene interpretata come locale dal browser)
-  return new Date(iso);
-  if(tz) return new Date(iso+(tz[0]==='+'||tz[0]==='-'?tz[0]+tz.slice(1,3)+':'+tz.slice(3,5)||'00':'+00:00'));
+
+  return null;
+}
+
+// ═══════════════════════════════════════════════════
+// XMLTV PARSER WITH DEDUPLICATION
+// ═══════════════════════════════════════════════════
+function parseDate(s){
+  const parts=s.trim().split(/\s+/);
+  const m=parts[0];
+  const tz=parts[1]||'';
+  const iso=`${m.slice(0,4)}-${m.slice(4,6)}-${m.slice(6,8)}T${m.slice(8,10)||'00'}:${m.slice(10,12)||'00'}:${m.slice(12,14)||'00'}`;
+  if(tz&&(tz[0]==='+'||tz[0]==='-')){
+    const sign=tz[0],hh=tz.slice(1,3),mm2=tz.slice(3,5)||'00';
+    return new Date(`${iso}${sign}${hh}:${mm2}`);
+  }
   return new Date(iso+'Z');
 }
 
 function parseXMLTV(xml){
-@@ -749,21 +740,13 @@
+  const doc=new DOMParser().parseFromString(xml,'text/xml');
+  if(doc.querySelector('parsererror')) throw new Error('XML parse error');
+
+  // Pass 1: collect raw channels
+  const raw=[];
+  doc.querySelectorAll('channel').forEach(el=>{
+    const id=el.getAttribute('id');
+    const d=el.querySelector('display-name');
+    const ic=el.querySelector('icon');
+    if(!id||!d) return;
+    raw.push({id,rawName:d.textContent.trim(),logo:(ic?ic.getAttribute('src'):'')||''});
+  });
+
+  // Pass 2: deduplicate — group by canonical name, keep best variant
+  const canonMap={};   // canon → {id, rawName, logo, score, allIds[]}
+  const idToCanon={};  // any id → canon key
+
+  for(const ch of raw){
+    const canon=canonName(ch.rawName);
+    const score=variantScore(ch.rawName);
+    if(!canonMap[canon]){
+      canonMap[canon]={id:ch.id,rawName:ch.rawName,logo:ch.logo,score,allIds:[ch.id]};
+    } else {
+      canonMap[canon].allIds.push(ch.id);
+      if(score<canonMap[canon].score){
+        canonMap[canon].id=ch.id;
+        canonMap[canon].rawName=ch.rawName;
+        canonMap[canon].logo=ch.logo;
+        canonMap[canon].score=score;
+      }
+    }
+  }
+  for(const [canon,entry] of Object.entries(canonMap)){
+    for(const id of entry.allIds) idToCanon[id]=canon;
+  }
+
+  // Pass 3: programmes — merge all variants
+  const progMap={};  // canon → Map<timeKey, prog>
+  doc.querySelectorAll('programme').forEach(el=>{
+    const chId=el.getAttribute('channel');
+    const startRaw=el.getAttribute('start');
+    if(!chId||!startRaw) return;
+    const canon=idToCanon[chId];
+    if(!canon) return;
+    let start,stop;
+    try{start=parseDate(startRaw);}catch(e){return;}
+    try{stop=el.getAttribute('stop')?parseDate(el.getAttribute('stop')):null;}catch(e){stop=null;}
+    const title=(el.querySelector('title')||{}).textContent?.trim()||'—';
+    const desc=(el.querySelector('desc')||{}).textContent?.trim()||'';
+    const cat=(el.querySelector('category')||{}).textContent?.trim()||'';
+    const tk=start.getTime().toString();
+    if(!progMap[canon]) progMap[canon]=new Map();
+    if(!progMap[canon].has(tk)) progMap[canon].set(tk,{start,stop,title,desc,category:cat});
+  });
+
+  // Pass 4: build channel list, then deduplicate by final display name
+  // (EPG may have Rai1.it / Rai1.sky.it / Rai1.tivusat.it → all become "Rai 1")
+  const rawList=Object.entries(canonMap).map(([canon,entry])=>{
+    const local=lookupLocal(canon);
+    return {
+      id:canon,
+      name:local?local.name:canon,
+      logo:local?local.logo:(entry.logo||''),
+      lcn:local?local.lcn:getLCN(canon),
+    };
+  });
+
+  // Merge by final name: keep entry with best (lowest) lcn, merge programme IDs
+  const nameMap={};   // final name (lower) → best entry
+  const nameToCanons={}; // final name (lower) → [canon ids]
+  for(const ch of rawList){
+    const k=ch.name.toLowerCase();
+    if(!nameMap[k]){
+      nameMap[k]=ch;
+      nameToCanons[k]=[ch.id];
+    } else {
+      nameToCanons[k].push(ch.id);
+      // keep lower lcn
+      if(ch.lcn<nameMap[k].lcn) nameMap[k]={...ch};
+    }
+  }
+
+  // Re-map programme IDs to the winning canon for each merged group
+  for(const [nameKey,canons] of Object.entries(nameToCanons)){
+    if(canons.length<=1) continue;
+    const winId=nameMap[nameKey].id;
+    if(!progMap[winId]) progMap[winId]=new Map();
+    for(const cid of canons){
+      if(cid===winId) continue;
+      if(progMap[cid]) for(const [tk,p] of progMap[cid]) if(!progMap[winId].has(tk)) progMap[winId].set(tk,p);
+    }
+  }
+
+  const programmes={};
+  for(const [nameKey,ch] of Object.entries(nameMap)){
+    const map=progMap[ch.id];
+    if(map){
+      // Dedup definitivo: stessa chiave = arrotonda start al minuto + titolo normalizzato
+      const seen=new Set();
+      const deduped=[];
+      for(const p of [...map.values()].sort((a,b)=>a.start-b.start)){
+        const roundedMin=Math.round(p.start.getTime()/60000);
+        const k=roundedMin+'|'+p.title.toLowerCase().replace(/\s+/g,' ').trim();
+        if(!seen.has(k)){seen.add(k);deduped.push(p);}
+      }
+      programmes[ch.id]=deduped;
+    }
+  }
+
+  const chList=Object.values(nameMap);
+  return{channels:chList,programmes};
+}
+
+// ═══════════════════════════════════════════════════
+// GROUPS
+// ═══════════════════════════════════════════════════
+const GROUP_RULES=[
+  {g:'RAI',kw:['rai ','rai1','rai2','rai3','rai4','rai5']},
+  {g:'Mediaset',kw:['canale 5','italia 1','rete 4','cine 34','iris','la 5','mediaset','top crime','boing','cartoonito','focus','twentyseven']},
+  {g:'Sky',kw:['sky ','cielo','eurosport','dazn']},
+  {g:'Sport',kw:['sport','calcio','tennis','motor','gol','juventus','inter tv','milan tv','basket','supertennis','sportitalia']},
+  {g:'News',kw:['news','tg ','tg24','notizie','euronews','france 24','bloomberg','sky news']},
+  {g:'Kids',kw:['yoyo','gulp','cartoon','junior','kids','boing','baby','manga','super!','k2','frisbee']},
+  {g:'Musica',kw:['music','radio ','deejay','rtl','m2o','vevo','rock tv','mtv','trace']},
+  {g:'Discovery',kw:['discovery','dmax','real time','food network','hgtv','giallo','motor trend','motortrend']},
+];
+function getGroup(name){
+  const n=name.toLowerCase();
+  for(const{g,kw}of GROUP_RULES){if(kw.some(k=>n.includes(k)))return g;}
+  return 'Altro';
+}
+
+// ═══════════════════════════════════════════════════
+// UTILITY: get current program (the one started most recently among overlapping)
+// ═══════════════════════════════════════════════════
+function getCurrentProgram(programs, now) {
+  if (!programs || programs.length === 0) return null;
+  const todayStr = todayKey();
+  const overlapping = programs.filter(p =>
+    ldk(p.start) === todayStr && p.start <= now && p.stop && p.stop > now
+  );
+  if (overlapping.length === 0) return null;
+  return overlapping.reduce((latest, p) => p.start > latest.start ? p : latest, overlapping[0]);
+}
+
+// ═══════════════════════════════════════════════════
+// RENDER CHANNELS
+// ═══════════════════════════════════════════════════
+function renderChannels(){
+  const q=document.getElementById('search').value.toLowerCase().trim();
+  const list=document.getElementById('chList');
+  list.innerHTML='';
+  const now=new Date();
+  let shown=0;
+  for(const ch of channels){
+    if(ch.lcn>=9999) continue; // nasconde canali senza numero
+    if(filterGroup!=='all'&&getGroup(ch.name)!==filterGroup) continue;
+    if(q&&!ch.name.toLowerCase().includes(q)) continue;
+    shown++;
+    const progs=programmes[ch.id]||[];
+    const current = getCurrentProgram(progs, now);
+    const todayProgs = progs.filter(p => ldk(p.start) === todayKey());
+    const nowP = current || todayProgs.find(p => p.start > now);
+    let pct=0;
+    if(current && current.stop && current.start<=now && current.stop>now)
+      pct=Math.min(100,((now-current.start)/(current.stop-current.start))*100);
+    const ini=ch.name.split(' ').slice(0,2).map(w=>w[0]||'').join('').toUpperCase()||'TV';
+    const item=document.createElement('div');
+    item.className='ch-item'+(activeChannel&&activeChannel.id===ch.id?' active':'');
+    item.innerHTML=`
+      <div class="ch-num">${ch.lcn<9999?ch.lcn:''}</div>
+      <div class="ch-logo-wrap">
+        ${ch.logo
+          ?`<img class="ch-logo" src="${esc(ch.logo)}" alt="" loading="lazy" onerror="this.style.display='none';this.nextSibling.style.display='block'"><div class="ch-logo-ph" style="display:none">${ini}</div>`
+          :`<div class="ch-logo-ph">${ini}</div>`}
+      </div>
+      <div class="ch-info">
+        <div class="ch-name">${esc(ch.name)}</div>
+        <div class="ch-now">${nowP?`<span class="ch-now-title">${esc(nowP.title)}</span>`:'<span>—</span>'}</div>
+      </div>
+      ${pct>0?`<div class="ch-prog-bar" style="width:${pct.toFixed(1)}%"></div>`:''}`;
+    item.addEventListener('click',()=>selectChannel(ch,item));
+    list.appendChild(item);
+  }
+  if(!shown) list.innerHTML=`<div style="padding:40px;text-align:center;color:var(--muted2);font-size:12px">Nessun canale trovato</div>`;
+}
+function filterChannels(){renderChannels();}
+
+function buildFilters(){
+  // filtri rimossi dall'interfaccia, funzione mantenuta per compatibilità
+  filterGroup='all';
+  renderChannels();
+}
+function setFilter(g,btn){
+  filterGroup=g;
+  document.querySelectorAll('.filt-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  renderChannels();
+}
+
+// ═══════════════════════════════════════════════════
+// SELECT CHANNEL
+// ═══════════════════════════════════════════════════
+function selectChannel(ch,itemEl){
+  activeChannel=ch;
+  document.querySelectorAll('.ch-item').forEach(e=>e.classList.remove('active'));
+  if(itemEl) itemEl.classList.add('active');
+  document.getElementById('epgHeader').style.display='block';
+  const logo=document.getElementById('epgLogo');
+  const ph=document.getElementById('epgLogoPh');
+  const ini=ch.name.split(' ').slice(0,2).map(w=>w[0]||'').join('').toUpperCase()||'TV';
+  ph.textContent=ini;
+  if(ch.logo){logo.src=ch.logo;logo.style.display='';ph.style.display='none';}
+  else{logo.style.display='none';ph.style.display='';}
+  document.getElementById('epgChName').textContent=ch.name;
+  const progs=programmes[ch.id]||[];
+  allDates=buildDates(progs);
+  const today=todayKey();
+  if(allDates.includes(today)){activeDate=today;}
+  else{activeDate=allDates.reduce((best,d)=>Math.abs(new Date(d)-new Date(today))<Math.abs(new Date(best)-new Date(today))?d:best,allDates[0]||today);}
+  renderDateTabs(); renderSchedule();
+}
+
+// ═══════════════════════════════════════════════════
+// DATES
+// ═══════════════════════════════════════════════════
+function buildDates(progs){const s=new Set();for(const p of progs)s.add(ldk(p.start));return[...s].sort();}
+function ldk(d){return d.toLocaleDateString('sv-SE');}
+function todayKey(){return new Date().toLocaleDateString('sv-SE');}
+function fmtDate(key){
+  const[y,m,d]=key.split('-').map(Number);
+  const dt=new Date(y,m-1,d);
+  const td=new Date();td.setHours(0,0,0,0);
+  const diff=Math.round((dt-td)/86400000);
+  const nm={'-1':'Ieri','0':'Oggi','1':'Domani'};
+  if(nm[diff]!==undefined)return nm[diff];
+  return dt.toLocaleDateString('it-IT',{weekday:'short',day:'numeric',month:'short'});
+}
+function renderDateTabs(){
+  const el=document.getElementById('dateTabs');el.innerHTML='';
+  if(!allDates.length){el.innerHTML='<span style="font-size:10px;color:var(--muted2)">Nessuna data</span>';return;}
+  for(const d of allDates){
+    const btn=document.createElement('button');
+    btn.className='date-tab'+(d===activeDate?' active':'');
+    btn.textContent=fmtDate(d);
+    btn.onclick=()=>{activeDate=d;renderDateTabs();renderSchedule();};
+    el.appendChild(btn);
+  }
+}
+
+// ═══════════════════════════════════════════════════
+// RENDER SCHEDULE
+// ═══════════════════════════════════════════════════
+function renderSchedule(){
+  const el=document.getElementById('epgList');
   if(!activeChannel){el.innerHTML='';return;}
   const now=new Date();
   const progs=(programmes[activeChannel.id]||[]).filter(p=>ldk(p.start)===activeDate);
@@ -444,181 +790,68 @@ function parseXMLTV(xml){
     el.innerHTML=`<div class="center-msg"><div class="icon">📋</div><div class="sub">Nessun programma per questa data</div></div>`;
     return;
   }
-  // Dedup finale: stesso orario di inizio + stesso titolo → mostra solo il primo
-  // (può succedere se due feed hanno lo stesso programma con leggere differenze di chiave)
-  const seenRender=new Set();
-  const progsDeduped=progs.filter(p=>{
-    const minKey=Math.round(p.start.getTime()/60000)+'|'+p.title.toLowerCase().replace(/\s+/g,' ').trim();
-    if(seenRender.has(minKey))return false;
-    seenRender.add(minKey);return true;
-  });
-  document.getElementById('epgChSub').textContent=`${progsDeduped.length} programmi · ${fmtDate(activeDate)}`;
+  // determina il programma corrente (se presente) usando la funzione helper
+  const currentProgram = getCurrentProgram(progs, now);
   el.innerHTML='';let scrollTo=null;
-  for(const p of progsDeduped){
   for(const p of progs){
-    const isNow=p.start<=now&&p.stop&&p.stop>now;
-    const isPast=p.stop&&p.stop<=now;
+    const isNow = (currentProgram === p);
+    const isPast = p.stop && p.stop <= now;
     const item=document.createElement('div');
-@@ -824,224 +807,45 @@
-  programmes=parsed.programmes;
+    item.className='prog-item'+(isNow?' now':'')+(isPast?' past':'');
+    const ss=p.start.toLocaleTimeString('it-IT',{hour:'2-digit',minute:'2-digit'});
+    const es=p.stop?p.stop.toLocaleTimeString('it-IT',{hour:'2-digit',minute:'2-digit'}):'';
+    const dur=p.stop?Math.round((p.stop-p.start)/60000):0;
+    let pct=0;if(isNow&&p.stop)pct=Math.min(100,((now-p.start)/(p.stop-p.start))*100);
+    item.innerHTML=`
+      <div class="prog-time">${ss}${es?`<br><span style="font-size:9px;opacity:.4">${es}</span>`:''}</div>
+      <div class="prog-body">
+        <div class="prog-title">${esc(p.title)}</div>
+        ${p.desc?`<div class="prog-desc">${esc(p.desc)}</div>`:''}
+        <div class="prog-meta">
+          ${isNow?'<span class="prog-tag live">● IN ONDA</span>':''}
+          ${p.category?`<span class="prog-tag">${esc(p.category)}</span>`:''}
+        </div>
+        ${isNow&&pct>0?`<div class="prog-bar-wrap"><div class="prog-bar-fill" style="width:${pct.toFixed(1)}%"></div></div>`:''}
+      </div>
+      ${dur>0?`<div class="prog-dur">${dur}m</div>`:''}`;
+    el.appendChild(item);
+    if(isNow)scrollTo=item;
+  }
+  if(scrollTo)setTimeout(()=>scrollTo.scrollIntoView({behavior:'smooth',block:'center'}),80);
 }
 
 // ═══════════════════════════════════════════════════
-// WEB WORKER — parsing XML off-thread
+// UTILS
 // ═══════════════════════════════════════════════════
-function parseXMLTVInWorker(xml){
-  return new Promise((resolve,reject)=>{
-    // Serializza le funzioni necessarie nel worker
-    const workerSrc=`
-(${canonName.toString()});\n
-(${variantScore.toString()});\n
-const LOCAL_CHANNELS_DATA=${JSON.stringify(LOCAL_CHANNELS)};\n
-const LOCAL_BY_ALIAS_W={};\n
-for(const ch of LOCAL_CHANNELS_DATA){\n
-  LOCAL_BY_ALIAS_W[ch.name.toLowerCase()]=ch;\n
-  for(const a of ch.aliases) LOCAL_BY_ALIAS_W[a.toLowerCase()]=ch;\n
-}\n
-function lookupLocalW(name){\n
-  if(!name)return null;\n
-  const k=name.toLowerCase().replace(/\\s+/g,' ').trim();\n
-  if(LOCAL_BY_ALIAS_W[k])return LOCAL_BY_ALIAS_W[k];\n
-  const stripped=k.replace(/\\s+(hd\\+1|\\+1\\s*hd|full\\s*hd|fhd|h\\.?265|uhd|4k|\\+1|\\+2|hd|sd|ita|italy|italia|it)\\s*$/i,'').trim();\n
-  if(stripped!==k&&LOCAL_BY_ALIAS_W[stripped])return LOCAL_BY_ALIAS_W[stripped];\n
-  for(const [key,ch] of Object.entries(LOCAL_BY_ALIAS_W)){\n
-    if(k.startsWith(key+' ')||stripped.startsWith(key+' '))return ch;\n
-  }\n
-  return null;\n
-}\n
-function getLCNW(name){\n
-  const ch=lookupLocalW(name);return ch?ch.lcn:9999;\n
-}\n
-function parseDateW(s){\n
-  const m=s.replace(/\\s.*/,'');\n
-  const iso=\`\${m.slice(0,4)}-\${m.slice(4,6)}-\${m.slice(6,8)}T\${m.slice(8,10)||'00'}:\${m.slice(10,12)||'00'}:\${m.slice(12,14)||'00'}\`;\n
-  const tz=s.slice(m.length).trim();\n
-  if(tz&&(tz[0]==='+'||tz[0]==='-'))return new Date(iso+tz[0]+tz.slice(1,3)+':'+tz.slice(3,5));\n
-  return new Date(iso);\n
-}\n
-self.onmessage=function(e){\n
-  try{\n
-    const xml=e.data;\n
-    const doc=new DOMParser().parseFromString(xml,'text/xml');\n
-    if(doc.querySelector('parsererror'))throw new Error('XML parse error');\n
-    const raw=[];\n
-    doc.querySelectorAll('channel').forEach(el=>{\n
-      const id=el.getAttribute('id');\n
-      const d=el.querySelector('display-name');\n
-      const ic=el.querySelector('icon');\n
-      if(!id||!d)return;\n
-      raw.push({id,rawName:d.textContent.trim(),logo:(ic?ic.getAttribute('src'):'')||''});\n
-    });\n
-    const canonMap={};const idToCanon={};\n
-    for(const ch of raw){\n
-      const canon=canonName(ch.rawName);\n
-      const score=variantScore(ch.rawName);\n
-      if(!canonMap[canon]){canonMap[canon]={id:ch.id,rawName:ch.rawName,logo:ch.logo,score,allIds:[ch.id]};}\n
-      else{canonMap[canon].allIds.push(ch.id);if(score<canonMap[canon].score){canonMap[canon].id=ch.id;canonMap[canon].rawName=ch.rawName;canonMap[canon].logo=ch.logo;canonMap[canon].score=score;}}\n
-    }\n
-    for(const [canon,entry] of Object.entries(canonMap))for(const id of entry.allIds)idToCanon[id]=canon;\n
-    const progMap={};\n
-    doc.querySelectorAll('programme').forEach(el=>{\n
-      const chId=el.getAttribute('channel');\n
-      const startRaw=el.getAttribute('start');\n
-      if(!chId||!startRaw)return;\n
-      const canon=idToCanon[chId];if(!canon)return;\n
-      let start,stop;\n
-      try{start=parseDateW(startRaw);}catch(ex){return;}\n
-      try{stop=el.getAttribute('stop')?parseDateW(el.getAttribute('stop')):null;}catch(ex){stop=null;}\n
-      const title=(el.querySelector('title')||{}).textContent?.trim()||'—';\n
-      const desc=(el.querySelector('desc')||{}).textContent?.trim()||'';\n
-      const cat=(el.querySelector('category')||{}).textContent?.trim()||'';\n
-      const tk=start.getTime().toString();\n
-      if(!progMap[canon])progMap[canon]=new Map();\n
-      if(!progMap[canon].has(tk))progMap[canon].set(tk,{startMs:start.getTime(),stopMs:stop?stop.getTime():null,title,desc,category:cat});\n
-    });\n
-    const rawList=Object.entries(canonMap).map(([canon,entry])=>{\n
-      const local=lookupLocalW(canon);\n
-      return{id:canon,name:local?local.name:canon,logo:local?local.logo:(entry.logo||''),lcn:local?local.lcn:getLCNW(canon)};\n
-    });\n
-    const nameMap={};const nameToCanons={};\n
-    for(const ch of rawList){\n
-      const k=ch.name.toLowerCase();\n
-      if(!nameMap[k]){nameMap[k]=ch;nameToCanons[k]=[ch.id];}\n
-      else{nameToCanons[k].push(ch.id);if(ch.lcn<nameMap[k].lcn)nameMap[k]={...ch};}\n
-    }\n
-    for(const [nameKey,canons] of Object.entries(nameToCanons)){\n
-      if(canons.length<=1)continue;\n
-      const winId=nameMap[nameKey].id;\n
-      if(!progMap[winId])progMap[winId]=new Map();\n
-      for(const cid of canons){\n
-        if(cid===winId)continue;\n
-        if(progMap[cid])for(const [tk,p] of progMap[cid])if(!progMap[winId].has(tk))progMap[winId].set(tk,p);\n
-      }\n
-    }\n
-    const programmes={};\n
-    for(const [nameKey,ch] of Object.entries(nameMap)){\n
-      const map=progMap[ch.id];\n
-      if(map){\n
-        const seen=new Set();\n
-        const deduped=[];\n
-        for(const p of [...map.values()].sort((a,b)=>a.startMs-b.startMs)){\n
-          const roundedMin=Math.round(p.startMs/60000);\n
-          const k=roundedMin+'|'+p.title.toLowerCase().replace(/\\s+/g,' ').trim();\n
-          if(!seen.has(k)){seen.add(k);deduped.push(p);}\n
-        }\n
-        programmes[ch.id]=deduped;\n
-      }\n
-    }\n
-    const chList=Object.values(nameMap);\n
-    self.postMessage({ok:true,channels:chList,programmes});\n
-  }catch(ex){\n
-    self.postMessage({ok:false,error:ex.message});\n
-  }\n
-};\n
-`;
-    const blob=new Blob([workerSrc],{type:'application/javascript'});
-    const url=URL.createObjectURL(blob);
-    const w=new Worker(url);
-    w.onmessage=e=>{
-      URL.revokeObjectURL(url);
-      w.terminate();
-      if(!e.data.ok){reject(new Error(e.data.error));return;}
-      // Riconverti i timestamp in Date objects
-      const progs=e.data.programmes;
-      for(const id of Object.keys(progs)){
-        progs[id]=progs[id].map(p=>({
-          start:new Date(p.startMs),
-          stop:p.stopMs!=null?new Date(p.stopMs):null,
-          title:p.title,desc:p.desc,category:p.category
-        }));
-      }
-      resolve({channels:e.data.channels,programmes:progs});
-    };
-    w.onerror=ex=>{URL.revokeObjectURL(url);w.terminate();reject(ex);};
-    w.postMessage(xml);
-  });
+function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+function showSkeleton(){const el=document.getElementById('chList');el.innerHTML='';for(let i=0;i<22;i++){const d=document.createElement('div');d.className='skel-ch';el.appendChild(d);}}
+
+// ═══════════════════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════════════════
+function showLocalChannels(){
+  // Mostra subito tutti i canali LOCAL_CHANNELS mentre EPG carica
+  channels=LOCAL_CHANNELS.map(lc=>({id:'local_'+lc.lcn,name:lc.name,logo:lc.logo,lcn:lc.lcn}));
+  channels.sort((a,b)=>a.lcn-b.lcn);
+  programmes={};
+  renderChannels();
 }
 
-// Unisce i programmi di due feed parsed mantenendo dedup per minuto+titolo
-function mergeParsed(base, extra){
-  for(const [chId, extraProgs] of Object.entries(extra.programmes)){
-    if(!base.programmes[chId]){
-      base.programmes[chId]=extraProgs;
-    } else {
-      const seen=new Set(base.programmes[chId].map(p=>Math.round(p.start.getTime()/60000)+'|'+p.title.toLowerCase().replace(/\s+/g,' ').trim()));
-      for(const p of extraProgs){
-        const k=Math.round(p.start.getTime()/60000)+'|'+p.title.toLowerCase().replace(/\s+/g,' ').trim();
-        if(!seen.has(k)){seen.add(k);base.programmes[chId].push(p);}
-      }
-      base.programmes[chId].sort((a,b)=>a.start-b.start);
+function mergeEPGIntoChannels(parsed){
+  // Aggiorna i canali esistenti con dati EPG, aggiunge nuovi se non presenti
+  const existingNames=new Set(parsed.channels.map(c=>c.name.toLowerCase()));
+  for(const lc of LOCAL_CHANNELS){
+    if(!existingNames.has(lc.name.toLowerCase())){
+      parsed.channels.push({id:'local_'+lc.lcn,name:lc.name,logo:lc.logo,lcn:lc.lcn});
     }
   }
-  // Aggiungi canali presenti solo nel feed extra
-  const baseNames=new Set(base.channels.map(c=>c.name.toLowerCase()));
-  for(const ch of extra.channels){
-    if(!baseNames.has(ch.name.toLowerCase())){base.channels.push(ch);baseNames.add(ch.name.toLowerCase());}
-  }
-  return base;
+  parsed.channels.sort((a,b)=>{
+    if(a.lcn<9999&&b.lcn<9999)return a.lcn-b.lcn;
+    if(a.lcn<9999)return-1;if(b.lcn<9999)return 1;
+    return a.name.localeCompare(b.name,'it');
+  });
+  channels=parsed.channels;
+  programmes=parsed.programmes;
 }
 
 async function init(forceRefresh=false){
@@ -626,69 +859,39 @@ async function init(forceRefresh=false){
   // Mostra subito i canali locali senza aspettare EPG
   showLocalChannels();
 
-  const EPG_URL1='https://www.epgitalia.tv/gzip';
-  const EPG_URL2='https://iptv-epg.org/files/epg-it.xml';
+  const EPG_URLS=[
+    'https://www.epgitalia.tv/gzip',
+    'https://www.epgitalia.tv/xmltv',
+    'https://www.epgitalia.tv/',
+  ];
 
-  // Scarica entrambi i feed in parallelo, ognuno con la propria cache
-  async function getXml(url, cacheKey){
-    if(!forceRefresh){
-      const cached=await loadCache(cacheKey);
-      if(cached&&cached.xml) return {xml:cached.xml,fromCache:true};
-    }
-    const xml=await fetchEPG(url);
-    if(xml) await saveCache(xml,cacheKey);
-    return {xml,fromCache:false};
-  }
-
-  setStatus('loading','Download EPG...');
-  const [r1,r2]=await Promise.all([
-    getXml(EPG_URL1,CACHE_KEY).catch(()=>({xml:null})),
-    getXml(EPG_URL2,CACHE_KEY2).catch(()=>({xml:null}))
-  ]);
-
-  const xml1=r1.xml, xml2=r2.xml;
-  if(!xml1&&!xml2){
-    setStatus('err','Errore connessione — solo canali locali');
-    return;
-  const EPG_URL='https://www.epgitalia.tv/gzip';
   let xmlText=null;
   if(!forceRefresh){
     const cached=await loadCache();
     if(cached&&cached.xml){xmlText=cached.xml;setStatus('loading','Da cache...');}
   }
-
-  setStatus('loading','Elaborazione XML...');
-  let parsed=null;
-
-  if(xml1&&xml1.includes('<tv')){
-    try{ parsed=await parseXMLTVInWorker(xml1); }catch(e){ parsed=null; }
   if(!xmlText){
-    setStatus('loading','Download EPG...');
-    xmlText=await fetchEPG(EPG_URL);
-    if(xmlText)await saveCache(xmlText);
+    for(let i=0;i<EPG_URLS.length;i++){
+      setStatus('loading',`Download EPG (${i+1}/${EPG_URLS.length})...`);
+      xmlText=await fetchEPG(EPG_URLS[i]);
+      if(xmlText&&xmlText.includes('<tv')) break;
+      xmlText=null;
+    }
+    if(xmlText) await saveCache(xmlText);
   }
-  if(xml2&&xml2.includes('<tv')){
-    try{
-      const parsed2=await parseXMLTVInWorker(xml2);
-      if(parsed) mergeParsed(parsed,parsed2);
-      else parsed=parsed2;
-    }catch(e){}
   if(!xmlText||!xmlText.includes('<tv')){
     setStatus('err','Errore connessione — solo canali locali');
+    document.getElementById('epgList').innerHTML=`<div class="center-msg"><div class="icon">⚠️</div><div class="ttl">Dati EPG non disponibili</div><div class="sub">La guida TV non è al momento raggiungibile. I canali locali sono visibili ma senza programmazione.</div><button class="retry-btn" onclick="hardRefresh()">🔄 Riprova</button></div>`;
     return; // canali locali già visibili
   }
-
-  if(!parsed){
   setStatus('loading','Elaborazione...');
   await new Promise(r=>setTimeout(r,10));
   let parsed;
   try{parsed=parseXMLTV(xmlText);}
   catch(e){
     setStatus('err','Errore parsing XML');
-    return;
     return; // canali locali già visibili
   }
-
   mergeEPGIntoChannels(parsed);
   setStatus('ok',`${channels.length} canali`);
   buildFilters();
