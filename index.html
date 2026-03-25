@@ -636,7 +636,12 @@ function getGroup(name){
 // ═══════════════════════════════════════════════════
 function getCurrentProgram(programs, now) {
   if (!programs || programs.length === 0) return null;
-  const overlapping = programs.filter(p => p.start <= now && p.stop && p.stop > now);
+  // Solo programmi di OGGI
+  const todayStr = todayKey();
+  const overlapping = programs.filter(p =>
+    ldk(p.start) === todayStr &&
+    p.start <= now && p.stop && p.stop > now
+  );
   if (overlapping.length === 0) return null;
   // choose the one with the latest start (most recent started)
   return overlapping.reduce((latest, p) => p.start > latest.start ? p : latest, overlapping[0]);
@@ -658,7 +663,9 @@ function renderChannels(){
     shown++;
     const progs=programmes[ch.id]||[];
     const current = getCurrentProgram(progs, now);
-    const nowP = current || progs.find(p => p.start > now);
+    // Nella sidebar mostra solo programmi di oggi per il "prossimo"
+    const todayProgs = progs.filter(p => ldk(p.start) === todayKey());
+    const nowP = current || todayProgs.find(p => p.start > now);
     let pct=0;
     if(current && current.stop && current.start<=now && current.stop>now)
       pct=Math.min(100,((now-current.start)/(current.stop-current.start))*100);
@@ -714,7 +721,15 @@ function selectChannel(ch,itemEl){
   const progs=programmes[ch.id]||[];
   allDates=buildDates(progs);
   const today=todayKey();
-  activeDate=allDates.includes(today)?today:(allDates[0]||today);
+  // Forza sempre "Oggi" come data attiva se disponibile, altrimenti la più vicina
+  if(allDates.includes(today)){
+    activeDate=today;
+  } else {
+    // Cerca la data più vicina a oggi (futura o passata)
+    activeDate=allDates.reduce((best,d)=>
+      Math.abs(new Date(d)-new Date(today)) < Math.abs(new Date(best)-new Date(today)) ? d : best
+    , allDates[0]||today);
+  }
   renderDateTabs(); renderSchedule();
 }
 
