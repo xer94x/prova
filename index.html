@@ -785,6 +785,13 @@ async function init(forceRefresh=false){
   channels=parsed.channels;
   programmes=parsed.programmes;
   if(!channels.length){setStatus('err','Nessun canale');return;}
+  // Aggiungi tutti i canali LOCAL_CHANNELS mancanti (senza corrispondenza EPG)
+  const existingNames=new Set(channels.map(c=>c.name.toLowerCase()));
+  for(const lc of LOCAL_CHANNELS){
+    if(!existingNames.has(lc.name.toLowerCase())){
+      channels.push({id:'local_'+lc.lcn,name:lc.name,logo:lc.logo,lcn:lc.lcn});
+    }
+  }
   channels.sort((a,b)=>{
     if(a.lcn<9999&&b.lcn<9999)return a.lcn-b.lcn;
     if(a.lcn<9999)return-1;if(b.lcn<9999)return 1;
