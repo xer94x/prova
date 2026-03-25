@@ -473,11 +473,6 @@ let activeChannel = null;
 let activeDate = null;
 let allDates = [];
 let filterGroup = 'all';
-const PROXIES = [
-  u => `https://api.allorigins.win/get?url=${encodeURIComponent(u)}`,
-  u => `https://corsproxy.io/?${encodeURIComponent(u)}`,
-  u => `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(u)}`,
-];
 
 // ── Clock ──────────────────────────────────────────────────────────────────
 function updateClock(){
@@ -495,29 +490,110 @@ function setStatus(state, txt){
 }
 
 // ── Fetch helpers ──────────────────────────────────────────────────────────
-async function fetchViaProxy(url){
-  for(const makeUrl of PROXIES){
-    try{
-      const r = await fetch(makeUrl(url), {signal: AbortSignal.timeout(12000)});
-      if(!r.ok) continue;
-      const ct = r.headers.get('content-type')||'';
-      if(ct.includes('json')){
-        const j = await r.json();
-        // allorigins wraps in {contents}
-        if(j && j.contents) return j.contents;
-        return JSON.stringify(j);
-      }
-      const text = await r.text();
-      if(text && (text.includes('<tv') || text.includes('<?xml'))) return text;
+
+// Decompress gzip ArrayBuffer → string
+async function decompressGzip(buffer){
+  try{
+    const ds = new DecompressionStream('gzip');
+    const writer = ds.writable.getWriter();
+    const reader = ds.readable.getReader();
+    writer.write(new Uint8Array(buffer));
+    writer.close();
+    const chunks = [];
+    while(true){
+      const {done, value} = await reader.read();
+      if(done) break;
+      chunks.push(value);
+    }
+    const total = chunks.reduce((n,c)=>n+c.length,0);
+    const merged = new Uint8Array(total);
+    let off=0; for(const c of chunks){merged.set(c,off);off+=c.length;}
+    return new TextDecoder().decode(merged);
+  }catch(e){ return null; }
+}
+
+// Try to extract XML from whatever we got
+async function extractXml(response){
+  // Try as binary (gzip) first
+  try{
+    const buf = await response.clone().arrayBuffer();
+    // Check gzip magic bytes
+    const header = new Uint8Array(buf.slice(0,2));
+    if(header[0]===0x1f && header[1]===0x8b){
+      const text = await decompressGzip(buf);
       if(text && text.includes('<tv')) return text;
-      // allorigins sometimes returns json with contents
-      try{
-        const j = JSON.parse(text);
-        if(j && j.contents) return j.contents;
-      }catch(e){}
-      if(text && text.length > 100) return text;
-    }catch(e){ /* try next */ }
-  }
+    }
+    // Try as plain text
+    const text = new TextDecoder().decode(buf);
+    if(text.includes('<tv')) return text;
+    // Try JSON wrapper (allorigins)
+    try{
+      const j = JSON.parse(text);
+      if(j && j.contents){
+        // contents might be gzip base64 or plain xml
+        if(j.contents.includes('<tv')) return j.contents;
+        // try base64 decode + decompress
+        try{
+          const bin = atob(j.contents);
+          const bytes = new Uint8Array(bin.length);
+          for(let i=0;i<bin.length;i++) bytes[i]=bin.charCodeAt(i);
+          if(bytes[0]===0x1f && bytes[1]===0x8b){
+            const xml = await decompressGzip(bytes.buffer);
+            if(xml && xml.includes('<tv')) return xml;
+          }
+        }catch(e){}
+      }
+    }catch(e){}
+  }catch(e){}
+  return null;
+}
+
+async function fetchViaProxy(url){
+  // Strategy 1: Direct fetch (browser handles gzip decompression automatically)
+  try{
+    const r = await fetch(url, {signal: AbortSignal.timeout(10000)});
+    if(r.ok){
+      const text = await r.text();
+      if(text && text.includes('<tv')) return text;
+    }
+  }catch(e){}
+
+  // Strategy 2: corsproxy.io — returns raw binary, browser decompresses
+  try{
+    const r = await fetch(`https://corsproxy.io/?${encodeURIComponent(url)}`, {signal: AbortSignal.timeout(14000)});
+    if(r.ok){
+      const xml = await extractXml(r);
+      if(xml) return xml;
+    }
+  }catch(e){}
+
+  // Strategy 3: allorigins — wraps in JSON {contents}
+  try{
+    const r = await fetch(`https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`, {signal: AbortSignal.timeout(14000)});
+    if(r.ok){
+      const xml = await extractXml(r);
+      if(xml) return xml;
+    }
+  }catch(e){}
+
+  // Strategy 4: allorigins get (JSON wrapper)
+  try{
+    const r = await fetch(`https://api.allorigins.win/get?url=${encodeURIComponent(url)}`, {signal: AbortSignal.timeout(14000)});
+    if(r.ok){
+      const j = await r.json();
+      if(j && j.contents && j.contents.includes('<tv')) return j.contents;
+    }
+  }catch(e){}
+
+  // Strategy 5: codetabs
+  try{
+    const r = await fetch(`https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(url)}`, {signal: AbortSignal.timeout(14000)});
+    if(r.ok){
+      const xml = await extractXml(r);
+      if(xml) return xml;
+    }
+  }catch(e){}
+
   return null;
 }
 
@@ -839,29 +915,32 @@ function showSkeleton(){
 
 // ── INIT ───────────────────────────────────────────────────────────────────
 async function init(){
-  setStatus('loading', 'Caricamento...');
+  setStatus('loading', 'Connessione...');
   showSkeleton();
 
   const EPG_URL = 'https://www.epgitalia.tv/gzip';
   let xmlText = null;
 
+  setStatus('loading', 'Download EPG...');
   try{
     xmlText = await fetchViaProxy(EPG_URL);
   }catch(e){}
 
-  if(!xmlText){
-    setStatus('err', 'Errore');
+  if(!xmlText || !xmlText.includes('<tv')){
+    setStatus('err', 'Errore download');
     document.getElementById('chList').innerHTML = `
-      <div style="padding:30px 16px;text-align:center;color:var(--muted2);font-size:12px;line-height:1.7">
+      <div style="padding:30px 16px;text-align:center;color:var(--muted2);font-size:12px;line-height:1.9">
         ❌ Impossibile caricare l'EPG.<br>
-        Controlla la connessione o prova di nuovo.<br><br>
+        I proxy CORS potrebbero essere temporaneamente non disponibili.<br><br>
         <button class="retry-btn" onclick="init()">↺ Riprova</button>
       </div>`;
     return;
   }
 
-  // The URL returns gzipped XMLTV — browser fetch decompresses gzip automatically
-  // but allorigins may base64-encode binary. Try parsing as XML.
+  setStatus('loading', 'Parsing...');
+  // small delay so UI updates
+  await new Promise(r => setTimeout(r, 10));
+
   let parsed = null;
   try{
     parsed = parseXMLTV(xmlText);
