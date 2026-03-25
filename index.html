@@ -408,7 +408,7 @@ function variantScore(raw){
 // STATE
 // ═══════════════════════════════════════════════════
 let channels=[], programmes={}, activeChannel=null, activeDate=null, allDates=[], filterGroup='all';
-const CACHE_KEY='epgit_v6', CACHE_TTL=24*60*60*1000;
+const CACHE_KEY='epgit_v7', CACHE_KEY2='epgit2_v7', CACHE_TTL=24*60*60*1000;
 
 // ═══════════════════════════════════════════════════
 // CLOCK
@@ -423,24 +423,22 @@ function setStatus(s,t){ document.getElementById('sdot').className='status-dot '
 // Cache con IndexedDB (primario) + localStorage (fallback) per persistenza anche su file://
 const _IDB_NAME='epgcache',_IDB_STORE='data',_IDB_VER=1;
 function openIDB(){return new Promise((res,rej)=>{const r=indexedDB.open(_IDB_NAME,_IDB_VER);r.onupgradeneeded=e=>e.target.result.createObjectStore(_IDB_STORE);r.onsuccess=e=>res(e.target.result);r.onerror=rej;});}
-async function saveCache(xml){
+async function saveCache(xml,key=CACHE_KEY){
   const payload=JSON.stringify({ts:Date.now(),xml});
-  // prova IndexedDB
-  try{const db=await openIDB();await new Promise((res,rej)=>{const tx=db.transaction(_IDB_STORE,'readwrite');tx.objectStore(_IDB_STORE).put(payload,CACHE_KEY);tx.oncomplete=res;tx.onerror=rej;});return;}catch(e){}
-  // fallback localStorage/sessionStorage
-  for(const s of [localStorage,sessionStorage]){try{s.setItem(CACHE_KEY,payload);return;}catch(e){}}
+  try{const db=await openIDB();await new Promise((res,rej)=>{const tx=db.transaction(_IDB_STORE,'readwrite');tx.objectStore(_IDB_STORE).put(payload,key);tx.oncomplete=res;tx.onerror=rej;});return;}catch(e){}
+  for(const s of [localStorage,sessionStorage]){try{s.setItem(key,payload);return;}catch(e){}}
 }
-async function loadCache(){
-  // prova IndexedDB
-  try{const db=await openIDB();const val=await new Promise((res,rej)=>{const tx=db.transaction(_IDB_STORE,'readonly');const req=tx.objectStore(_IDB_STORE).get(CACHE_KEY);req.onsuccess=e=>res(e.target.result);req.onerror=rej;});if(val){const c=JSON.parse(val);if(Date.now()-c.ts<CACHE_TTL)return c;}}catch(e){}
-  // fallback localStorage/sessionStorage
-  for(const s of [localStorage,sessionStorage]){try{const c=JSON.parse(s.getItem(CACHE_KEY)||'null');if(c&&Date.now()-c.ts<CACHE_TTL)return c;}catch(e){}}
+async function loadCache(key=CACHE_KEY){
+  try{const db=await openIDB();const val=await new Promise((res,rej)=>{const tx=db.transaction(_IDB_STORE,'readonly');const req=tx.objectStore(_IDB_STORE).get(key);req.onsuccess=e=>res(e.target.result);req.onerror=rej;});if(val){const c=JSON.parse(val);if(Date.now()-c.ts<CACHE_TTL)return c;}}catch(e){}
+  for(const s of [localStorage,sessionStorage]){try{const c=JSON.parse(s.getItem(key)||'null');if(c&&Date.now()-c.ts<CACHE_TTL)return c;}catch(e){}}
   return null;
 }
 async function hardRefresh(){
-  try{const db=await openIDB();db.transaction(_IDB_STORE,'readwrite').objectStore(_IDB_STORE).delete(CACHE_KEY);}catch(e){}
-  try{localStorage.removeItem(CACHE_KEY);}catch(e){}
-  try{sessionStorage.removeItem(CACHE_KEY);}catch(e){}
+  for(const key of [CACHE_KEY,CACHE_KEY2]){
+    try{const db=await openIDB();db.transaction(_IDB_STORE,'readwrite').objectStore(_IDB_STORE).delete(key);}catch(e){}
+    try{localStorage.removeItem(key);}catch(e){}
+    try{sessionStorage.removeItem(key);}catch(e){}
+  }
   document.getElementById('cacheBadge').style.display='none';
   init(true);
 }
@@ -493,8 +491,13 @@ function parseDate(s){
   const m=s.replace(/\s.*/,'');
   const iso=`${m.slice(0,4)}-${m.slice(4,6)}-${m.slice(6,8)}T${m.slice(8,10)||'00'}:${m.slice(10,12)||'00'}:${m.slice(12,14)||'00'}`;
   const tz=s.slice(m.length).trim();
-  if(tz) return new Date(iso+(tz[0]==='+'||tz[0]==='-'?tz[0]+tz.slice(1,3)+':'+tz.slice(3,5)||'00':'+00:00'));
-  return new Date(iso+'Z');
+  if(tz&&(tz[0]==='+'||tz[0]==='-')){
+    // Timezone esplicita nel feed (es. +0100) → usala direttamente
+    return new Date(iso+tz[0]+tz.slice(1,3)+':'+tz.slice(3,5));
+  }
+  // Nessun timezone: il feed EPGItalia usa ora locale italiana → interpretare come locale
+  // Usiamo Date.parse con stringa senza Z (viene interpretata come locale dal browser)
+  return new Date(iso);
 }
 
 function parseXMLTV(xml){
@@ -740,13 +743,21 @@ function renderSchedule(){
   if(!activeChannel){el.innerHTML='';return;}
   const now=new Date();
   const progs=(programmes[activeChannel.id]||[]).filter(p=>ldk(p.start)===activeDate);
-  document.getElementById('epgChSub').textContent=`${progs.length} programmi · ${fmtDate(activeDate)}`;
   if(!progs.length){
     el.innerHTML=`<div class="center-msg"><div class="icon">📋</div><div class="sub">Nessun programma per questa data</div></div>`;
     return;
   }
+  // Dedup finale: stesso orario di inizio + stesso titolo → mostra solo il primo
+  // (può succedere se due feed hanno lo stesso programma con leggere differenze di chiave)
+  const seenRender=new Set();
+  const progsDeduped=progs.filter(p=>{
+    const minKey=Math.round(p.start.getTime()/60000)+'|'+p.title.toLowerCase().replace(/\s+/g,' ').trim();
+    if(seenRender.has(minKey))return false;
+    seenRender.add(minKey);return true;
+  });
+  document.getElementById('epgChSub').textContent=`${progsDeduped.length} programmi · ${fmtDate(activeDate)}`;
   el.innerHTML='';let scrollTo=null;
-  for(const p of progs){
+  for(const p of progsDeduped){
     const isNow=p.start<=now&&p.stop&&p.stop>now;
     const isPast=p.stop&&p.stop<=now;
     const item=document.createElement('div');
@@ -807,38 +818,217 @@ function mergeEPGIntoChannels(parsed){
   programmes=parsed.programmes;
 }
 
+// ═══════════════════════════════════════════════════
+// WEB WORKER — parsing XML off-thread
+// ═══════════════════════════════════════════════════
+function parseXMLTVInWorker(xml){
+  return new Promise((resolve,reject)=>{
+    // Serializza le funzioni necessarie nel worker
+    const workerSrc=`
+(${canonName.toString()});\n
+(${variantScore.toString()});\n
+const LOCAL_CHANNELS_DATA=${JSON.stringify(LOCAL_CHANNELS)};\n
+const LOCAL_BY_ALIAS_W={};\n
+for(const ch of LOCAL_CHANNELS_DATA){\n
+  LOCAL_BY_ALIAS_W[ch.name.toLowerCase()]=ch;\n
+  for(const a of ch.aliases) LOCAL_BY_ALIAS_W[a.toLowerCase()]=ch;\n
+}\n
+function lookupLocalW(name){\n
+  if(!name)return null;\n
+  const k=name.toLowerCase().replace(/\\s+/g,' ').trim();\n
+  if(LOCAL_BY_ALIAS_W[k])return LOCAL_BY_ALIAS_W[k];\n
+  const stripped=k.replace(/\\s+(hd\\+1|\\+1\\s*hd|full\\s*hd|fhd|h\\.?265|uhd|4k|\\+1|\\+2|hd|sd|ita|italy|italia|it)\\s*$/i,'').trim();\n
+  if(stripped!==k&&LOCAL_BY_ALIAS_W[stripped])return LOCAL_BY_ALIAS_W[stripped];\n
+  for(const [key,ch] of Object.entries(LOCAL_BY_ALIAS_W)){\n
+    if(k.startsWith(key+' ')||stripped.startsWith(key+' '))return ch;\n
+  }\n
+  return null;\n
+}\n
+function getLCNW(name){\n
+  const ch=lookupLocalW(name);return ch?ch.lcn:9999;\n
+}\n
+function parseDateW(s){\n
+  const m=s.replace(/\\s.*/,'');\n
+  const iso=\`\${m.slice(0,4)}-\${m.slice(4,6)}-\${m.slice(6,8)}T\${m.slice(8,10)||'00'}:\${m.slice(10,12)||'00'}:\${m.slice(12,14)||'00'}\`;\n
+  const tz=s.slice(m.length).trim();\n
+  if(tz&&(tz[0]==='+'||tz[0]==='-'))return new Date(iso+tz[0]+tz.slice(1,3)+':'+tz.slice(3,5));\n
+  return new Date(iso);\n
+}\n
+self.onmessage=function(e){\n
+  try{\n
+    const xml=e.data;\n
+    const doc=new DOMParser().parseFromString(xml,'text/xml');\n
+    if(doc.querySelector('parsererror'))throw new Error('XML parse error');\n
+    const raw=[];\n
+    doc.querySelectorAll('channel').forEach(el=>{\n
+      const id=el.getAttribute('id');\n
+      const d=el.querySelector('display-name');\n
+      const ic=el.querySelector('icon');\n
+      if(!id||!d)return;\n
+      raw.push({id,rawName:d.textContent.trim(),logo:(ic?ic.getAttribute('src'):'')||''});\n
+    });\n
+    const canonMap={};const idToCanon={};\n
+    for(const ch of raw){\n
+      const canon=canonName(ch.rawName);\n
+      const score=variantScore(ch.rawName);\n
+      if(!canonMap[canon]){canonMap[canon]={id:ch.id,rawName:ch.rawName,logo:ch.logo,score,allIds:[ch.id]};}\n
+      else{canonMap[canon].allIds.push(ch.id);if(score<canonMap[canon].score){canonMap[canon].id=ch.id;canonMap[canon].rawName=ch.rawName;canonMap[canon].logo=ch.logo;canonMap[canon].score=score;}}\n
+    }\n
+    for(const [canon,entry] of Object.entries(canonMap))for(const id of entry.allIds)idToCanon[id]=canon;\n
+    const progMap={};\n
+    doc.querySelectorAll('programme').forEach(el=>{\n
+      const chId=el.getAttribute('channel');\n
+      const startRaw=el.getAttribute('start');\n
+      if(!chId||!startRaw)return;\n
+      const canon=idToCanon[chId];if(!canon)return;\n
+      let start,stop;\n
+      try{start=parseDateW(startRaw);}catch(ex){return;}\n
+      try{stop=el.getAttribute('stop')?parseDateW(el.getAttribute('stop')):null;}catch(ex){stop=null;}\n
+      const title=(el.querySelector('title')||{}).textContent?.trim()||'—';\n
+      const desc=(el.querySelector('desc')||{}).textContent?.trim()||'';\n
+      const cat=(el.querySelector('category')||{}).textContent?.trim()||'';\n
+      const tk=start.getTime().toString();\n
+      if(!progMap[canon])progMap[canon]=new Map();\n
+      if(!progMap[canon].has(tk))progMap[canon].set(tk,{startMs:start.getTime(),stopMs:stop?stop.getTime():null,title,desc,category:cat});\n
+    });\n
+    const rawList=Object.entries(canonMap).map(([canon,entry])=>{\n
+      const local=lookupLocalW(canon);\n
+      return{id:canon,name:local?local.name:canon,logo:local?local.logo:(entry.logo||''),lcn:local?local.lcn:getLCNW(canon)};\n
+    });\n
+    const nameMap={};const nameToCanons={};\n
+    for(const ch of rawList){\n
+      const k=ch.name.toLowerCase();\n
+      if(!nameMap[k]){nameMap[k]=ch;nameToCanons[k]=[ch.id];}\n
+      else{nameToCanons[k].push(ch.id);if(ch.lcn<nameMap[k].lcn)nameMap[k]={...ch};}\n
+    }\n
+    for(const [nameKey,canons] of Object.entries(nameToCanons)){\n
+      if(canons.length<=1)continue;\n
+      const winId=nameMap[nameKey].id;\n
+      if(!progMap[winId])progMap[winId]=new Map();\n
+      for(const cid of canons){\n
+        if(cid===winId)continue;\n
+        if(progMap[cid])for(const [tk,p] of progMap[cid])if(!progMap[winId].has(tk))progMap[winId].set(tk,p);\n
+      }\n
+    }\n
+    const programmes={};\n
+    for(const [nameKey,ch] of Object.entries(nameMap)){\n
+      const map=progMap[ch.id];\n
+      if(map){\n
+        const seen=new Set();\n
+        const deduped=[];\n
+        for(const p of [...map.values()].sort((a,b)=>a.startMs-b.startMs)){\n
+          const roundedMin=Math.round(p.startMs/60000);\n
+          const k=roundedMin+'|'+p.title.toLowerCase().replace(/\\s+/g,' ').trim();\n
+          if(!seen.has(k)){seen.add(k);deduped.push(p);}\n
+        }\n
+        programmes[ch.id]=deduped;\n
+      }\n
+    }\n
+    const chList=Object.values(nameMap);\n
+    self.postMessage({ok:true,channels:chList,programmes});\n
+  }catch(ex){\n
+    self.postMessage({ok:false,error:ex.message});\n
+  }\n
+};\n
+`;
+    const blob=new Blob([workerSrc],{type:'application/javascript'});
+    const url=URL.createObjectURL(blob);
+    const w=new Worker(url);
+    w.onmessage=e=>{
+      URL.revokeObjectURL(url);
+      w.terminate();
+      if(!e.data.ok){reject(new Error(e.data.error));return;}
+      // Riconverti i timestamp in Date objects
+      const progs=e.data.programmes;
+      for(const id of Object.keys(progs)){
+        progs[id]=progs[id].map(p=>({
+          start:new Date(p.startMs),
+          stop:p.stopMs!=null?new Date(p.stopMs):null,
+          title:p.title,desc:p.desc,category:p.category
+        }));
+      }
+      resolve({channels:e.data.channels,programmes:progs});
+    };
+    w.onerror=ex=>{URL.revokeObjectURL(url);w.terminate();reject(ex);};
+    w.postMessage(xml);
+  });
+}
+
+// Unisce i programmi di due feed parsed mantenendo dedup per minuto+titolo
+function mergeParsed(base, extra){
+  for(const [chId, extraProgs] of Object.entries(extra.programmes)){
+    if(!base.programmes[chId]){
+      base.programmes[chId]=extraProgs;
+    } else {
+      const seen=new Set(base.programmes[chId].map(p=>Math.round(p.start.getTime()/60000)+'|'+p.title.toLowerCase().replace(/\s+/g,' ').trim()));
+      for(const p of extraProgs){
+        const k=Math.round(p.start.getTime()/60000)+'|'+p.title.toLowerCase().replace(/\s+/g,' ').trim();
+        if(!seen.has(k)){seen.add(k);base.programmes[chId].push(p);}
+      }
+      base.programmes[chId].sort((a,b)=>a.start-b.start);
+    }
+  }
+  // Aggiungi canali presenti solo nel feed extra
+  const baseNames=new Set(base.channels.map(c=>c.name.toLowerCase()));
+  for(const ch of extra.channels){
+    if(!baseNames.has(ch.name.toLowerCase())){base.channels.push(ch);baseNames.add(ch.name.toLowerCase());}
+  }
+  return base;
+}
+
 async function init(forceRefresh=false){
   setStatus('loading','Caricamento...');
-  // Mostra subito i canali locali senza aspettare EPG
   showLocalChannels();
-  const EPG_URL='https://www.epgitalia.tv/gzip';
-  let xmlText=null;
-  if(!forceRefresh){
-    const cached=await loadCache();
-    if(cached&&cached.xml){xmlText=cached.xml;setStatus('loading','Da cache...');}
+
+  const EPG_URL1='https://www.epgitalia.tv/gzip';
+  const EPG_URL2='https://iptv-epg.org/files/epg-it.xml';
+
+  // Scarica entrambi i feed in parallelo, ognuno con la propria cache
+  async function getXml(url, cacheKey){
+    if(!forceRefresh){
+      const cached=await loadCache(cacheKey);
+      if(cached&&cached.xml) return {xml:cached.xml,fromCache:true};
+    }
+    const xml=await fetchEPG(url);
+    if(xml) await saveCache(xml,cacheKey);
+    return {xml,fromCache:false};
   }
-  if(!xmlText){
-    setStatus('loading','Download EPG...');
-    xmlText=await fetchEPG(EPG_URL);
-    if(xmlText)await saveCache(xmlText);
-  }
-  if(!xmlText||!xmlText.includes('<tv')){
+
+  setStatus('loading','Download EPG...');
+  const [r1,r2]=await Promise.all([
+    getXml(EPG_URL1,CACHE_KEY).catch(()=>({xml:null})),
+    getXml(EPG_URL2,CACHE_KEY2).catch(()=>({xml:null}))
+  ]);
+
+  const xml1=r1.xml, xml2=r2.xml;
+  if(!xml1&&!xml2){
     setStatus('err','Errore connessione — solo canali locali');
-    return; // canali locali già visibili
+    return;
   }
-  setStatus('loading','Elaborazione...');
-  await new Promise(r=>setTimeout(r,10));
-  let parsed;
-  try{parsed=parseXMLTV(xmlText);}
-  catch(e){
+
+  setStatus('loading','Elaborazione XML...');
+  let parsed=null;
+
+  if(xml1&&xml1.includes('<tv')){
+    try{ parsed=await parseXMLTVInWorker(xml1); }catch(e){ parsed=null; }
+  }
+  if(xml2&&xml2.includes('<tv')){
+    try{
+      const parsed2=await parseXMLTVInWorker(xml2);
+      if(parsed) mergeParsed(parsed,parsed2);
+      else parsed=parsed2;
+    }catch(e){}
+  }
+
+  if(!parsed){
     setStatus('err','Errore parsing XML');
-    return; // canali locali già visibili
+    return;
   }
+
   mergeEPGIntoChannels(parsed);
   setStatus('ok',`${channels.length} canali`);
   buildFilters();
   renderChannels();
-  // Refresh in onda ogni minuto
   setTimeout(function refresh(){
     if(channels.length){renderChannels();}
     if(activeChannel)renderSchedule();
