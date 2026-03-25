@@ -468,48 +468,48 @@ async function extractXml(resp){
   try{
     const buf=await resp.arrayBuffer();
     const h=new Uint8Array(buf.slice(0,2));
-    if(h[0]===0x1f&&h[1]===0x8b){const t=await ungzip(buf);if(t&&t.includes('<tv'))return t;}
+    console.log('[EPG] extractXml: bytes='+buf.byteLength+' magic='+h[0].toString(16)+h[1].toString(16));
+    if(h[0]===0x1f&&h[1]===0x8b){const t=await ungzip(buf);if(t&&t.includes('<tv')){console.log('[EPG] gzip OK len='+t.length);return t;}}
     const t=new TextDecoder().decode(buf);
-    if(t.includes('<tv'))return t;
-    try{const j=JSON.parse(t);if(j&&j.contents&&j.contents.includes('<tv'))return j.contents;}catch(e){}
-  }catch(e){}
+    if(t.includes('<tv')){console.log('[EPG] plain XML OK len='+t.length);return t;}
+    try{const j=JSON.parse(t);if(j&&j.contents&&j.contents.includes('<tv')){console.log('[EPG] JSON wrapper OK');return j.contents;}}catch(e){}
+    console.warn('[EPG] extractXml: no <tv found, preview:',t.slice(0,200));
+  }catch(e){console.error('[EPG] extractXml error:',e);}
   return null;
 }
 async function fetchEPG(url){
-  const t16={signal:AbortSignal.timeout(20000)};
-  const t12={signal:AbortSignal.timeout(14000)};
+  const t20={signal:AbortSignal.timeout(25000)};
   const enc=encodeURIComponent(url);
 
-  // 1. Direct (con extractXml per gestire gzip)
-  try{const r=await fetch(url,t16);if(r.ok){const x=await extractXml(r);if(x)return x;}}catch(e){}
-
-  // 2. corsproxy.io
-  try{const r=await fetch('https://corsproxy.io/?url='+enc,t16);if(r.ok){const x=await extractXml(r);if(x)return x;}}catch(e){}
-
-  // 3. allorigins raw
-  try{const r=await fetch('https://api.allorigins.win/raw?url='+enc,t16);if(r.ok){const x=await extractXml(r);if(x)return x;}}catch(e){}
-
-  // 4. allorigins get (JSON wrapper)
-  try{const r=await fetch('https://api.allorigins.win/get?url='+enc,t16);if(r.ok){const j=await r.json();if(j&&j.contents&&j.contents.includes('<tv'))return j.contents;}}catch(e){}
-
-  // 5. thingproxy
-  try{const r=await fetch('https://thingproxy.freeboard.io/fetch/'+url,t16);if(r.ok){const x=await extractXml(r);if(x)return x;}}catch(e){}
-
-  // 6. codetabs
-  try{const r=await fetch('https://api.codetabs.com/v1/proxy?quest='+enc,t16);if(r.ok){const x=await extractXml(r);if(x)return x;}}catch(e){}
-
-  // 7. crossorigin.me
-  try{const r=await fetch('https://crossorigin.me/'+url,t12);if(r.ok){const x=await extractXml(r);if(x)return x;}}catch(e){}
-
-  // 8. Prova URL alternativo senza gzip
-  const urlPlain=url.replace('/gzip','');
-  if(urlPlain!==url){
-    try{const r=await fetch('https://corsproxy.io/?url='+encodeURIComponent(urlPlain),t16);if(r.ok){const x=await extractXml(r);if(x)return x;}}catch(e){}
-    try{const r=await fetch('https://api.allorigins.win/raw?url='+encodeURIComponent(urlPlain),t16);if(r.ok){const x=await extractXml(r);if(x)return x;}}catch(e){}
-  }
-
+  // 1. Direct
+  try{const r=await fetch(url,t20);if(r.ok){const x=await extractXml(r);if(x)return x;}}catch(e){}
+  // 2. corsproxy.io (formato nuovo)
+  try{const r=await fetch('https://corsproxy.io/?url='+enc,t20);if(r.ok){const x=await extractXml(r);if(x)return x;}}catch(e){}
+  // 3. corsproxy.io (formato vecchio)
+  try{const r=await fetch('https://corsproxy.io/?'+enc,t20);if(r.ok){const x=await extractXml(r);if(x)return x;}}catch(e){}
+  // 4. allorigins raw
+  try{const r=await fetch('https://api.allorigins.win/raw?url='+enc,t20);if(r.ok){const x=await extractXml(r);if(x)return x;}}catch(e){}
+  // 5. allorigins get
+  try{const r=await fetch('https://api.allorigins.win/get?url='+enc,t20);if(r.ok){const j=await r.json();if(j?.contents?.includes('<tv'))return j.contents;}}catch(e){}
+  // 6. thingproxy
+  try{const r=await fetch('https://thingproxy.freeboard.io/fetch/'+url,t20);if(r.ok){const x=await extractXml(r);if(x)return x;}}catch(e){}
+  // 7. codetabs
+  try{const r=await fetch('https://api.codetabs.com/v1/proxy?quest='+enc,t20);if(r.ok){const x=await extractXml(r);if(x)return x;}}catch(e){}
   return null;
 }
+
+// Fonti EPG alternative che non richiedono proxy (CORS aperto o CDN)
+const EPG_SOURCES=[
+  // epgitalia.tv - fonte principale
+  {label:'epgitalia gzip',   url:'https://www.epgitalia.tv/gzip',   proxy:true},
+  {label:'epgitalia xmltv',  url:'https://www.epgitalia.tv/xmltv',  proxy:true},
+  // iptv-org/epg su GitHub raw (CORS aperto)
+  {label:'iptv-org it',      url:'https://raw.githubusercontent.com/iptv-org/epg/refs/heads/master/sites/mediasetinfinity.it/mediasetinfinity.it_it.xml', proxy:false},
+  // xmltv.co
+  {label:'xmltv.co',         url:'https://xmltv.co/epg/italy.xml',  proxy:true},
+  // epg.iptv.ink
+  {label:'epg.iptv.ink',     url:'https://epg.iptv.ink/xmltv/it.xml', proxy:false},
+];
 
 // ═══════════════════════════════════════════════════
 // XMLTV PARSER WITH DEDUPLICATION
@@ -856,50 +856,60 @@ function mergeEPGIntoChannels(parsed){
 
 async function init(forceRefresh=false){
   setStatus('loading','Caricamento...');
-  // Mostra subito i canali locali senza aspettare EPG
   showLocalChannels();
 
-  const EPG_URLS=[
-    'https://www.epgitalia.tv/gzip',
-    'https://www.epgitalia.tv/xmltv',
-    'https://www.epgitalia.tv/',
-  ];
-
   let xmlText=null;
+
+  // Prova cache prima
   if(!forceRefresh){
     const cached=await loadCache();
-    if(cached&&cached.xml){xmlText=cached.xml;setStatus('loading','Da cache...');}
+    if(cached&&cached.xml){
+      xmlText=cached.xml;
+      setStatus('loading','Da cache...');
+    }
   }
+
+  // Se non c'è cache valida, scarica da una delle fonti
   if(!xmlText){
-    for(let i=0;i<EPG_URLS.length;i++){
-      setStatus('loading',`Download EPG (${i+1}/${EPG_URLS.length})...`);
-      xmlText=await fetchEPG(EPG_URLS[i]);
-      if(xmlText&&xmlText.includes('<tv')) break;
-      xmlText=null;
+    for(let i=0;i<EPG_SOURCES.length;i++){
+      const src=EPG_SOURCES[i];
+      setStatus('loading',`Tentativo ${i+1}/${EPG_SOURCES.length}: ${src.label}...`);
+      try{
+        let x=null;
+        if(!src.proxy){
+          // Fetch diretto (CORS aperto)
+          const r=await fetch(src.url,{signal:AbortSignal.timeout(20000)});
+          if(r.ok) x=await extractXml(r);
+        } else {
+          x=await fetchEPG(src.url);
+        }
+        if(x&&x.includes('<tv')){xmlText=x;break;}
+      }catch(e){}
     }
     if(xmlText) await saveCache(xmlText);
   }
+
   if(!xmlText||!xmlText.includes('<tv')){
-    setStatus('err','Errore connessione — solo canali locali');
-    document.getElementById('epgList').innerHTML=`<div class="center-msg"><div class="icon">⚠️</div><div class="ttl">Dati EPG non disponibili</div><div class="sub">La guida TV non è al momento raggiungibile. I canali locali sono visibili ma senza programmazione.</div><button class="retry-btn" onclick="hardRefresh()">🔄 Riprova</button></div>`;
-    return; // canali locali già visibili
+    setStatus('err','Errore connessione');
+    document.getElementById('epgList').innerHTML=`<div class="center-msg"><div class="icon">⚠️</div><div class="ttl">EPG non disponibile</div><div class="sub">Nessuna fonte EPG raggiungibile. Controlla la connessione e riprova.<br><br>Se il problema persiste apri la console (F12) per dettagli.</div><button class="retry-btn" onclick="hardRefresh()">🔄 Riprova</button></div>`;
+    return;
   }
-  setStatus('loading','Elaborazione...');
+
+  setStatus('loading','Elaborazione XML...');
   await new Promise(r=>setTimeout(r,10));
   let parsed;
   try{parsed=parseXMLTV(xmlText);}
   catch(e){
     setStatus('err','Errore parsing XML');
-    return; // canali locali già visibili
+    return;
   }
   mergeEPGIntoChannels(parsed);
   setStatus('ok',`${channels.length} canali`);
   buildFilters();
   renderChannels();
-  // Refresh in onda ogni minuto
   setTimeout(function refresh(){
-    if(channels.length){renderChannels();}
-    if(activeChannel)renderSchedule();
+    if(channels.length) renderChannels();
+    if(activeChannel) renderSchedule();
     setTimeout(refresh,60000);
   },60000);
 }
