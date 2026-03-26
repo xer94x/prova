@@ -15,18 +15,34 @@ jobs:
 
       - name: Scarica e decomprimi EPG
         run: |
-          # epgitalia.tv — risponde con gzip, curl --compressed lo decomprime al volo
-          curl -L --compressed --max-time 60 \
+          # Scarica il file grezzo (senza --compressed, lo gestiamo noi)
+          curl -L --max-time 60 \
             "https://www.epgitalia.tv/gzip" \
-            -o epg-it.xml || true
+            -o epg-raw || true
+
+          # Controlla se è gzip e decomprimi
+          if file epg-raw | grep -q 'gzip'; then
+            echo "File gzip rilevato, decomprimo..."
+            gunzip -c epg-raw > epg-it.xml
+          else
+            mv epg-raw epg-it.xml
+          fi
 
           # Se non è XML valido, prova iptv-epg.org
           if ! grep -q '<tv' epg-it.xml 2>/dev/null; then
             echo "Fonte principale fallita, provo iptv-epg.org..."
-            curl -L --compressed --max-time 60 \
+            curl -L --max-time 60 \
               "https://iptv-epg.org/files/epg-it.xml" \
-              -o epg-it.xml || true
+              -o epg-raw2 || true
+            if file epg-raw2 | grep -q 'gzip'; then
+              gunzip -c epg-raw2 > epg-it.xml
+            else
+              mv epg-raw2 epg-it.xml
+            fi
           fi
+
+          # Pulizia file temporanei
+          rm -f epg-raw epg-raw2
 
           # Verifica finale
           if grep -q '<tv' epg-it.xml; then
