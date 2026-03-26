@@ -420,26 +420,109 @@ function showLocalChannels(){
 // EPG LOCALE — carica epg-it.xml.gz e decomprime nel browser
 // (aggiornato automaticamente da GitHub Actions)
 // ═══════════════════════════════════════════════════
-async function fetchEPGLocal(){
+// Decomprime un ArrayBuffer gzip e restituisce la stringa XML
+async function decompressGzip(buf){
+  const ds=new DecompressionStream('gzip');
+  const w=ds.writable.getWriter();
+  const reader=ds.readable.getReader();
+  w.write(new Uint8Array(buf)); w.close();
+  const chunks=[];
+  while(true){const{done,value}=await reader.read();if(done)break;chunks.push(value);}
+  const total=chunks.reduce((n,c)=>n+c.length,0);
+  const out=new Uint8Array(total); let off=0;
+  for(const c of chunks){out.set(c,off);off+=c.length;}
+  return new TextDecoder().decode(out);
+}
+
+// Carica un singolo file EPG (gzip o xml) e restituisce il testo XML
+async function fetchOneEPG(filename){
   try{
-    const r=await fetch('epg-it.xml.gz',{signal:AbortSignal.timeout(30000)});
+    const r=await fetch(filename,{signal:AbortSignal.timeout(30000)});
     if(!r.ok) throw new Error('HTTP '+r.status);
     const buf=await r.arrayBuffer();
-    // Decomprimi gzip nel browser
-    const ds=new DecompressionStream('gzip');
-    const w=ds.writable.getWriter();
-    const reader=ds.readable.getReader();
-    w.write(new Uint8Array(buf)); w.close();
-    const chunks=[];
-    while(true){const{done,value}=await reader.read();if(done)break;chunks.push(value);}
-    const total=chunks.reduce((n,c)=>n+c.length,0);
-    const out=new Uint8Array(total); let off=0;
-    for(const c of chunks){out.set(c,off);off+=c.length;}
-    return new TextDecoder().decode(out);
+    try{
+      const xml=await decompressGzip(buf);
+      if(xml.includes('<tv')) return xml;
+    }catch(_){}
+    const xml=new TextDecoder().decode(buf);
+    if(xml.includes('<tv')) return xml;
+    return null;
   }catch(e){
-    console.error('[EPG] Errore caricamento epg-it.xml.gz:',e);
+    console.warn('[EPG] Impossibile caricare '+filename+':',e.message);
     return null;
   }
+}
+
+// Estrae tutti gli ID canale presenti in un documento XMLTV
+function extractChannelIds(xml){
+  const ids=new Set();
+  const re=/<channel\s+id="([^"]+)"/g;
+  let m;
+  while((m=re.exec(xml))!==null) ids.add(m[1].toLowerCase());
+  return ids;
+}
+
+// Fusione con priorità:
+// - xml1 (primario) viene usato integralmente
+// - xml2 (secondario) contribuisce SOLO con canali e programmi
+//   i cui channel-id NON sono già presenti nel primario
+function mergeXMLTVPriority(xmlPrimary, xmlSecondary){
+  if(!xmlSecondary) return xmlPrimary;
+  if(!xmlPrimary)   return xmlSecondary;
+
+  // IDs già coperti dalla fonte primaria (case-insensitive)
+  const coveredIds = extractChannelIds(xmlPrimary);
+
+  const parser = new DOMParser();
+  const doc2 = parser.parseFromString(xmlSecondary, 'text/xml');
+  if(doc2.querySelector('parsererror')){
+    console.warn('[EPG] Fonte secondaria: XML non valido, ignorata');
+    return xmlPrimary;
+  }
+
+  // Raccoglie solo i <channel> non coperti
+  const newChannels = [...doc2.querySelectorAll('channel')]
+    .filter(el => !coveredIds.has((el.getAttribute('id')||'').toLowerCase()));
+
+  // Raccoglie solo i <programme> dei canali non coperti
+  const newCoveredIds = new Set(newChannels.map(el => el.getAttribute('id').toLowerCase()));
+  const newProgrammes = [...doc2.querySelectorAll('programme')]
+    .filter(el => newCoveredIds.has((el.getAttribute('channel')||'').toLowerCase()));
+
+  if(newChannels.length===0){
+    console.log('[EPG] Fonte secondaria: nessun canale aggiuntivo da integrare');
+    return xmlPrimary;
+  }
+
+  console.log(`[EPG] Fonte secondaria: +${newChannels.length} canali integrati (${newProgrammes.length} programmi)`);
+
+  // Serializza i nuovi nodi come stringa
+  const s = new XMLSerializer();
+  const extra = [...newChannels, ...newProgrammes]
+    .map(el => s.serializeToString(el)).join('\n');
+
+  // Inserisce prima della chiusura </tv> del feed primario
+  return xmlPrimary.replace(/<\/tv>[\s\S]*$/, extra + '\n</tv>');
+}
+
+async function fetchEPGLocal(){
+  setStatus('loading','Caricamento EPG...');
+  // Carica entrambe le fonti in parallelo
+  const [xmlPrimary, xmlSecondary] = await Promise.all([
+    fetchOneEPG('epg-it2.xml.gz'),   // iptv-epg.org  → fonte primaria
+    fetchOneEPG('epg-it.xml.gz'),    // epgitalia.tv  → supplementare
+  ]);
+  if(!xmlPrimary && !xmlSecondary){ return null; }
+  if(!xmlPrimary){
+    console.warn('[EPG] Fonte primaria non disponibile, uso solo secondaria');
+    return xmlSecondary;
+  }
+  if(!xmlSecondary){
+    console.log('[EPG] Solo fonte primaria disponibile');
+    return xmlPrimary;
+  }
+  setStatus('loading','Integrazione canali mancanti...');
+  return mergeXMLTVPriority(xmlPrimary, xmlSecondary);
 }
 
 // ═══════════════════════════════════════════════════
