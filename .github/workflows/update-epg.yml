@@ -13,25 +13,26 @@ jobs:
       - name: Checkout repo
         uses: actions/checkout@v4
 
-      - name: Scarica EPG principale (epgitalia.tv)
+      - name: Scarica e decomprimi EPG
         run: |
+          # epgitalia.tv — risponde con gzip, curl --compressed lo decomprime al volo
           curl -L --compressed --max-time 60 \
             "https://www.epgitalia.tv/gzip" \
             -o epg-it.xml || true
 
-          # Se il file non è XML valido, prova la seconda fonte
+          # Se non è XML valido, prova iptv-epg.org
           if ! grep -q '<tv' epg-it.xml 2>/dev/null; then
             echo "Fonte principale fallita, provo iptv-epg.org..."
-            curl -L --max-time 60 \
+            curl -L --compressed --max-time 60 \
               "https://iptv-epg.org/files/epg-it.xml" \
               -o epg-it.xml || true
           fi
 
           # Verifica finale
           if grep -q '<tv' epg-it.xml; then
-            echo "EPG scaricato correttamente ($(wc -c < epg-it.xml) bytes)"
+            echo "OK — $(wc -c < epg-it.xml) bytes, $(grep -c '<programme' epg-it.xml) programmi"
           else
-            echo "ERRORE: nessuna fonte EPG raggiungibile"
+            echo "ERRORE: nessuna fonte raggiungibile"
             exit 1
           fi
 
