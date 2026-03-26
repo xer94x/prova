@@ -1,0 +1,48 @@
+name: Aggiorna EPG
+
+on:
+  schedule:
+    - cron: '0 3 * * *'   # ogni notte alle 03:00 UTC (04:00 ora italiana)
+  workflow_dispatch:        # permette avvio manuale dal pannello GitHub
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Scarica EPG principale (epgitalia.tv)
+        run: |
+          curl -L --compressed --max-time 60 \
+            "https://www.epgitalia.tv/gzip" \
+            -o epg-it.xml || true
+
+          # Se il file non è XML valido, prova la seconda fonte
+          if ! grep -q '<tv' epg-it.xml 2>/dev/null; then
+            echo "Fonte principale fallita, provo iptv-epg.org..."
+            curl -L --max-time 60 \
+              "https://iptv-epg.org/files/epg-it.xml" \
+              -o epg-it.xml || true
+          fi
+
+          # Verifica finale
+          if grep -q '<tv' epg-it.xml; then
+            echo "EPG scaricato correttamente ($(wc -c < epg-it.xml) bytes)"
+          else
+            echo "ERRORE: nessuna fonte EPG raggiungibile"
+            exit 1
+          fi
+
+      - name: Commit e push se ci sono modifiche
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add epg-it.xml
+          if git diff --cached --quiet; then
+            echo "Nessuna modifica, skip commit"
+          else
+            git commit -m "EPG aggiornato $(date -u '+%Y-%m-%d %H:%M UTC')"
+            git push
+          fi
