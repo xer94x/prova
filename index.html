@@ -417,16 +417,27 @@ function showLocalChannels(){
 }
 
 // ═══════════════════════════════════════════════════
-// EPG LOCALE — carica epg-it.xml dalla stessa cartella
+// EPG LOCALE — carica epg-it.xml.gz e decomprime nel browser
 // (aggiornato automaticamente da GitHub Actions)
 // ═══════════════════════════════════════════════════
 async function fetchEPGLocal(){
   try{
-    const r=await fetch('epg-it.xml',{signal:AbortSignal.timeout(30000)});
+    const r=await fetch('epg-it.xml.gz',{signal:AbortSignal.timeout(30000)});
     if(!r.ok) throw new Error('HTTP '+r.status);
-    return await r.text();
+    const buf=await r.arrayBuffer();
+    // Decomprimi gzip nel browser
+    const ds=new DecompressionStream('gzip');
+    const w=ds.writable.getWriter();
+    const reader=ds.readable.getReader();
+    w.write(new Uint8Array(buf)); w.close();
+    const chunks=[];
+    while(true){const{done,value}=await reader.read();if(done)break;chunks.push(value);}
+    const total=chunks.reduce((n,c)=>n+c.length,0);
+    const out=new Uint8Array(total); let off=0;
+    for(const c of chunks){out.set(c,off);off+=c.length;}
+    return new TextDecoder().decode(out);
   }catch(e){
-    console.error('[EPG] Errore caricamento epg-it.xml:',e);
+    console.error('[EPG] Errore caricamento epg-it.xml.gz:',e);
     return null;
   }
 }
@@ -826,7 +837,7 @@ async function init(){
 
   if(!xmlText||!xmlText.includes('<tv')){
     setStatus('err','EPG non trovato');
-    document.getElementById('epgList').innerHTML=`<div class="center-msg"><div class="icon">⚠️</div><div class="ttl">EPG non disponibile</div><div class="sub">Il file <strong>epg-it.xml</strong> non è stato trovato nella stessa cartella di questa pagina.<br><br>Assicurati che GitHub Actions abbia scaricato il file.</div><button class="retry-btn" onclick="hardRefresh()">🔄 Riprova</button></div>`;
+    document.getElementById('epgList').innerHTML=`<div class="center-msg"><div class="icon">⚠️</div><div class="ttl">EPG non disponibile</div><div class="sub">Il file <strong>epg-it.xml.gz</strong> non è stato trovato nella stessa cartella di questa pagina.<br><br>Assicurati che GitHub Actions abbia scaricato il file.</div><button class="retry-btn" onclick="hardRefresh()">🔄 Riprova</button></div>`;
     return;
   }
 
