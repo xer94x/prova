@@ -2,8 +2,8 @@ name: Aggiorna EPG
 
 on:
   schedule:
-    - cron: '0 3 * * *'   # ogni notte alle 03:00 UTC (04:00 ora italiana)
-  workflow_dispatch:        # permette avvio manuale dal pannello GitHub
+    - cron: '0 3 * * *'
+  workflow_dispatch:
 
 jobs:
   update:
@@ -13,52 +13,42 @@ jobs:
       - name: Checkout repo
         uses: actions/checkout@v4
 
-      - name: Scarica e decomprimi EPG
+      - name: Scarica EPG e salva compresso
         run: |
-          # Scarica il file grezzo (senza --compressed, lo gestiamo noi)
           curl -L --max-time 60 \
             "https://www.epgitalia.tv/gzip" \
-            -o epg-raw || true
+            -o epg-it.xml.gz || true
 
-          # Controlla se è gzip e decomprimi
-          if file epg-raw | grep -q 'gzip'; then
-            echo "File gzip rilevato, decomprimo..."
-            gunzip -c epg-raw > epg-it.xml
+          # Verifica che sia un gzip valido con XML dentro
+          if gunzip -c epg-it.xml.gz 2>/dev/null | grep -q '<tv'; then
+            echo "OK — $(wc -c < epg-it.xml.gz) bytes compressi"
           else
-            mv epg-raw epg-it.xml
-          fi
-
-          # Se non è XML valido, prova iptv-epg.org
-          if ! grep -q '<tv' epg-it.xml 2>/dev/null; then
             echo "Fonte principale fallita, provo iptv-epg.org..."
             curl -L --max-time 60 \
               "https://iptv-epg.org/files/epg-it.xml" \
-              -o epg-raw2 || true
-            if file epg-raw2 | grep -q 'gzip'; then
-              gunzip -c epg-raw2 > epg-it.xml
+              -o epg-raw || true
+            if file epg-raw | grep -q 'gzip'; then
+              mv epg-raw epg-it.xml.gz
             else
-              mv epg-raw2 epg-it.xml
+              gzip -c epg-raw > epg-it.xml.gz
             fi
+            rm -f epg-raw
           fi
 
-          # Pulizia file temporanei
-          rm -f epg-raw epg-raw2
-
-          # Verifica finale
-          if grep -q '<tv' epg-it.xml; then
-            echo "OK — $(wc -c < epg-it.xml) bytes, $(grep -c '<programme' epg-it.xml) programmi"
+          if gunzip -c epg-it.xml.gz 2>/dev/null | grep -q '<tv'; then
+            echo "EPG OK — $(wc -c < epg-it.xml.gz) bytes compressi"
           else
-            echo "ERRORE: nessuna fonte raggiungibile"
+            echo "ERRORE: nessuna fonte valida"
             exit 1
           fi
 
-      - name: Commit e push se ci sono modifiche
+      - name: Commit e push
         run: |
           git config user.name  "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add epg-it.xml
+          git add epg-it.xml.gz
           if git diff --cached --quiet; then
-            echo "Nessuna modifica, skip commit"
+            echo "Nessuna modifica"
           else
             git commit -m "EPG aggiornato $(date -u '+%Y-%m-%d %H:%M UTC')"
             git push
