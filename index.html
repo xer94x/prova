@@ -412,7 +412,7 @@ function variantScore(raw){
 // STATE
 // ═══════════════════════════════════════════════════
 let channels=[], programmes={}, activeChannel=null, activeDate=null, allDates=[], filterGroup='all';
-const CACHE_KEY='epgit_v10', CACHE_TTL=24*60*60*1000;
+const CACHE_KEY='epgit_v9', CACHE_TTL=24*60*60*1000;
 // Cache scade sempre a mezzanotte, non 24h dal salvataggio
 function isCacheValid(ts){
   const midnight=new Date(); midnight.setHours(0,0,0,0);
@@ -432,8 +432,8 @@ function setStatus(s,t){ document.getElementById('sdot').className='status-dot '
 // Cache con IndexedDB (primario) + localStorage (fallback) per persistenza anche su file://
 const _IDB_NAME='epgcache',_IDB_STORE='data',_IDB_VER=1;
 function openIDB(){return new Promise((res,rej)=>{const r=indexedDB.open(_IDB_NAME,_IDB_VER);r.onupgradeneeded=e=>e.target.result.createObjectStore(_IDB_STORE);r.onsuccess=e=>res(e.target.result);r.onerror=rej;});}
-async function saveCache(xml, xmlSuppl=null){
-  const payload=JSON.stringify({ts:Date.now(),xml,xmlSuppl});
+async function saveCache(xml){
+  const payload=JSON.stringify({ts:Date.now(),xml});
   // prova IndexedDB
   try{const db=await openIDB();await new Promise((res,rej)=>{const tx=db.transaction(_IDB_STORE,'readwrite');tx.objectStore(_IDB_STORE).put(payload,CACHE_KEY);tx.oncomplete=res;tx.onerror=rej;});return;}catch(e){}
   // fallback localStorage/sessionStorage
@@ -513,39 +513,6 @@ const EPG_SOURCES=[
   // epg.iptv.ink
   {label:'epg.iptv.ink',     url:'https://epg.iptv.ink/xmltv/it.xml', proxy:false},
 ];
-
-// Fonte EPG supplementare: usata per coprire canali non presenti nella fonte principale
-const EPG_SUPPLEMENTAL={label:'iptv-epg.org', url:'https://iptv-epg.org/files/epg-it.xml', proxy:true};
-
-// Fonde i dati di un EPG supplementare in quello principale:
-// - aggiunge programmi per canali già presenti ma senza dati
-// - aggiunge canali/programmi completamente nuovi
-function mergeSupplemental(primary, supplemental){
-  // Aggiungi canali mancanti
-  const existingIds=new Set(primary.channels.map(c=>c.id));
-  for(const ch of supplemental.channels){
-    if(!existingIds.has(ch.id)){
-      primary.channels.push(ch);
-    }
-  }
-  // Aggiungi programmi: per canali già presenti, solo se non hanno programmi;
-  // per canali nuovi, aggiungi tutto.
-  for(const [chId, progs] of Object.entries(supplemental.programmes)){
-    if(!primary.programmes[chId] || primary.programmes[chId].length===0){
-      primary.programmes[chId]=progs;
-    }
-    // Se il canale esiste ma ha pochi programmi (< 5), integra con il supplementale
-    else if(primary.programmes[chId].length < 5){
-      const existing=new Set(primary.programmes[chId].map(p=>p.start.getTime()+'|'+p.title.toLowerCase().trim()));
-      for(const p of progs){
-        const k=p.start.getTime()+'|'+p.title.toLowerCase().trim();
-        if(!existing.has(k)){primary.programmes[chId].push(p);existing.add(k);}
-      }
-      primary.programmes[chId].sort((a,b)=>a.start-b.start);
-    }
-  }
-  return primary;
-}
 
 // ═══════════════════════════════════════════════════
 // XMLTV PARSER WITH DEDUPLICATION
@@ -939,51 +906,34 @@ async function init(forceRefresh=false){
   showLocalChannels();
 
   let xmlText=null;
-  let xmlSuppl=null;
 
   // Prova cache prima
   if(!forceRefresh){
     const cached=await loadCache();
     if(cached&&cached.xml){
       xmlText=cached.xml;
-      xmlSuppl=cached.xmlSuppl||null;
       setStatus('loading','Da cache...');
     }
   }
 
-  // Se non c'è cache valida, scarica fonte principale + supplementare in parallelo
+  // Se non c'è cache valida, scarica da una delle fonti
   if(!xmlText){
-    // Fonte principale: prova in sequenza finché una funziona
-    const mainFetch=(async()=>{
-      for(let i=0;i<EPG_SOURCES.length;i++){
-        const src=EPG_SOURCES[i];
-        setStatus('loading',`Tentativo ${i+1}/${EPG_SOURCES.length}: ${src.label}...`);
-        try{
-          let x=null;
-          if(!src.proxy){
-            const r=await fetch(src.url,{signal:AbortSignal.timeout(20000)});
-            if(r.ok) x=await extractXml(r);
-          } else {
-            x=await fetchEPG(src.url);
-          }
-          if(x&&x.includes('<tv')) return x;
-        }catch(e){}
-      }
-      return null;
-    })();
-
-    // Fonte supplementare: in parallelo, senza bloccare
-    const supplFetch=(async()=>{
+    for(let i=0;i<EPG_SOURCES.length;i++){
+      const src=EPG_SOURCES[i];
+      setStatus('loading',`Tentativo ${i+1}/${EPG_SOURCES.length}: ${src.label}...`);
       try{
-        const x=await fetchEPG(EPG_SUPPLEMENTAL.url);
-        if(x&&x.includes('<tv')) return x;
+        let x=null;
+        if(!src.proxy){
+          // Fetch diretto (CORS aperto)
+          const r=await fetch(src.url,{signal:AbortSignal.timeout(20000)});
+          if(r.ok) x=await extractXml(r);
+        } else {
+          x=await fetchEPG(src.url);
+        }
+        if(x&&x.includes('<tv')){xmlText=x;break;}
       }catch(e){}
-      return null;
-    })();
-
-    // Attendi entrambe
-    [xmlText, xmlSuppl]=await Promise.all([mainFetch, supplFetch]);
-    if(xmlText) await saveCache(xmlText, xmlSuppl);
+    }
+    if(xmlText) await saveCache(xmlText);
   }
 
   if(!xmlText||!xmlText.includes('<tv')){
@@ -1000,15 +950,6 @@ async function init(forceRefresh=false){
     setStatus('err','Errore parsing XML');
     return;
   }
-
-  // Integra fonte supplementare se disponibile
-  if(xmlSuppl&&xmlSuppl.includes('<tv')){
-    try{
-      const parsedSuppl=parseXMLTV(xmlSuppl);
-      parsed=mergeSupplemental(parsed, parsedSuppl);
-    }catch(e){console.warn('[EPG] Errore parsing supplementale:',e);}
-  }
-
   mergeEPGIntoChannels(parsed);
   setStatus('ok',`${channels.length} canali`);
   buildFilters();
