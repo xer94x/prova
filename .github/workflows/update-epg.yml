@@ -1,7 +1,7 @@
 name: Aggiorna EPG
 on:
   schedule:
-    - cron: '0 3 * * *'
+    - cron: '0 8 * * *'   # 8:00 UTC → 9:00 CET (inverno) / 10:00 CEST (estate)
   workflow_dispatch:
 jobs:
   update:
