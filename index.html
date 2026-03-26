@@ -95,7 +95,7 @@ header{background:var(--surface);border-bottom:1px solid var(--border);padding:0
   <div class="logo"><span class="logo-epg">EPG</span><span class="logo-it">Italia</span><div class="logo-dot"></div></div>
   <div class="hdr-clock" id="clock">--:--:--</div>
   <input class="hdr-search" id="search" type="text" placeholder="🔍 Cerca canale..." oninput="filterChannels()">
-  <button class="hdr-refresh-btn" onclick="hardRefresh()" title="Cancella cache e ricarica EPG">↺ Ricarica EPG</button>
+
   <div class="hdr-status"><div class="status-dot loading" id="sdot"></div><span id="stxt">Caricamento...</span></div>
 </header>
 <div class="main">
@@ -393,12 +393,6 @@ function variantScore(raw){
 // STATE
 // ═══════════════════════════════════════════════════
 let channels=[], programmes={}, activeChannel=null, activeDate=null, allDates=[], filterGroup='all';
-const CACHE_KEY='epgit_v9', CACHE_TTL=24*60*60*1000;
-// Cache scade sempre a mezzanotte, non 24h dal salvataggio
-function isCacheValid(ts){
-  const midnight=new Date(); midnight.setHours(0,0,0,0);
-  return new Date(ts)>=midnight;
-}
 
 // ═══════════════════════════════════════════════════
 // CLOCK
@@ -410,90 +404,32 @@ function setStatus(s,t){ document.getElementById('sdot').className='status-dot '
 // ═══════════════════════════════════════════════════
 // CACHE
 // ═══════════════════════════════════════════════════
-// Cache con IndexedDB (primario) + localStorage (fallback) per persistenza anche su file://
-const _IDB_NAME='epgcache',_IDB_STORE='data',_IDB_VER=1;
-function openIDB(){return new Promise((res,rej)=>{const r=indexedDB.open(_IDB_NAME,_IDB_VER);r.onupgradeneeded=e=>e.target.result.createObjectStore(_IDB_STORE);r.onsuccess=e=>res(e.target.result);r.onerror=rej;});}
-async function saveCache(xml){
-  const payload=JSON.stringify({ts:Date.now(),xml});
-  // prova IndexedDB
-  try{const db=await openIDB();await new Promise((res,rej)=>{const tx=db.transaction(_IDB_STORE,'readwrite');tx.objectStore(_IDB_STORE).put(payload,CACHE_KEY);tx.oncomplete=res;tx.onerror=rej;});return;}catch(e){}
-  // fallback localStorage/sessionStorage
-  for(const s of [localStorage,sessionStorage]){try{s.setItem(CACHE_KEY,payload);return;}catch(e){}}
-}
-async function loadCache(){
-  try{const db=await openIDB();const val=await new Promise((res,rej)=>{const tx=db.transaction(_IDB_STORE,'readonly');const req=tx.objectStore(_IDB_STORE).get(CACHE_KEY);req.onsuccess=e=>res(e.target.result);req.onerror=rej;});if(val){const c=JSON.parse(val);if(isCacheValid(c.ts))return c;}}catch(e){}
-  for(const s of [localStorage,sessionStorage]){try{const c=JSON.parse(s.getItem(CACHE_KEY)||'null');if(c&&isCacheValid(c.ts))return c;}catch(e){}}
-  return null;
-}
-async function hardRefresh(){
-  try{const db=await openIDB();db.transaction(_IDB_STORE,'readwrite').objectStore(_IDB_STORE).delete(CACHE_KEY);}catch(e){}
-  try{localStorage.removeItem(CACHE_KEY);}catch(e){}
-  try{sessionStorage.removeItem(CACHE_KEY);}catch(e){}
-  document.getElementById('cacheBadge').style.display='none';
-  init(true);
+async function hardRefresh(){ init(); }
+
+// ═══════════════════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════════════════
+function showLocalChannels(){
+  channels=LOCAL_CHANNELS.map(lc=>({id:'local_'+lc.lcn,name:lc.name,logo:lc.logo,lcn:lc.lcn}));
+  channels.sort((a,b)=>a.lcn-b.lcn);
+  programmes={};
+  renderChannels();
 }
 
 // ═══════════════════════════════════════════════════
-// GZIP DECOMPRESSION
+// EPG LOCALE — carica epg-it.xml dalla stessa cartella
+// (aggiornato automaticamente da GitHub Actions)
 // ═══════════════════════════════════════════════════
-async function ungzip(buf){
+async function fetchEPGLocal(){
   try{
-    const ds=new DecompressionStream('gzip');
-    const w=ds.writable.getWriter(), r=ds.readable.getReader();
-    w.write(new Uint8Array(buf)); w.close();
-    const chunks=[]; while(true){const{done,value}=await r.read();if(done)break;chunks.push(value);}
-    const total=chunks.reduce((n,c)=>n+c.length,0);
-    const out=new Uint8Array(total); let off=0;
-    for(const c of chunks){out.set(c,off);off+=c.length;}
-    return new TextDecoder().decode(out);
-  }catch(e){return null;}
+    const r=await fetch('epg-it.xml',{signal:AbortSignal.timeout(30000)});
+    if(!r.ok) throw new Error('HTTP '+r.status);
+    return await r.text();
+  }catch(e){
+    console.error('[EPG] Errore caricamento epg-it.xml:',e);
+    return null;
+  }
 }
-async function extractXml(resp){
-  try{
-    const buf=await resp.arrayBuffer();
-    const h=new Uint8Array(buf.slice(0,2));
-    console.log('[EPG] extractXml: bytes='+buf.byteLength+' magic='+h[0].toString(16)+h[1].toString(16));
-    if(h[0]===0x1f&&h[1]===0x8b){const t=await ungzip(buf);if(t&&t.includes('<tv')){console.log('[EPG] gzip OK len='+t.length);return t;}}
-    const t=new TextDecoder().decode(buf);
-    if(t.includes('<tv')){console.log('[EPG] plain XML OK len='+t.length);return t;}
-    try{const j=JSON.parse(t);if(j&&j.contents&&j.contents.includes('<tv')){console.log('[EPG] JSON wrapper OK');return j.contents;}}catch(e){}
-    console.warn('[EPG] extractXml: no <tv found, preview:',t.slice(0,200));
-  }catch(e){console.error('[EPG] extractXml error:',e);}
-  return null;
-}
-async function fetchEPG(url){
-  const t20={signal:AbortSignal.timeout(25000)};
-  const enc=encodeURIComponent(url);
-
-  // 1. Direct
-  try{const r=await fetch(url,t20);if(r.ok){const x=await extractXml(r);if(x)return x;}}catch(e){}
-  // 2. corsproxy.io (formato nuovo)
-  try{const r=await fetch('https://corsproxy.io/?url='+enc,t20);if(r.ok){const x=await extractXml(r);if(x)return x;}}catch(e){}
-  // 3. corsproxy.io (formato vecchio)
-  try{const r=await fetch('https://corsproxy.io/?'+enc,t20);if(r.ok){const x=await extractXml(r);if(x)return x;}}catch(e){}
-  // 4. allorigins raw
-  try{const r=await fetch('https://api.allorigins.win/raw?url='+enc,t20);if(r.ok){const x=await extractXml(r);if(x)return x;}}catch(e){}
-  // 5. allorigins get
-  try{const r=await fetch('https://api.allorigins.win/get?url='+enc,t20);if(r.ok){const j=await r.json();if(j?.contents?.includes('<tv'))return j.contents;}}catch(e){}
-  // 6. thingproxy
-  try{const r=await fetch('https://thingproxy.freeboard.io/fetch/'+url,t20);if(r.ok){const x=await extractXml(r);if(x)return x;}}catch(e){}
-  // 7. codetabs
-  try{const r=await fetch('https://api.codetabs.com/v1/proxy?quest='+enc,t20);if(r.ok){const x=await extractXml(r);if(x)return x;}}catch(e){}
-  return null;
-}
-
-// Fonti EPG alternative che non richiedono proxy (CORS aperto o CDN)
-const EPG_SOURCES=[
-  // epgitalia.tv - fonte principale
-  {label:'epgitalia gzip',   url:'https://www.epgitalia.tv/gzip',   proxy:true},
-  {label:'epgitalia xmltv',  url:'https://www.epgitalia.tv/xmltv',  proxy:true},
-  // iptv-org/epg su GitHub raw (CORS aperto)
-  {label:'iptv-org it',      url:'https://raw.githubusercontent.com/iptv-org/epg/refs/heads/master/sites/mediasetinfinity.it/mediasetinfinity.it_it.xml', proxy:false},
-  // xmltv.co
-  {label:'xmltv.co',         url:'https://xmltv.co/epg/italy.xml',  proxy:true},
-  // epg.iptv.ink
-  {label:'epg.iptv.ink',     url:'https://epg.iptv.ink/xmltv/it.xml', proxy:false},
-];
 
 // ═══════════════════════════════════════════════════
 // XMLTV PARSER WITH DEDUPLICATION
@@ -882,44 +818,15 @@ function mergeEPGIntoChannels(parsed){
   programmes=parsed.programmes;
 }
 
-async function init(forceRefresh=false){
-  setStatus('loading','Caricamento...');
+async function init(){
+  setStatus('loading','Caricamento EPG...');
   showLocalChannels();
 
-  let xmlText=null;
-
-  // Prova cache prima
-  if(!forceRefresh){
-    const cached=await loadCache();
-    if(cached&&cached.xml){
-      xmlText=cached.xml;
-      setStatus('loading','Da cache...');
-    }
-  }
-
-  // Se non c'è cache valida, scarica da una delle fonti
-  if(!xmlText){
-    for(let i=0;i<EPG_SOURCES.length;i++){
-      const src=EPG_SOURCES[i];
-      setStatus('loading',`Tentativo ${i+1}/${EPG_SOURCES.length}: ${src.label}...`);
-      try{
-        let x=null;
-        if(!src.proxy){
-          // Fetch diretto (CORS aperto)
-          const r=await fetch(src.url,{signal:AbortSignal.timeout(20000)});
-          if(r.ok) x=await extractXml(r);
-        } else {
-          x=await fetchEPG(src.url);
-        }
-        if(x&&x.includes('<tv')){xmlText=x;break;}
-      }catch(e){}
-    }
-    if(xmlText) await saveCache(xmlText);
-  }
+  const xmlText=await fetchEPGLocal();
 
   if(!xmlText||!xmlText.includes('<tv')){
-    setStatus('err','Errore connessione');
-    document.getElementById('epgList').innerHTML=`<div class="center-msg"><div class="icon">⚠️</div><div class="ttl">EPG non disponibile</div><div class="sub">Nessuna fonte EPG raggiungibile. Controlla la connessione e riprova.<br><br>Se il problema persiste apri la console (F12) per dettagli.</div><button class="retry-btn" onclick="hardRefresh()">🔄 Riprova</button></div>`;
+    setStatus('err','EPG non trovato');
+    document.getElementById('epgList').innerHTML=`<div class="center-msg"><div class="icon">⚠️</div><div class="ttl">EPG non disponibile</div><div class="sub">Il file <strong>epg-it.xml</strong> non è stato trovato nella stessa cartella di questa pagina.<br><br>Assicurati che GitHub Actions abbia scaricato il file.</div><button class="retry-btn" onclick="hardRefresh()">🔄 Riprova</button></div>`;
     return;
   }
 
