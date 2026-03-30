@@ -679,12 +679,16 @@ function parseXMLTV(xml){
   for(const [nameKey,ch] of Object.entries(nameMap)){
     const map=progMap[ch.id];
     if(map){
-      // Dedup: stessa ora esatta (al minuto) — elimina duplicati da feed multipli
+      // Dedup: titolo + giorno + bucket 30min — elimina duplicati da feed con tz diverse (+0000 vs +0100)
+      // mantenendo repliche vere (stesso titolo in fasce orarie distanti >30min)
       const seen=new Set();
       const deduped=[];
       for(const p of [...map.values()].sort((a,b)=>a.start-b.start)){
-        const minuteKey=Math.round(p.start.getTime()/60000).toString();
-        if(!seen.has(minuteKey)){seen.add(minuteKey);deduped.push(p);}
+        const dayKey=ldk(p.start);
+        const titleNorm=p.title.toLowerCase().replace(/\s+/g,' ').trim().replace(/[^a-z0-9àèéìíîòóùú]/g,'');
+        const bucket30=Math.floor(p.start.getTime()/(30*60000));
+        const k=dayKey+'|'+titleNorm+'|'+bucket30;
+        if(!seen.has(k)){seen.add(k);deduped.push(p);}
       }
       programmes[ch.id]=deduped;
     }
