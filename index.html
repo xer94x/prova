@@ -458,21 +458,31 @@ function mergeXMLTVPriority(xmlPrimary, xmlSecondary){
   if(!xmlSecondary) return xmlPrimary;
   if(!xmlPrimary)   return xmlSecondary;
 
-  // IDs già coperti dalla fonte primaria (case-insensitive)
-  const coveredIds = extractChannelIds(xmlPrimary);
-
+  // Costruisce l'insieme dei nomi canonici già coperti dalla fonte primaria
+  // (le due sorgenti usano channel-id diversi per gli stessi canali, es. Rai1.it vs Rai1.sky.it)
   const parser = new DOMParser();
+  const doc1 = parser.parseFromString(xmlPrimary, 'text/xml');
   const doc2 = parser.parseFromString(xmlSecondary, 'text/xml');
   if(doc2.querySelector('parsererror')){
     console.warn('[EPG] Fonte secondaria: XML non valido, ignorata');
     return xmlPrimary;
   }
 
-  // Raccoglie solo i <channel> non coperti
-  const newChannels = [...doc2.querySelectorAll('channel')]
-    .filter(el => !coveredIds.has((el.getAttribute('id')||'').toLowerCase()));
+  // Nomi canonici già presenti nella fonte primaria
+  const coveredCanons = new Set();
+  doc1.querySelectorAll('channel').forEach(el => {
+    const d = el.querySelector('display-name');
+    if(d) coveredCanons.add(canonName(d.textContent.trim()).toLowerCase());
+  });
 
-  // Raccoglie solo i <programme> dei canali non coperti
+  // Prende dalla secondaria SOLO i canali il cui nome canonico non è già coperto
+  const newChannels = [...doc2.querySelectorAll('channel')]
+    .filter(el => {
+      const d = el.querySelector('display-name');
+      if(!d) return false;
+      return !coveredCanons.has(canonName(d.textContent.trim()).toLowerCase());
+    });
+
   const newCoveredIds = new Set(newChannels.map(el => el.getAttribute('id').toLowerCase()));
   const newProgrammes = [...doc2.querySelectorAll('programme')]
     .filter(el => newCoveredIds.has((el.getAttribute('channel')||'').toLowerCase()));
@@ -484,12 +494,10 @@ function mergeXMLTVPriority(xmlPrimary, xmlSecondary){
 
   console.log(`[EPG] Fonte secondaria: +${newChannels.length} canali integrati (${newProgrammes.length} programmi)`);
 
-  // Serializza i nuovi nodi come stringa
   const s = new XMLSerializer();
   const extra = [...newChannels, ...newProgrammes]
     .map(el => s.serializeToString(el)).join('\n');
 
-  // Inserisce prima della chiusura </tv> del feed primario
   return xmlPrimary.replace(/<\/tv>[\s\S]*$/, extra + '\n</tv>');
 }
 
@@ -668,14 +676,14 @@ function parseXMLTV(xml){
   for(const [nameKey,ch] of Object.entries(nameMap)){
     const map=progMap[ch.id];
     if(map){
-      // Dedup robusto: bucket da 15 minuti + titolo normalizzato
-      // Elimina duplicati da canali con offset timezone diversi (es. +0000 vs +0100 vs +0200)
+      // Dedup: stesso titolo + bucket 2h per distinguere repliche vere ma eliminare duplicati da tz diverse
       const seen=new Set();
       const deduped=[];
       for(const p of [...map.values()].sort((a,b)=>a.start-b.start)){
-        const bucket15=Math.round(p.start.getTime()/(15*60000)); // arrotonda a 15 min
+        const dayKey=ldk(p.start);
         const titleNorm=p.title.toLowerCase().replace(/\s+/g,' ').trim().replace(/[^a-z0-9àèéìíîòóùú]/g,'');
-        const k=bucket15+'|'+titleNorm;
+        const bucket2h=Math.floor(p.start.getTime()/(2*60*60000)); // bucket da 2 ore: tollera offset fino a +/-2h
+        const k=dayKey+'|'+titleNorm+'|'+bucket2h;
         if(!seen.has(k)){seen.add(k);deduped.push(p);}
       }
       programmes[ch.id]=deduped;
