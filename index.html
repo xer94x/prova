@@ -616,7 +616,11 @@ function parseXMLTV(xml){
   }
 
   // Pass 3: programmes — merge all variants
-  const progMap={};  // canon → Map<timeKey, prog>
+  // Per ogni (canon, titolo, bucket60min) teniamo solo il primo programma trovato.
+  // Questo elimina duplicati da sorgenti con timezone sbagliata (offset di 1h)
+  // mantenendo le repliche vere (stesso titolo ma orari distanti >60 min).
+  const progMap={};         // canon → Map<timeKey, prog>
+  const titleBucketSeen={}; // canon+'|'+titleNorm+'|'+bucket60 → true
   doc.querySelectorAll('programme').forEach(el=>{
     const chId=el.getAttribute('channel');
     const startRaw=el.getAttribute('start');
@@ -629,7 +633,15 @@ function parseXMLTV(xml){
     const title=(el.querySelector('title')||{}).textContent?.trim()||'—';
     const desc=(el.querySelector('desc')||{}).textContent?.trim()||'';
     const cat=(el.querySelector('category')||{}).textContent?.trim()||'';
-    const tk=Math.round(start.getTime()/60000).toString(); // arrotonda al minuto per tollerare offset tz
+
+    // Deduplicazione per titolo + bucket 60 min: elimina stessa trasmissione con tz sbagliata
+    const titleNorm=title.toLowerCase().replace(/\s+/g,' ').trim().replace(/[^a-z0-9àèéìíîòóùú]/g,'');
+    const bucket60=Math.floor(start.getTime()/(60*60000)); // bucket da 60 min
+    const tbKey=canon+'|'+ldk(start)+'|'+titleNorm+'|'+bucket60;
+    if(titleBucketSeen[tbKey]) return; // scarta duplicato da tz diversa
+    titleBucketSeen[tbKey]=true;
+
+    const tk=Math.round(start.getTime()/60000).toString();
     if(!progMap[canon]) progMap[canon]=new Map();
     if(!progMap[canon].has(tk)) progMap[canon].set(tk,{start,stop,title,desc,category:cat});
   });
@@ -676,14 +688,16 @@ function parseXMLTV(xml){
   for(const [nameKey,ch] of Object.entries(nameMap)){
     const map=progMap[ch.id];
     if(map){
-      // Dedup: stesso titolo + bucket 2h per distinguere repliche vere ma eliminare duplicati da tz diverse
+      // Pass 4 dedup (seconda linea di difesa): stesso titolo + bucket 30 min
+      // A questo punto il Pass 3 ha già eliminato i duplicati da tz diversa.
+      // Questo bucket stretto serve solo contro eventuali residui da merge di canoni.
       const seen=new Set();
       const deduped=[];
       for(const p of [...map.values()].sort((a,b)=>a.start-b.start)){
         const dayKey=ldk(p.start);
         const titleNorm=p.title.toLowerCase().replace(/\s+/g,' ').trim().replace(/[^a-z0-9àèéìíîòóùú]/g,'');
-        const bucket2h=Math.floor(p.start.getTime()/(2*60*60000)); // bucket da 2 ore: tollera offset fino a +/-2h
-        const k=dayKey+'|'+titleNorm+'|'+bucket2h;
+        const bucket30=Math.floor(p.start.getTime()/(30*60000)); // bucket 30 min
+        const k=dayKey+'|'+titleNorm+'|'+bucket30;
         if(!seen.has(k)){seen.add(k);deduped.push(p);}
       }
       programmes[ch.id]=deduped;
