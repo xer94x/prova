@@ -561,12 +561,12 @@ function parseDate(s){
     return new Date(`${iso}${sign}${hh}:${mm2}`);
   }
 
-  // Nessuna timezone → tratta come orario locale di Roma (epgitalia manda orari italiani senza tz)
-  const romeOff=romeOffsetMinutes(iso);
-  const sign=romeOff>=0?'-':'+';
-  const absOff=Math.abs(romeOff);
-  const hh=String(Math.floor(absOff/60)).padStart(2,'0');
-  const mm2=String(absOff%60).padStart(2,'0');
+  // Nessuna timezone → usa l'offset locale del browser (già impostato su fuso italiano)
+  const localOff = -new Date().getTimezoneOffset(); // getTimezoneOffset è UTC-locale, invertiamo
+  const sign = localOff >= 0 ? '+' : '-';
+  const absOff = Math.abs(localOff);
+  const hh = String(Math.floor(absOff / 60)).padStart(2, '0');
+  const mm2 = String(absOff % 60).padStart(2, '0');
   return new Date(`${iso}${sign}${hh}:${mm2}`);
 }
 
@@ -621,7 +621,7 @@ function parseXMLTV(xml){
     const title=(el.querySelector('title')||{}).textContent?.trim()||'—';
     const desc=(el.querySelector('desc')||{}).textContent?.trim()||'';
     const cat=(el.querySelector('category')||{}).textContent?.trim()||'';
-    const tk=start.getTime().toString();
+    const tk=Math.round(start.getTime()/60000).toString(); // arrotonda al minuto per tollerare offset tz
     if(!progMap[canon]) progMap[canon]=new Map();
     if(!progMap[canon].has(tk)) progMap[canon].set(tk,{start,stop,title,desc,category:cat});
   });
