@@ -689,7 +689,7 @@ function parseXMLTV(xml){
         const titleNorm=p.title.toLowerCase().replace(/\s+/g,' ').trim().replace(/[^a-z0-9àèéìíîòóùú]/g,'');
         const k=dayKey+'|'+titleNorm;
         const t=p.start.getTime();
-        if(lastKept[k]===undefined||t-lastKept[k]>90*60000){
+        if(lastKept[k]===undefined||t-lastKept[k]>180*60000){
           lastKept[k]=t;
           deduped.push(p);
         }
