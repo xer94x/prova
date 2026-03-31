@@ -687,7 +687,11 @@ function parseXMLTV(xml){
       for(const p of sorted){
         const dayKey=ldk(p.start);
         const titleNorm=p.title.toLowerCase().replace(/\s+/g,' ').trim().replace(/[^a-z0-9àèéìíîòóùú]/g,'');
-        const k=dayKey+'|'+titleNorm;
+        // La chiave include giorno+titolo+ora arrotondata a 3h
+        // → duplicati da fuso orario (distanza <120min) vengono scartati
+        // → stesso programma il giorno dopo è una chiave diversa → mantenuto
+        const slotH=Math.floor(p.start.getHours()/3); // 0-7 fasce da 3h
+        const k=dayKey+'|'+titleNorm+'|'+slotH;
         const t=p.start.getTime();
         if(lastKept[k]===undefined||t-lastKept[k]>120*60000){
           lastKept[k]=t;
