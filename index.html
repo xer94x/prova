@@ -679,27 +679,7 @@ function parseXMLTV(xml){
   for(const [nameKey,ch] of Object.entries(nameMap)){
     const map=progMap[ch.id];
     if(map){
-      // Dedup: per ogni titolo+giorno, scarta entry entro 90min da una gia' tenuta
-      // (duplicati da feed con tz +0000 vs +0100/+0200). Repliche vere a >90min restano.
-      const sorted=[...map.values()].sort((a,b)=>a.start-b.start);
-      const deduped=[];
-      const lastKept={};
-      for(const p of sorted){
-        const dayKey=ldk(p.start);
-        const titleNorm=p.title.toLowerCase().replace(/\s+/g,' ').trim().replace(/[^a-z0-9àèéìíîòóùú]/g,'');
-        // Chiave = giorno + titolo: elimina duplicati da fuso orario (stessa puntata
-        // presente 2 volte con offset +0000 e +0200 → distanza esatta 120min).
-        // Finestra 130min per coprire anche piccoli arrotondamenti.
-        // Il giorno nella chiave garantisce che lo stesso programma il giorno
-        // successivo (es. Affari Tuoi ogni sera) venga mantenuto.
-        const k=dayKey+'|'+titleNorm;
-        const t=p.start.getTime();
-        if(lastKept[k]===undefined||t-lastKept[k]>120*60000){
-          lastKept[k]=t;
-          deduped.push(p);
-        }
-      }
-      programmes[ch.id]=deduped;
+      programmes[ch.id]=[...map.values()].sort((a,b)=>a.start-b.start);
     }
   }
 
