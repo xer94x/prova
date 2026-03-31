@@ -683,18 +683,14 @@ function parseXMLTV(xml){
       // (duplicati da feed con tz +0000 vs +0100/+0200). Repliche vere a >90min restano.
       const sorted=[...map.values()].sort((a,b)=>a.start-b.start);
       const deduped=[];
-      const lastKept={};
+      // Deduplica per slot temporale: arrotonda l'orario di inizio a 10 minuti.
+      // Se due programmi iniziano nello stesso slot di 10 minuti, è un duplicato
+      // da fuso orario (es. feed UTC vs feed UTC+2). Teniamo solo il primo.
+      const seenSlots=new Set();
       for(const p of sorted){
-        const dayKey=ldk(p.start);
-        const titleNorm=p.title.toLowerCase().replace(/\s+/g,' ').trim().replace(/[^a-z0-9àèéìíîòóùú]/g,'');
-        // La chiave include giorno+titolo+ora arrotondata a 3h
-        // → duplicati da fuso orario (distanza <120min) vengono scartati
-        // → stesso programma il giorno dopo è una chiave diversa → mantenuto
-        const slotH=Math.floor(p.start.getHours()/3); // 0-7 fasce da 3h
-        const k=dayKey+'|'+titleNorm+'|'+slotH;
-        const t=p.start.getTime();
-        if(lastKept[k]===undefined||t-lastKept[k]>120*60000){
-          lastKept[k]=t;
+        const slot=Math.round(p.start.getTime()/(10*60000));
+        if(!seenSlots.has(slot)){
+          seenSlots.add(slot);
           deduped.push(p);
         }
       }
