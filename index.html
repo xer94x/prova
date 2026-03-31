@@ -563,22 +563,22 @@ function parseDate(s){
   const tz=parts[1]||'';
   const iso=`${m.slice(0,4)}-${m.slice(4,6)}-${m.slice(6,8)}T${m.slice(8,10)||'00'}:${m.slice(10,12)||'00'}:${m.slice(12,14)||'00'}`;
 
-  // Offset locale del browser (positivo = est di UTC, es. +60 per CET, +120 per CEST)
-  const localOff = -new Date().getTimezoneOffset();
-  const localSign = localOff >= 0 ? '+' : '-';
-  const localAbs = Math.abs(localOff);
-  const localHH = String(Math.floor(localAbs / 60)).padStart(2, '0');
-  const localMM = String(localAbs % 60).padStart(2, '0');
-  const localTzStr = `${localSign}${localHH}:${localMM}`;
-
   if(tz&&(tz[0]==='+'||tz[0]==='-')){
     // Rispetta sempre la timezone dichiarata nel file EPG (incluso +0000 = UTC reale)
     const sign=tz[0],hh=tz.slice(1,3),mm2=tz.slice(3,5)||'00';
     return new Date(`${iso}${sign}${hh}:${mm2}`);
   }
 
-  // Nessuna timezone → usa l'offset locale del browser
-  return new Date(`${iso}${localTzStr}`);
+  // Nessuna timezone dichiarata → assume ora italiana (Europe/Rome)
+  // Determina se è ora legale (CEST=+02:00) o solare (CET=+01:00)
+  const probe=new Date(iso+'Z');
+  const y=probe.getUTCFullYear();
+  const lastSunMarch=new Date(Date.UTC(y,2,31));
+  lastSunMarch.setUTCDate(31-(lastSunMarch.getUTCDay()%7));
+  const lastSunOct=new Date(Date.UTC(y,9,31));
+  lastSunOct.setUTCDate(31-(lastSunOct.getUTCDay()%7));
+  const isCEST=(probe>=lastSunMarch&&probe<lastSunOct);
+  return new Date(`${iso}${isCEST?'+02:00':'+01:00'}`);
 }
 
 function parseXMLTV(xml){
@@ -683,14 +683,19 @@ function parseXMLTV(xml){
       // (duplicati da feed con tz +0000 vs +0100/+0200). Repliche vere a >90min restano.
       const sorted=[...map.values()].sort((a,b)=>a.start-b.start);
       const deduped=[];
-      // Deduplica per slot temporale: arrotonda l'orario di inizio a 10 minuti.
-      // Se due programmi iniziano nello stesso slot di 10 minuti, è un duplicato
-      // da fuso orario (es. feed UTC vs feed UTC+2). Teniamo solo il primo.
-      const seenSlots=new Set();
+      const lastKept={};
       for(const p of sorted){
-        const slot=Math.round(p.start.getTime()/(10*60000));
-        if(!seenSlots.has(slot)){
-          seenSlots.add(slot);
+        const dayKey=ldk(p.start);
+        const titleNorm=p.title.toLowerCase().replace(/\s+/g,' ').trim().replace(/[^a-z0-9àèéìíîòóùú]/g,'');
+        // Chiave = giorno + titolo: elimina duplicati da fuso orario (stessa puntata
+        // presente 2 volte con offset +0000 e +0200 → distanza esatta 120min).
+        // Finestra 130min per coprire anche piccoli arrotondamenti.
+        // Il giorno nella chiave garantisce che lo stesso programma il giorno
+        // successivo (es. Affari Tuoi ogni sera) venga mantenuto.
+        const k=dayKey+'|'+titleNorm;
+        const t=p.start.getTime();
+        if(lastKept[k]===undefined||t-lastKept[k]>120*60000){
+          lastKept[k]=t;
           deduped.push(p);
         }
       }
