@@ -424,8 +424,8 @@ async function decompressGzip(buf){
 // Carica un singolo file EPG (gzip o xml) e restituisce il testo XML
 async function fetchOneEPG(filename){
   try{
-    const bust=new Date().toISOString().slice(0,10).replace(/-/g,'');
-    const r=await fetch(filename+'?v='+bust,{signal:AbortSignal.timeout(30000)});
+    const bust=Date.now();
+    const r=await fetch(filename+'?v='+bust,{cache:'no-store',signal:AbortSignal.timeout(30000)});
     if(!r.ok) throw new Error('HTTP '+r.status);
     const buf=await r.arrayBuffer();
     try{
@@ -679,7 +679,20 @@ function parseXMLTV(xml){
   for(const [nameKey,ch] of Object.entries(nameMap)){
     const map=progMap[ch.id];
     if(map){
-      programmes[ch.id]=[...map.values()].sort((a,b)=>a.start-b.start);
+      const sorted=[...map.values()].sort((a,b)=>a.start-b.start);
+      const deduped=[];
+      const lastKept={};
+      for(const p of sorted){
+        const dayKey=ldk(p.start);
+        const titleNorm=p.title.toLowerCase().replace(/\s+/g,' ').trim().replace(/[^a-z0-9àèéìíîòóùú]/g,'');
+        const k=dayKey+'|'+titleNorm;
+        const t=p.start.getTime();
+        if(lastKept[k]===undefined||t-lastKept[k]>120*60000){
+          lastKept[k]=t;
+          deduped.push(p);
+        }
+      }
+      programmes[ch.id]=deduped;
     }
   }
 
